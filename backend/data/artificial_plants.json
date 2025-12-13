@@ -1,0 +1,385 @@
+{
+    "category": "artificial_plants",
+    "category_name_ru": "Искусственные растения",
+    "category_name_uz": "Sun'iy o'simliklar",
+    "products": [
+        {
+            "id": 1,
+            "code": "P-6",
+            "slug": "p-6",
+            "name_ru": "Искусственное растение P-6",
+            "name_uz": "Sun'iy o'simlik P-6",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 315000,
+            "price_per_piece": 6300,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 2,
+            "code": "P-7",
+            "slug": "p-7",
+            "name_ru": "Искусственное растение P-7",
+            "name_uz": "Sun'iy o'simlik P-7",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 315000,
+            "price_per_piece": 6300,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 3,
+            "code": "P-8",
+            "slug": "p-8",
+            "name_ru": "Искусственное растение P-8",
+            "name_uz": "Sun'iy o'simlik P-8",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 380000,
+            "price_per_piece": 7600,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 4,
+            "code": "P-9",
+            "slug": "p-9",
+            "name_ru": "Искусственное растение P-9",
+            "name_uz": "Sun'iy o'simlik P-9",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 345000,
+            "price_per_piece": 6900,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 5,
+            "code": "P-10",
+            "slug": "p-10",
+            "name_ru": "Искусственное растение P-10",
+            "name_uz": "Sun'iy o'simlik P-10",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 315000,
+            "price_per_piece": 6300,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 6,
+            "code": "P-11",
+            "slug": "p-11",
+            "name_ru": "Искусственное растение P-11",
+            "name_uz": "Sun'iy o'simlik P-11",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 345000,
+            "price_per_piece": 6900,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 7,
+            "code": "P-12",
+            "slug": "p-12",
+            "name_ru": "Искусственное растение P-12",
+            "name_uz": "Sun'iy o'simlik P-12",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 345000,
+            "price_per_piece": 6900,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 8,
+            "code": "P-13",
+            "slug": "p-13",
+            "name_ru": "Искусственное растение P-13",
+            "name_uz": "Sun'iy o'simlik P-13",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 315000,
+            "price_per_piece": 6300,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 9,
+            "code": "P-14",
+            "slug": "p-14",
+            "name_ru": "Искусственное растение P-14",
+            "name_uz": "Sun'iy o'simlik P-14",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 315000,
+            "price_per_piece": 6300,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 10,
+            "code": "P-15",
+            "slug": "p-15",
+            "name_ru": "Искусственное растение P-15",
+            "name_uz": "Sun'iy o'simlik P-15",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 375000,
+            "price_per_piece": 7500,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 11,
+            "code": "P-16",
+            "slug": "p-16",
+            "name_ru": "Искусственное растение P-16",
+            "name_uz": "Sun'iy o'simlik P-16",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 315000,
+            "price_per_piece": 6300,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 12,
+            "code": "P-17",
+            "slug": "p-17",
+            "name_ru": "Искусственное растение P-17",
+            "name_uz": "Sun'iy o'simlik P-17",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 315000,
+            "price_per_piece": 6300,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 13,
+            "code": "P-18",
+            "slug": "p-18",
+            "name_ru": "Искусственное растение P-18",
+            "name_uz": "Sun'iy o'simlik P-18",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 420000,
+            "price_per_piece": 8400,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 14,
+            "code": "P-19",
+            "slug": "p-19",
+            "name_ru": "Искусственное растение P-19",
+            "name_uz": "Sun'iy o'simlik P-19",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 360000,
+            "price_per_piece": 7200,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 15,
+            "code": "P-20",
+            "slug": "p-20",
+            "name_ru": "Искусственное растение P-20",
+            "name_uz": "Sun'iy o'simlik P-20",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 390000,
+            "price_per_piece": 7800,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 16,
+            "code": "P-21",
+            "slug": "p-21",
+            "name_ru": "Искусственное растение P-21",
+            "name_uz": "Sun'iy o'simlik P-21",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 390000,
+            "price_per_piece": 7800,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 17,
+            "code": "P-22",
+            "slug": "p-22",
+            "name_ru": "Искусственное растение P-22",
+            "name_uz": "Sun'iy o'simlik P-22",
+            "description_ru": "Искусственное декоративное растение. Высококачественный пластик, реалистичный внешний вид.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Yuqori sifatli plastik, real ko'rinish.",
+            "packaging": {
+                "bags_per_box": 5,
+                "pcs_per_bag": 10,
+                "total_pcs": 50
+            },
+            "price": 345000,
+            "price_per_piece": 6900,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 18,
+            "code": "P-A",
+            "slug": "p-a",
+            "name_ru": "Искусственное растение P-A",
+            "name_uz": "Sun'iy o'simlik P-A",
+            "description_ru": "Искусственное декоративное растение. Компактный размер, идеально для небольших пространств.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Ixcham o'lcham, kichik joylar uchun ideal.",
+            "packaging": {
+                "bags_per_box": 3,
+                "pcs_per_bag": 30,
+                "total_pcs": 90
+            },
+            "price": 160000,
+            "price_per_piece": 1778,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 19,
+            "code": "P-B",
+            "slug": "p-b",
+            "name_ru": "Искусственное растение P-B",
+            "name_uz": "Sun'iy o'simlik P-B",
+            "description_ru": "Искусственное декоративное растение. Компактный размер, идеально для небольших пространств.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Ixcham o'lcham, kichik joylar uchun ideal.",
+            "packaging": {
+                "bags_per_box": 3,
+                "pcs_per_bag": 30,
+                "total_pcs": 90
+            },
+            "price": 160000,
+            "price_per_piece": 1778,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 20,
+            "code": "P-C",
+            "slug": "p-c",
+            "name_ru": "Искусственное растение P-C",
+            "name_uz": "Sun'iy o'simlik P-C",
+            "description_ru": "Искусственное декоративное растение. Компактный размер, идеально для небольших пространств.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Ixcham o'lcham, kichik joylar uchun ideal.",
+            "packaging": {
+                "bags_per_box": 3,
+                "pcs_per_bag": 30,
+                "total_pcs": 90
+            },
+            "price": 160000,
+            "price_per_piece": 1778,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 21,
+            "code": "P-26",
+            "slug": "p-26",
+            "name_ru": "Искусственное растение P-26",
+            "name_uz": "Sun'iy o'simlik P-26",
+            "description_ru": "Искусственное декоративное растение. Мини-размер, оптовая упаковка.",
+            "description_uz": "Sun'iy dekorativ o'simlik. Mini o'lcham, ulgurji qadoq.",
+            "packaging": {
+                "bags_per_box": 1,
+                "pcs_per_bag": 600,
+                "total_pcs": 600
+            },
+            "price": 17000,
+            "price_per_piece": 28,
+            "in_stock": true,
+            "image": null
+        }
+    ]
+}

@@ -1,0 +1,712 @@
+{
+    "category": "plant_stands",
+    "category_name_ru": "Подставки для растений",
+    "category_name_uz": "O'simliklar uchun tagliklar",
+    "products": [
+        {
+            "id": 1,
+            "code": "8983",
+            "slug": "stand-8983",
+            "name_ru": "Подставка для растений 8983",
+            "name_uz": "O'simliklar uchun taglik 8983",
+            "description_ru": "Многоярусная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 112,
+                "width_cm": 40,
+                "height_cm": 155
+            },
+            "carton_size": {
+                "length_cm": 122,
+                "width_cm": 50,
+                "height_cm": 165
+            },
+            "quantity": 1,
+            "price": 10000000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 2,
+            "code": "8938",
+            "slug": "stand-8938",
+            "name_ru": "Подставка для растений 8938",
+            "name_uz": "O'simliklar uchun taglik 8938",
+            "description_ru": "Многоярусная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 77,
+                "width_cm": 32,
+                "height_cm": 160
+            },
+            "carton_size": {
+                "length_cm": 82,
+                "width_cm": 46,
+                "height_cm": 172
+            },
+            "quantity": 1,
+            "price": 5980000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 3,
+            "code": "8933",
+            "slug": "stand-8933",
+            "name_ru": "Подставка для растений 8933",
+            "name_uz": "O'simliklar uchun taglik 8933",
+            "description_ru": "Большая многоярусная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Katta ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 148,
+                "width_cm": 43,
+                "height_cm": 180
+            },
+            "carton_size": {
+                "length_cm": 158,
+                "width_cm": 53,
+                "height_cm": 190
+            },
+            "quantity": 1,
+            "price": 13240000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 4,
+            "code": "8906",
+            "slug": "stand-8906",
+            "name_ru": "Подставка для растений 8906",
+            "name_uz": "O'simliklar uchun taglik 8906",
+            "description_ru": "Большая многоярусная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Katta ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 157,
+                "width_cm": 43.5,
+                "height_cm": 176
+            },
+            "carton_size": {
+                "length_cm": 157,
+                "width_cm": 55,
+                "height_cm": 188
+            },
+            "quantity": 1,
+            "price": 14300000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 5,
+            "code": "8907",
+            "slug": "stand-8907",
+            "name_ru": "Подставка для растений 8907",
+            "name_uz": "O'simliklar uchun taglik 8907",
+            "description_ru": "Многоярусная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 108,
+                "width_cm": 43.5,
+                "height_cm": 178
+            },
+            "carton_size": {
+                "length_cm": 119,
+                "width_cm": 55,
+                "height_cm": 188
+            },
+            "quantity": 1,
+            "price": 11100000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 6,
+            "code": "8893",
+            "slug": "stand-8893",
+            "name_ru": "Подставка для растений 8893",
+            "name_uz": "O'simliklar uchun taglik 8893",
+            "description_ru": "Премиум многоярусная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Premium ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 188,
+                "width_cm": 42.5,
+                "height_cm": 196
+            },
+            "carton_size": {
+                "length_cm": 195,
+                "width_cm": 52,
+                "height_cm": 207
+            },
+            "quantity": 1,
+            "price": 19750000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 7,
+            "code": "8282",
+            "slug": "stand-8282",
+            "name_ru": "Подставка для растений 8282",
+            "name_uz": "O'simliklar uchun taglik 8282",
+            "description_ru": "Компактная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Ixcham o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 88,
+                "width_cm": 33,
+                "height_cm": 155
+            },
+            "carton_size": {
+                "length_cm": 135,
+                "width_cm": 78,
+                "height_cm": 18
+            },
+            "quantity": 1,
+            "price": 6000000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 8,
+            "code": "BY201",
+            "slug": "by201",
+            "name_ru": "Подставка для растений BY201",
+            "name_uz": "O'simliklar uchun taglik BY201",
+            "description_ru": "Элегантная многоярусная подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi nafis ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 128,
+                "width_cm": 36,
+                "height_cm": 168
+            },
+            "carton_size": {
+                "length_cm": 140,
+                "width_cm": 48,
+                "height_cm": 180
+            },
+            "quantity": 1,
+            "price": 9500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 9,
+            "code": "BY2105",
+            "slug": "by2105",
+            "name_ru": "Подставка для растений BY2105",
+            "name_uz": "O'simliklar uchun taglik BY2105",
+            "description_ru": "Большая многоярусная подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi katta ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 145,
+                "width_cm": 40,
+                "height_cm": 190
+            },
+            "carton_size": {
+                "length_cm": 160,
+                "width_cm": 52,
+                "height_cm": 195
+            },
+            "quantity": 1,
+            "price": 13500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 10,
+            "code": "BY2103",
+            "slug": "by2103",
+            "name_ru": "Подставка для растений BY2103",
+            "name_uz": "O'simliklar uchun taglik BY2103",
+            "description_ru": "Компактная подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi ixcham o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 105,
+                "width_cm": 33,
+                "height_cm": 140
+            },
+            "carton_size": {
+                "length_cm": 115.5,
+                "width_cm": 41,
+                "height_cm": 148.5
+            },
+            "quantity": 1,
+            "price": 6500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 11,
+            "code": "BY2102",
+            "slug": "by2102",
+            "name_ru": "Подставка для растений BY2102",
+            "name_uz": "O'simliklar uchun taglik BY2102",
+            "description_ru": "Высокая подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 85.5,
+                "width_cm": 37,
+                "height_cm": 187.5
+            },
+            "carton_size": {
+                "length_cm": 196.5,
+                "width_cm": 46,
+                "height_cm": 95.5
+            },
+            "quantity": 1,
+            "price": 8770000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 12,
+            "code": "BY2106",
+            "slug": "by2106",
+            "name_ru": "Подставка для растений BY2106",
+            "name_uz": "O'simliklar uchun taglik BY2106",
+            "description_ru": "Премиум большая подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi premium katta o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 169,
+                "width_cm": 37,
+                "height_cm": 177
+            },
+            "carton_size": {
+                "length_cm": 183,
+                "width_cm": 50,
+                "height_cm": 186
+            },
+            "quantity": 1,
+            "price": 16500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 13,
+            "code": "BY2107",
+            "slug": "by2107",
+            "name_ru": "Подставка для растений BY2107",
+            "name_uz": "O'simliklar uchun taglik BY2107",
+            "description_ru": "Премиум подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi premium o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 159,
+                "width_cm": 37.5,
+                "height_cm": 180
+            },
+            "carton_size": {
+                "length_cm": 169,
+                "width_cm": 48.5,
+                "height_cm": 190
+            },
+            "quantity": 1,
+            "price": 15300000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 14,
+            "code": "BY202",
+            "slug": "by202",
+            "name_ru": "Подставка для растений BY202",
+            "name_uz": "O'simliklar uchun taglik BY202",
+            "description_ru": "Премиум большая подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi premium katta o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 177,
+                "width_cm": 38,
+                "height_cm": 177
+            },
+            "carton_size": {
+                "length_cm": 191,
+                "width_cm": 50,
+                "height_cm": 186
+            },
+            "quantity": 1,
+            "price": 15500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 15,
+            "code": "BY213-A",
+            "slug": "by213-a",
+            "name_ru": "Подставка для растений BY213-A",
+            "name_uz": "O'simliklar uchun taglik BY213-A",
+            "description_ru": "Большая подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi katta o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 147,
+                "width_cm": 37,
+                "height_cm": 180
+            },
+            "carton_size": {
+                "length_cm": 158.5,
+                "width_cm": 49,
+                "height_cm": 191.5
+            },
+            "quantity": 1,
+            "price": 13000000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 16,
+            "code": "BY215",
+            "slug": "by215",
+            "name_ru": "Подставка для растений BY215",
+            "name_uz": "O'simliklar uchun taglik BY215",
+            "description_ru": "Премиум высокая подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi premium baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 154,
+                "width_cm": 40,
+                "height_cm": 193
+            },
+            "carton_size": {
+                "length_cm": 169,
+                "width_cm": 56,
+                "height_cm": 200
+            },
+            "quantity": 1,
+            "price": 15800000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 17,
+            "code": "216",
+            "slug": "stand-216",
+            "name_ru": "Подставка для растений 216",
+            "name_uz": "O'simliklar uchun taglik 216",
+            "description_ru": "Многоярусная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 117,
+                "width_cm": 37,
+                "height_cm": 165
+            },
+            "carton_size": {
+                "length_cm": 126,
+                "width_cm": 47,
+                "height_cm": 175
+            },
+            "quantity": 1,
+            "price": 9500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 18,
+            "code": "BY2108",
+            "slug": "by2108",
+            "name_ru": "Подставка для растений BY2108",
+            "name_uz": "O'simliklar uchun taglik BY2108",
+            "description_ru": "Высокая подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 90,
+                "width_cm": 50,
+                "height_cm": 188
+            },
+            "carton_size": {
+                "length_cm": 197.5,
+                "width_cm": 57,
+                "height_cm": 101.5
+            },
+            "quantity": 1,
+            "price": 10000000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 19,
+            "code": "BY2111",
+            "slug": "by2111",
+            "name_ru": "Подставка для растений BY2111",
+            "name_uz": "O'simliklar uchun taglik BY2111",
+            "description_ru": "Высокая подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 90,
+                "width_cm": 40,
+                "height_cm": 173
+            },
+            "carton_size": {
+                "length_cm": 97.5,
+                "width_cm": 51,
+                "height_cm": 183.5
+            },
+            "quantity": 1,
+            "price": 8700000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 20,
+            "code": "BY2129",
+            "slug": "by2129",
+            "name_ru": "Подставка для растений BY2129",
+            "name_uz": "O'simliklar uchun taglik BY2129",
+            "description_ru": "Многоярусная подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 113,
+                "width_cm": 37.5,
+                "height_cm": 180
+            },
+            "carton_size": {
+                "length_cm": 123,
+                "width_cm": 47,
+                "height_cm": 190
+            },
+            "quantity": 1,
+            "price": 10500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 21,
+            "code": "BY2133",
+            "slug": "by2133",
+            "name_ru": "Подставка для растений BY2133",
+            "name_uz": "O'simliklar uchun taglik BY2133",
+            "description_ru": "Многоярусная подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 105,
+                "width_cm": 40,
+                "height_cm": 168
+            },
+            "carton_size": {
+                "length_cm": 108,
+                "width_cm": 51.5,
+                "height_cm": 174.5
+            },
+            "quantity": 1,
+            "price": 9600000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 22,
+            "code": "BY2119",
+            "slug": "by2119",
+            "name_ru": "Подставка для растений BY2119",
+            "name_uz": "O'simliklar uchun taglik BY2119",
+            "description_ru": "Многоярусная подставка для растений серии BY. Прочная металлическая конструкция.",
+            "description_uz": "BY seriyasidagi ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 133,
+                "width_cm": 40,
+                "height_cm": 174
+            },
+            "carton_size": {
+                "length_cm": 142,
+                "width_cm": 50,
+                "height_cm": 182
+            },
+            "quantity": 1,
+            "price": 11000000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 23,
+            "code": "BY2201",
+            "slug": "by2201",
+            "name_ru": "Подставка для растений BY2201",
+            "name_uz": "O'simliklar uchun taglik BY2201",
+            "description_ru": "Многоярусная подставка для растений серии BY22. Прочная металлическая конструкция.",
+            "description_uz": "BY22 seriyasidagi ko'p qavatli o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 130,
+                "width_cm": 39,
+                "height_cm": 178
+            },
+            "carton_size": {
+                "length_cm": 140,
+                "width_cm": 49,
+                "height_cm": 195
+            },
+            "quantity": 1,
+            "price": 11000000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 24,
+            "code": "BY2203",
+            "slug": "by2203",
+            "name_ru": "Подставка для растений BY2203",
+            "name_uz": "O'simliklar uchun taglik BY2203",
+            "description_ru": "Компактная высокая подставка для растений серии BY22. Прочная металлическая конструкция.",
+            "description_uz": "BY22 seriyasidagi ixcham baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 58,
+                "width_cm": 41,
+                "height_cm": 177
+            },
+            "carton_size": {
+                "length_cm": 66.5,
+                "width_cm": 49.5,
+                "height_cm": 186.5
+            },
+            "quantity": 1,
+            "price": 7100000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 25,
+            "code": "BY2205",
+            "slug": "by2205",
+            "name_ru": "Подставка для растений BY2205",
+            "name_uz": "O'simliklar uchun taglik BY2205",
+            "description_ru": "Высокая подставка для растений серии BY22. Прочная металлическая конструкция.",
+            "description_uz": "BY22 seriyasidagi baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 85,
+                "width_cm": 42,
+                "height_cm": 178
+            },
+            "carton_size": {
+                "length_cm": 92.5,
+                "width_cm": 50.5,
+                "height_cm": 187.5
+            },
+            "quantity": 1,
+            "price": 9100000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 26,
+            "code": "BY2210",
+            "slug": "by2210",
+            "name_ru": "Подставка для растений BY2210",
+            "name_uz": "O'simliklar uchun taglik BY2210",
+            "description_ru": "Высокая подставка для растений серии BY22. Прочная металлическая конструкция.",
+            "description_uz": "BY22 seriyasidagi baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 90,
+                "width_cm": 41,
+                "height_cm": 193
+            },
+            "carton_size": {
+                "length_cm": 56.5,
+                "width_cm": 46,
+                "height_cm": 144.5
+            },
+            "quantity": 1,
+            "price": 7900000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 27,
+            "code": "8913A",
+            "slug": "stand-8913a",
+            "name_ru": "Подставка для растений 8913A",
+            "name_uz": "O'simliklar uchun taglik 8913A",
+            "description_ru": "Высокая узкая подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Baland tor o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 60,
+                "width_cm": 31,
+                "height_cm": 185
+            },
+            "carton_size": {
+                "length_cm": 70,
+                "width_cm": 41,
+                "height_cm": 195
+            },
+            "quantity": 1,
+            "price": 5400000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 28,
+            "code": "8910B",
+            "slug": "stand-8910b",
+            "name_ru": "Подставка для растений 8910B",
+            "name_uz": "O'simliklar uchun taglik 8910B",
+            "description_ru": "Компактная подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Ixcham o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 60,
+                "width_cm": 31,
+                "height_cm": 155
+            },
+            "carton_size": {
+                "length_cm": 60,
+                "width_cm": 41,
+                "height_cm": 165
+            },
+            "quantity": 1,
+            "price": 3835000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 29,
+            "code": "8913B",
+            "slug": "stand-8913b",
+            "name_ru": "Подставка для растений 8913B",
+            "name_uz": "O'simliklar uchun taglik 8913B",
+            "description_ru": "Высокая узкая подставка для растений. Прочная металлическая конструкция.",
+            "description_uz": "Baland tor o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 60,
+                "width_cm": 31,
+                "height_cm": 185
+            },
+            "carton_size": {
+                "length_cm": 70,
+                "width_cm": 41,
+                "height_cm": 195
+            },
+            "quantity": 1,
+            "price": 5400000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 30,
+            "code": "BY2310",
+            "slug": "by2310",
+            "name_ru": "Подставка для растений BY2310",
+            "name_uz": "O'simliklar uchun taglik BY2310",
+            "description_ru": "Высокая подставка для растений серии BY23. Прочная металлическая конструкция.",
+            "description_uz": "BY23 seriyasidagi baland o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 70,
+                "width_cm": 45,
+                "height_cm": 175
+            },
+            "carton_size": null,
+            "quantity": 1,
+            "price": 9500000,
+            "in_stock": true,
+            "image": null
+        },
+        {
+            "id": 31,
+            "code": "BY2318",
+            "slug": "by2318",
+            "name_ru": "Подставка для растений BY2318",
+            "name_uz": "O'simliklar uchun taglik BY2318",
+            "description_ru": "Премиум большая подставка для растений серии BY23. Прочная металлическая конструкция.",
+            "description_uz": "BY23 seriyasidagi premium katta o'simliklar tagligi. Mustahkam metall konstruksiya.",
+            "item_size": {
+                "length_cm": 155,
+                "width_cm": 47,
+                "height_cm": 180
+            },
+            "carton_size": null,
+            "quantity": 1,
+            "price": 14800000,
+            "in_stock": true,
+            "image": null
+        }
+    ]
+}

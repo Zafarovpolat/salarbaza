@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        @apply bg-gray-50 text-gray-900;
+        overflow-x: hidden;
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    body {
+        background-color: var(--tg-theme-bg-color, #f9fafb);
+        color: var(--tg-theme-text-color, #111827);
+    }
+}
+
+@layer utilities {
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Safe area для iOS */
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .safe-top {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    /* Гарантируем что fixed элементы учитывают safe area */
+    .fixed-bottom-safe {
+        bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+}
