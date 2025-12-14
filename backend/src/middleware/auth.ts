@@ -23,7 +23,6 @@ export async function authMiddleware(
         const initData = req.headers['x-telegram-init-data'] as string
 
         if (!initData) {
-            // Для разработки - создаём тестового пользователя
             if (config.nodeEnv === 'development') {
                 const testUser = await prisma.user.upsert({
                     where: { telegramId: BigInt(123456789) },
@@ -51,18 +50,15 @@ export async function authMiddleware(
             })
         }
 
-        // Парсим initData
         const params = new URLSearchParams(initData)
         const hash = params.get('hash')
         params.delete('hash')
 
-        // Сортируем параметры
         const dataCheckString = Array.from(params.entries())
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([key, value]) => `${key}=${value}`)
             .join('\n')
 
-        // Проверяем подпись
         const secretKey = crypto
             .createHmac('sha256', 'WebAppData')
             .update(config.botToken)
@@ -81,7 +77,6 @@ export async function authMiddleware(
             })
         }
 
-        // Получаем данные пользователя
         const userDataStr = params.get('user')
         if (!userDataStr) {
             return res.status(401).json({
@@ -92,21 +87,20 @@ export async function authMiddleware(
 
         const userData = JSON.parse(userDataStr)
 
-        // Создаём или обновляем пользователя
         const user = await prisma.user.upsert({
             where: { telegramId: BigInt(userData.id) },
             update: {
                 username: userData.username,
                 firstName: userData.first_name,
                 lastName: userData.last_name,
-                languageCode: userData.language_code,
+                language: userData.language_code,
             },
             create: {
                 telegramId: BigInt(userData.id),
                 username: userData.username,
                 firstName: userData.first_name,
                 lastName: userData.last_name,
-                languageCode: userData.language_code,
+                language: userData.language_code,
             },
         })
 

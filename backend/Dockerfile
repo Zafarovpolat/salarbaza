@@ -6,17 +6,20 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Устанавливаем зависимости
-RUN npm ci --only=production
+# Устанавливаем ВСЕ зависимости (включая devDependencies для сборки)
+RUN npm ci
 
 # Генерируем Prisma Client
 RUN npx prisma generate
 
-# Копируем остальные файлы
+# Копируем исходный код
 COPY . .
 
 # Собираем TypeScript
 RUN npm run build
+
+# Удаляем devDependencies для уменьшения размера образа
+RUN npm prune --production
 
 # Порт
 EXPOSE 3001
