@@ -7,14 +7,17 @@
         ],
         "outDir": "./dist",
         "rootDir": ".",
-        "strict": true,
+        "strict": false,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "declaration": true,
         "sourceMap": true,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/**/*",
