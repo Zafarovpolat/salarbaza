@@ -27,6 +27,18 @@ export interface Product {
     updatedAt: string
 }
 
+export interface ProductFilters {
+    categorySlug?: string
+    categoryId?: string
+    sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popular' | 'name'  // Объединили все варианты
+    minPrice?: number
+    maxPrice?: number
+    inStock?: boolean
+    search?: string
+    colors?: string[]
+    materials?: string[]
+}
+
 export interface ProductDimensions {
     size?: string
     diameter_cm?: number
@@ -182,15 +194,4 @@ export interface PaginatedResponse<T> {
         total: number
         totalPages: number
     }
-}
-
-// ===== Filter Types =====
-export interface ProductFilters {
-    categoryId?: string
-    minPrice?: number
-    maxPrice?: number
-    colors?: string[]
-    materials?: string[]
-    inStock?: boolean
-    sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popular'
 }

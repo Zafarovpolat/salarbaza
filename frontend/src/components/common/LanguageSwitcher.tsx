@@ -13,8 +13,6 @@ export function LanguageSwitcher() {
     const [isOpen, setIsOpen] = useState(false)
     const { language, setLanguage } = useLanguageStore()
 
-    const currentLang = languages.find(l => l.code === language)
-
     return (
         <div className="relative">
             <motion.button

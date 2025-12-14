@@ -5,7 +5,7 @@ node_modules/
 dist/
 build/
 
-# Environment files
+# Environment files - ВАЖНО!
 .env
 .env.local
 .env.production
@@ -26,9 +26,6 @@ logs/
 *.log
 npm-debug.log*
 
-# Test
-coverage/
-
-# Misc
-*.tgz
-.npm
+# Prisma
+*.db
+*.db-journal

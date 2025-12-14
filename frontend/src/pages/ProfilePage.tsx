@@ -15,7 +15,7 @@ import { cn } from '@/utils/helpers'
 
 export function ProfilePage() {
     const navigate = useNavigate()
-    const { language, setLanguage, t } = useLanguageStore()
+    const { language, setLanguage } = useLanguageStore()
     const { user } = useUserStore()
     const { user: tgUser } = useTelegram()
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import WebApp from '@twa-dev/sdk'
 
 interface TelegramUser {
@@ -9,88 +9,133 @@ interface TelegramUser {
     language_code?: string
 }
 
+interface HapticFeedback {
+    impact: (style?: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void
+    notification: (type: 'error' | 'success' | 'warning') => void
+    selection: () => void
+}
+
 export function useTelegram() {
     const [user, setUser] = useState<TelegramUser | null>(null)
     const [isReady, setIsReady] = useState(false)
 
     useEffect(() => {
-        // Initialize WebApp
-        WebApp.ready()
-        WebApp.expand()
+        try {
+            WebApp.ready()
+            WebApp.expand()
 
-        // Get user data
-        if (WebApp.initDataUnsafe?.user) {
-            setUser(WebApp.initDataUnsafe.user)
+            if (WebApp.initDataUnsafe?.user) {
+                setUser(WebApp.initDataUnsafe.user)
+            }
+
+            setIsReady(true)
+        } catch (error) {
+            console.warn('Telegram WebApp not available:', error)
+            setIsReady(true)
         }
-
-        setIsReady(true)
     }, [])
 
-    // Show main button
     const showMainButton = useCallback((text: string, onClick: () => void) => {
-        WebApp.MainButton.setText(text)
-        WebApp.MainButton.onClick(onClick)
-        WebApp.MainButton.show()
+        try {
+            WebApp.MainButton.setText(text)
+            WebApp.MainButton.onClick(onClick)
+            WebApp.MainButton.show()
+        } catch (error) {
+            console.warn('MainButton not available')
+        }
     }, [])
 
-    // Hide main button
     const hideMainButton = useCallback(() => {
-        WebApp.MainButton.hide()
+        try {
+            WebApp.MainButton.hide()
+        } catch (error) {
+            console.warn('MainButton not available')
+        }
     }, [])
 
-    // Show back button
     const showBackButton = useCallback((onClick: () => void) => {
-        WebApp.BackButton.onClick(onClick)
-        WebApp.BackButton.show()
+        try {
+            WebApp.BackButton.onClick(onClick)
+            WebApp.BackButton.show()
+        } catch (error) {
+            console.warn('BackButton not available')
+        }
     }, [])
 
-    // Hide back button
     const hideBackButton = useCallback(() => {
-        WebApp.BackButton.hide()
+        try {
+            WebApp.BackButton.hide()
+        } catch (error) {
+            console.warn('BackButton not available')
+        }
     }, [])
 
-    // Show confirm dialog
     const showConfirm = useCallback((message: string): Promise<boolean> => {
         return new Promise((resolve) => {
-            WebApp.showConfirm(message, (confirmed) => {
-                resolve(confirmed)
-            })
+            try {
+                WebApp.showConfirm(message, (confirmed) => {
+                    resolve(confirmed)
+                })
+            } catch (error) {
+                // Fallback to browser confirm
+                resolve(window.confirm(message))
+            }
         })
     }, [])
 
-    // Show alert
     const showAlert = useCallback((message: string): Promise<void> => {
         return new Promise((resolve) => {
-            WebApp.showAlert(message, () => {
+            try {
+                WebApp.showAlert(message, () => {
+                    resolve()
+                })
+            } catch (error) {
+                // Fallback to browser alert
+                window.alert(message)
                 resolve()
-            })
+            }
         })
     }, [])
 
-    // Haptic feedback
-    const haptic = useCallback({
+    // ✅ Haptic как объект с методами
+    const haptic: HapticFeedback = useMemo(() => ({
         impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'medium') => {
-            WebApp.HapticFeedback.impactOccurred(style)
+            try {
+                WebApp.HapticFeedback.impactOccurred(style)
+            } catch (error) {
+                // Haptic not available
+            }
         },
         notification: (type: 'error' | 'success' | 'warning') => {
-            WebApp.HapticFeedback.notificationOccurred(type)
+            try {
+                WebApp.HapticFeedback.notificationOccurred(type)
+            } catch (error) {
+                // Haptic not available
+            }
         },
         selection: () => {
-            WebApp.HapticFeedback.selectionChanged()
+            try {
+                WebApp.HapticFeedback.selectionChanged()
+            } catch (error) {
+                // Haptic not available
+            }
         },
-    }, [])
+    }), [])
 
-    // Close app
     const close = useCallback(() => {
-        WebApp.close()
+        try {
+            WebApp.close()
+        } catch (error) {
+            console.warn('Close not available')
+        }
     }, [])
 
     return {
         user,
         isReady,
-        colorScheme: WebApp.colorScheme,
-        themeParams: WebApp.themeParams,
-        initData: WebApp.initData,
+        colorScheme: WebApp.colorScheme || 'light',
+        themeParams: WebApp.themeParams || {},
+        initData: WebApp.initData || '',
         showMainButton,
         hideMainButton,
         showBackButton,
