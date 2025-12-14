@@ -25,12 +25,10 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
-  # ============ FRONTEND ============
+  # ============ FRONTEND (Static Site) ============
   - type: web
     name: dekorhouse-web
     runtime: static
-    region: frankfurt
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
