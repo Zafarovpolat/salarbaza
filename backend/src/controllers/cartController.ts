@@ -1,17 +1,6 @@
 import { Response, NextFunction } from 'express'
-import { z } from 'zod'
 import { AuthRequest } from '../middleware/auth'
 import * as cartService from '../services/cartService'
-
-const addToCartSchema = z.object({
-    productId: z.string(),
-    quantity: z.number().int().positive().default(1),
-    colorId: z.string().optional(),
-})
-
-const updateCartItemSchema = z.object({
-    quantity: z.number().int().positive(),
-})
 
 export async function getCart(
     req: AuthRequest,
@@ -20,55 +9,63 @@ export async function getCart(
 ) {
     try {
         const cart = await cartService.getCart(req.user!.id)
-
-        res.json({
-            success: true,
-            data: cart,
-        })
+        res.json({ success: true, data: cart })
     } catch (error) {
         next(error)
     }
 }
 
-export async function addToCart(
+export async function addItem(
     req: AuthRequest,
     res: Response,
     next: NextFunction
 ) {
     try {
-        const data = addToCartSchema.parse(req.body)
-        const cart = await cartService.addToCart(req.user!.id, data)
+        const { productId, quantity, colorId } = req.body
 
-        res.json({
-            success: true,
-            data: cart,
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: 'productId is required',
+            })
+        }
+
+        const cart = await cartService.addToCart(req.user!.id, {
+            productId,
+            quantity: quantity || 1,
+            colorId,
         })
+
+        res.json({ success: true, data: cart })
     } catch (error) {
         next(error)
     }
 }
 
-export async function updateCartItem(
+export async function updateItem(
     req: AuthRequest,
     res: Response,
     next: NextFunction
 ) {
     try {
         const { itemId } = req.params
-        const { quantity } = updateCartItemSchema.parse(req.body)
+        const { quantity } = req.body
+
+        if (typeof quantity !== 'number' || quantity < 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Valid quantity is required',
+            })
+        }
 
         const cart = await cartService.updateCartItem(req.user!.id, itemId, quantity)
-
-        res.json({
-            success: true,
-            data: cart,
-        })
+        res.json({ success: true, data: cart })
     } catch (error) {
         next(error)
     }
 }
 
-export async function removeFromCart(
+export async function removeItem(
     req: AuthRequest,
     res: Response,
     next: NextFunction
@@ -76,11 +73,7 @@ export async function removeFromCart(
     try {
         const { itemId } = req.params
         const cart = await cartService.removeFromCart(req.user!.id, itemId)
-
-        res.json({
-            success: true,
-            data: cart,
-        })
+        res.json({ success: true, data: cart })
     } catch (error) {
         next(error)
     }
@@ -93,11 +86,7 @@ export async function clearCart(
 ) {
     try {
         await cartService.clearCart(req.user!.id)
-
-        res.json({
-            success: true,
-            message: 'Cart cleared',
-        })
+        res.json({ success: true, message: 'Cart cleared' })
     } catch (error) {
         next(error)
     }
