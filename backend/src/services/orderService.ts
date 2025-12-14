@@ -2,7 +2,7 @@ import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 import { config } from '../config'
 import { generateOrderNumber } from '../utils/helpers'
-import { DeliveryType, PaymentMethod, OrderStatus } from '@prisma/client'
+import { DeliveryType, PaymentMethod, OrderStatus, Prisma } from '@prisma/client'
 
 interface CreateOrderData {
     deliveryType: DeliveryType
@@ -77,7 +77,7 @@ export async function createOrder(userId: string, data: CreateOrderData) {
 
         return {
             productId: item.productId,
-            productName: item.product.nameRu, // или nameUz в зависимости от языка
+            productName: item.product.nameRu,
             productCode: item.product.code,
             productImage: item.product.images[0]?.url || null,
             colorName: color?.nameRu || null,
@@ -105,7 +105,10 @@ export async function createOrder(userId: string, data: CreateOrderData) {
             discount: 0,
             total,
             deliveryType: data.deliveryType,
-            deliveryAddress: data.address ? { address: data.address } : null,
+            // ✅ Правильный способ - напрямую передаём значение
+            deliveryAddress: data.address
+                ? { address: data.address }
+                : Prisma.JsonNull,
             customerName: data.customerName,
             customerPhone: data.customerPhone,
             customerNote: data.customerNote,
@@ -140,7 +143,6 @@ export async function cancelOrder(userId: string, orderId: string) {
         throw new AppError('Order not found', 404)
     }
 
-    // Can only cancel pending orders
     if (order.status !== OrderStatus.PENDING) {
         throw new AppError('Cannot cancel this order', 400)
     }
@@ -157,12 +159,8 @@ export async function cancelOrder(userId: string, orderId: string) {
     })
 }
 
-// Admin functions
-export async function updateOrderStatus(
-    orderId: string,
-    status: OrderStatus
-) {
-    const updateData: any = { status }
+export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+    const updateData: Record<string, unknown> = { status }
 
     switch (status) {
         case OrderStatus.CONFIRMED:

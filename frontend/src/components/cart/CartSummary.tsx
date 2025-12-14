@@ -5,13 +5,13 @@ import { ChevronRight } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useLanguageStore } from '@/store/languageStore'
 import { formatPrice } from '@/utils/formatPrice'
-import { FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from '@/utils/constants'
+import { FREE_DELIVERY_THRESHOLD } from '@/utils/constants'
 import { Button } from '../ui/Button'
 import { Container } from '../layout/Container'
 
 export function CartSummary() {
     const navigate = useNavigate()
-    const { language, t } = useLanguageStore()
+    const { language } = useLanguageStore()
     const items = useCartStore((state) => state.items)
 
     const { subtotal, itemCount, freeDeliveryProgress } = useMemo(() => {

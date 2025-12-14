@@ -6,7 +6,7 @@ import { CartItem as CartItemType } from '@/types'
 import { useLanguageStore } from '@/store/languageStore'
 import { useCartStore } from '@/store/cartStore'
 import { formatPrice } from '@/utils/formatPrice'
-import { getProductName, getColorName, cn } from '@/utils/helpers'
+import { getProductName, getColorName } from '@/utils/helpers'
 import { QuantitySelector } from '../ui/QuantitySelector'
 
 interface CartItemProps {

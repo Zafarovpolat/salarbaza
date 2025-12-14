@@ -19,34 +19,8 @@ export function getBot() {
     return bot
 }
 
-interface OrderWithDetails {
-    id: string
-    orderNumber: string
-    customerName: string
-    customerPhone: string
-    deliveryType: string
-    deliveryAddress: any
-    paymentMethod: string
-    subtotal: number
-    deliveryFee: number
-    total: number
-    customerNote?: string | null
-    items: {
-        productName: string
-        productCode: string
-        colorName?: string | null
-        quantity: number
-        price: number
-        total: number
-    }[]
-    user: {
-        telegramId: bigint
-        username?: string | null
-        firstName?: string | null
-    }
-}
-
-export async function sendOrderNotification(order: OrderWithDetails) {
+// ✅ Используем any для гибкости с Prisma типами
+export async function sendOrderNotification(order: any) {
     if (!bot || !config.adminChatId) {
         logger.warn('Cannot send notification: bot or admin chat not configured')
         return
@@ -64,22 +38,24 @@ export async function sendOrderNotification(order: OrderWithDetails) {
         UZUM: '📱 Uzum',
     }
 
-    const itemsList = order.items.map(item => {
+    const items = order.items || []
+    const itemsList = items.map((item: any) => {
         const color = item.colorName ? ` (${item.colorName})` : ''
         return `  • ${item.productName}${color}\n    ${item.quantity} × ${formatPrice(item.price)} = ${formatPrice(item.total)} so'm`
     }).join('\n')
 
     const address = order.deliveryAddress
-        ? `\n📍 Manzil: ${order.deliveryAddress.address || 'Ko\'rsatilmagan'}`
+        ? `\n📍 Manzil: ${typeof order.deliveryAddress === 'object' ? order.deliveryAddress.address : order.deliveryAddress}`
         : ''
 
     const note = order.customerNote
         ? `\n💬 Izoh: ${order.customerNote}`
         : ''
 
-    const userInfo = order.user.username
-        ? `@${order.user.username}`
-        : order.user.firstName || 'Noma\'lum'
+    const user = order.user || {}
+    const userInfo = user.username
+        ? `@${user.username}`
+        : user.firstName || 'Noma\'lum'
 
     const message = `
 🆕 *YANGI BUYURTMA*
@@ -122,7 +98,7 @@ ${itemsList}
 }
 
 export async function sendStatusUpdateToUser(
-    telegramId: bigint,
+    telegramId: bigint | string,
     orderNumber: string,
     status: string
 ) {

@@ -3,7 +3,6 @@ import { ShoppingBag, Check } from 'lucide-react'
 import { Product, ProductColor } from '@/types'
 import { useCartStore } from '@/store/cartStore'
 import { useLanguageStore } from '@/store/languageStore'
-import { cn } from '@/utils/helpers'
 import { Button } from '../ui/Button'
 
 interface CartButtonProps {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Clock, TrendingUp } from 'lucide-react'
+import { Search, Clock, TrendingUp } from 'lucide-react'
 import { Product } from '@/types'
 import { useLanguageStore } from '@/store/languageStore'
 import { useDebounce } from '@/hooks/useDebounce'

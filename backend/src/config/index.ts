@@ -1,5 +1,9 @@
 import dotenv from 'dotenv'
-dotenv.config()
+
+// Загружаем .env только если файл существует (не в production на Render)
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config()
+}
 
 export const config = {
     port: parseInt(process.env.PORT || '3001', 10),
@@ -11,4 +15,15 @@ export const config = {
     jwtSecret: process.env.JWT_SECRET || 'default-secret',
     deliveryFee: 25000,
     freeDeliveryThreshold: 500000,
+}
+
+// Проверка обязательных переменных в production
+if (config.nodeEnv === 'production') {
+    const required = ['DATABASE_URL']
+    const missing = required.filter(key => !process.env[key])
+
+    if (missing.length > 0) {
+        console.error(`❌ Missing required env vars: ${missing.join(', ')}`)
+        process.exit(1)
+    }
 }
