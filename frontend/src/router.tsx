@@ -1,4 +1,7 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
+
+// Layout
+import { Layout } from './components/layout/Layout'
 
 // Main pages
 import { HomePage } from './pages/HomePage'
@@ -22,23 +25,30 @@ import { AdminProductEditPage } from './pages/admin/AdminProductEditPage'
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage'
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
 
-export function AppRouter() {
+function MainRoutes() {
+    return (
+        <Layout>
+            <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/catalog" element={<CatalogPage />} />
+                <Route path="/catalog/:slug" element={<CategoryPage />} />
+                <Route path="/product/:slug" element={<ProductPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/favorites" element={<FavoritesPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+        </Layout>
+    )
+}
+
+function AdminRoutes() {
     return (
         <Routes>
-            {/* Main routes */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/catalog" element={<CatalogPage />} />
-            <Route path="/catalog/:slug" element={<CategoryPage />} />
-            <Route path="/product/:slug" element={<ProductPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/favorites" element={<FavoritesPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/search" element={<SearchPage />} />
-
-            {/* Admin routes */}
             <Route path="/admin" element={<AdminLoginPage />} />
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/products" element={<AdminProductsPage />} />
@@ -46,9 +56,17 @@ export function AppRouter() {
             <Route path="/admin/products/:id" element={<AdminProductEditPage />} />
             <Route path="/admin/categories" element={<AdminCategoriesPage />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
-
-            {/* 404 */}
-            <Route path="*" element={<NotFoundPage />} />
         </Routes>
     )
+}
+
+export function AppRouter() {
+    const location = useLocation()
+    const isAdminRoute = location.pathname.startsWith('/admin')
+
+    if (isAdminRoute) {
+        return <AdminRoutes />
+    }
+
+    return <MainRoutes />
 }
