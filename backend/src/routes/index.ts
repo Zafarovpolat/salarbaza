@@ -4,6 +4,7 @@ import productRoutes from './productRoutes'
 import cartRoutes from './cartRoutes'
 import orderRoutes from './orderRoutes'
 import userRoutes from './userRoutes'
+import adminRoutes from './adminRoutes'
 
 const router = Router()
 
@@ -26,6 +27,7 @@ router.use('/categories', categoryRoutes)
 router.use('/products', productRoutes)
 router.use('/cart', cartRoutes)
 router.use('/orders', orderRoutes)
+router.use('/admin', adminRoutes)
 router.use('/user', userRoutes)
 
 export default router

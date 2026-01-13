@@ -7,6 +7,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 export const config = {
     port: parseInt(process.env.PORT || '3001', 10),
+    adminPassword: process.env.ADMIN_PASSWORD || 'dekorhouse2024',
     nodeEnv: process.env.NODE_ENV || 'development',
     databaseUrl: process.env.DATABASE_URL || '',
     botToken: process.env.BOT_TOKEN || '',
