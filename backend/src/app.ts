@@ -12,17 +12,21 @@ const app = express()
 // Security
 app.use(helmet())
 
-// CORS - разрешаем запросы с фронтенда
+// CORS - разрешаем x-admin-password
 app.use(cors({
     origin: [
-        config.frontendUrl,
         'https://dekorhouse-web.onrender.com',
         'http://localhost:3000',
         'http://localhost:5173'
-    ].filter(Boolean),
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Telegram-Init-Data']
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Telegram-Init-Data',
+        'X-Admin-Password'  // ← Добавили это
+    ]
 }))
 
 // Rate limiting
@@ -38,13 +42,12 @@ app.use((req, res, next) => {
     next()
 })
 
-// ✅ Health check - ВАЖНО: на корне, не на /api
+// Health check
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        service: 'dekorhouse-api',
-        version: '1.0.0'
+        service: 'dekorhouse-api'
     })
 })
 
