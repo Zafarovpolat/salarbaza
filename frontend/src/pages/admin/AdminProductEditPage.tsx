@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Save, ArrowLeft, Plus, Trash2, Upload } from 'lucide-react'
+import { Save, ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { adminService } from '@/services/adminService'
 import toast from 'react-hot-toast'
@@ -169,7 +169,7 @@ export function AdminProductEditPage() {
         return (
             <AdminLayout>
                 <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
                 </div>
             </AdminLayout>
         )
@@ -177,53 +177,49 @@ export function AdminProductEditPage() {
 
     return (
         <AdminLayout>
-            <div className="max-w-4xl">
+            <div className="max-w-2xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
                     <button
                         onClick={() => navigate('/admin/products')}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <h1 className="text-2xl font-bold text-gray-900">
-                        {isNew ? 'Новый товар' : 'Редактировать товар'}
+                    <h1 className="text-lg sm:text-xl font-bold text-gray-900">
+                        {isNew ? 'Новый товар' : 'Редактировать'}
                     </h1>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Basic Info */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Основная информация</h2>
+                    <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
+                        <h2 className="font-semibold text-gray-900">Основная информация</h2>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Код товара *
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Код *</label>
                                 <input
                                     type="text"
                                     name="code"
                                     value={form.code}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                                     required
                                     disabled={!isNew}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Категория *
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Категория *</label>
                                 <select
                                     name="categoryId"
                                     value={form.categoryId}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base bg-white"
                                     required
                                 >
-                                    <option value="">Выберите категорию</option>
+                                    <option value="">Выберите</option>
                                     {categories.map(cat => (
                                         <option key={cat.id} value={cat.id}>{cat.nameRu}</option>
                                     ))}
@@ -232,220 +228,178 @@ export function AdminProductEditPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Название (RU) *
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Название (RU) *</label>
                             <input
                                 type="text"
                                 name="nameRu"
                                 value={form.nameRu}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Название (UZ)
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Название (UZ)</label>
                             <input
                                 type="text"
                                 name="nameUz"
                                 value={form.nameUz}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Описание (RU)
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Описание (RU)</label>
                             <textarea
                                 name="descriptionRu"
                                 value={form.descriptionRu}
                                 onChange={handleChange}
                                 rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Описание (UZ)
-                            </label>
-                            <textarea
-                                name="descriptionUz"
-                                value={form.descriptionUz}
-                                onChange={handleChange}
-                                rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base resize-none"
                             />
                         </div>
                     </div>
 
                     {/* Price & Stock */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Цена и наличие</h2>
+                    <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
+                        <h2 className="font-semibold text-gray-900">Цена и наличие</h2>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Цена (сум) *
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Цена *</label>
                                 <input
                                     type="number"
                                     name="price"
                                     value={form.price}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                                     required
                                     min="0"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Старая цена
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Старая цена</label>
                                 <input
                                     type="number"
                                     name="oldPrice"
                                     value={form.oldPrice}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                                     min="0"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Остаток
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Остаток</label>
                                 <input
                                     type="number"
                                     name="stockQuantity"
                                     value={form.stockQuantity}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                                     min="0"
                                 />
                             </div>
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Материал
-                            </label>
-                            <input
-                                type="text"
-                                name="material"
-                                value={form.material}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
-                                placeholder="Пластик, металл, дерево..."
-                            />
-                        </div>
                     </div>
 
                     {/* Images */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Изображения</h2>
+                    <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
+                        <h2 className="font-semibold text-gray-900">Изображения</h2>
 
-                        {/* Image list */}
-                        <div className="grid grid-cols-4 gap-4">
-                            {images.map(img => (
-                                <div key={img.id} className="relative group">
-                                    <img
-                                        src={img.url}
-                                        alt=""
-                                        className={`w-full aspect-square object-cover rounded-lg border-2 ${img.isMain ? 'border-primary-500' : 'border-gray-200'
-                                            }`}
-                                    />
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleSetMainImage(img.id)}
-                                            className="p-2 bg-white rounded-lg text-sm"
-                                            title="Сделать главной"
-                                        >
-                                            ⭐
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveImage(img.id)}
-                                            className="p-2 bg-red-500 text-white rounded-lg"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                        {/* Image Grid */}
+                        {images.length > 0 && (
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                {images.map(img => (
+                                    <div key={img.id} className="relative aspect-square group">
+                                        <img
+                                            src={img.url}
+                                            alt=""
+                                            className={`w-full h-full object-cover rounded-lg border-2 ${img.isMain ? 'border-green-500' : 'border-gray-200'
+                                                }`}
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSetMainImage(img.id)}
+                                                className="p-1.5 bg-white rounded text-xs"
+                                            >
+                                                ⭐
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveImage(img.id)}
+                                                className="p-1.5 bg-red-500 text-white rounded"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                        {img.isMain && (
+                                            <span className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                                Главная
+                                            </span>
+                                        )}
                                     </div>
-                                    {img.isMain && (
-                                        <span className="absolute top-2 left-2 bg-primary-500 text-white text-xs px-2 py-1 rounded">
-                                            Главная
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
 
-                        {/* Add image */}
+                        {/* Add Image */}
                         <div className="flex gap-2">
                             <input
                                 type="url"
                                 value={newImageUrl}
                                 onChange={(e) => setNewImageUrl(e.target.value)}
                                 placeholder="URL изображения..."
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none"
+                                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                             />
                             <button
                                 type="button"
                                 onClick={handleAddImage}
-                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-2"
+                                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
                             >
-                                <Plus className="w-4 h-4" />
-                                Добавить
+                                <Plus className="w-5 h-5" />
                             </button>
                         </div>
-                        <p className="text-sm text-gray-500">
-                            Вставьте URL изображения из Supabase Storage
-                        </p>
                     </div>
 
                     {/* Flags */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Настройки</h2>
+                    <div className="bg-white rounded-xl p-4 shadow-sm">
+                        <h2 className="font-semibold text-gray-900 mb-3">Настройки</h2>
 
-                        <div className="flex flex-wrap gap-6">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="space-y-3">
+                            <label className="flex items-center gap-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="isActive"
                                     checked={form.isActive}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                    className="w-5 h-5 rounded border-gray-300 text-green-600"
                                 />
-                                <span className="text-gray-700">Активен (виден на сайте)</span>
+                                <span className="text-gray-700">Активен</span>
                             </label>
 
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label className="flex items-center gap-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="isNew"
                                     checked={form.isNew}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                    className="w-5 h-5 rounded border-gray-300 text-green-600"
                                 />
                                 <span className="text-gray-700">Новинка</span>
                             </label>
 
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label className="flex items-center gap-3 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     name="isFeatured"
                                     checked={form.isFeatured}
                                     onChange={handleChange}
-                                    className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                    className="w-5 h-5 rounded border-gray-300 text-green-600"
                                 />
                                 <span className="text-gray-700">Рекомендуемый</span>
                             </label>
@@ -453,18 +407,18 @@ export function AdminProductEditPage() {
                     </div>
 
                     {/* Submit */}
-                    <div className="flex justify-end gap-4">
+                    <div className="flex gap-3 sticky bottom-4">
                         <button
                             type="button"
                             onClick={() => navigate('/admin/products')}
-                            className="px-6 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+                            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 font-medium bg-white"
                         >
                             Отмена
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
-                            className="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             <Save className="w-5 h-5" />
                             {saving ? 'Сохранение...' : 'Сохранить'}
