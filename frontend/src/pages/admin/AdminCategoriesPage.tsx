@@ -10,8 +10,6 @@ interface Category {
     nameRu: string
     nameUz: string
     descriptionRu?: string
-    descriptionUz?: string
-    image?: string
     sortOrder: number
     isActive: boolean
     _count?: { products: number }
@@ -69,8 +67,8 @@ export function AdminCategoriesPage() {
             nameRu: category.nameRu,
             nameUz: category.nameUz || '',
             descriptionRu: category.descriptionRu || '',
-            descriptionUz: category.descriptionUz || '',
-            image: category.image || '',
+            descriptionUz: '',
+            image: '',
             sortOrder: category.sortOrder,
             isActive: category.isActive
         })
@@ -137,41 +135,39 @@ export function AdminCategoriesPage() {
 
     return (
         <AdminLayout>
-            <div className="flex items-center justify-between mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">Категории</h1>
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Категории</h1>
                 <button
                     onClick={handleNew}
-                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-xl hover:bg-primary-700 transition-colors"
+                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl hover:bg-green-700 transition-colors text-sm font-medium"
                 >
                     <Plus className="w-5 h-5" />
-                    Добавить категорию
+                    <span className="hidden sm:inline">Добавить</span>
                 </button>
             </div>
 
             {/* Form Modal */}
             {showForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b">
+                <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+                    <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white">
                             <h2 className="text-lg font-semibold">
-                                {editingId ? 'Редактировать категорию' : 'Новая категория'}
+                                {editingId ? 'Редактировать' : 'Новая категория'}
                             </h2>
                             <button onClick={handleCancel} className="p-2 hover:bg-gray-100 rounded-lg">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-4 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Slug (URL) *
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Slug *</label>
                                 <input
                                     type="text"
                                     name="slug"
                                     value={form.slug}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none"
                                     required
                                     disabled={!!editingId}
                                     placeholder="moss-panels"
@@ -179,102 +175,56 @@ export function AdminCategoriesPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Название (RU) *
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Название (RU) *</label>
                                 <input
                                     type="text"
                                     name="nameRu"
                                     value={form.nameRu}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Название (UZ)
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Название (UZ)</label>
                                 <input
                                     type="text"
                                     name="nameUz"
                                     value={form.nameUz}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 outline-none"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Описание (RU)
-                                </label>
-                                <textarea
-                                    name="descriptionRu"
-                                    value={form.descriptionRu}
-                                    onChange={handleChange}
-                                    rows={2}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    URL изображения
-                                </label>
-                                <input
-                                    type="url"
-                                    name="image"
-                                    value={form.image}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 outline-none"
-                                    placeholder="https://..."
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Порядок сортировки
-                                    </label>
+                            <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-2 cursor-pointer">
                                     <input
-                                        type="number"
-                                        name="sortOrder"
-                                        value={form.sortOrder}
+                                        type="checkbox"
+                                        name="isActive"
+                                        checked={form.isActive}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-primary-500 outline-none"
+                                        className="w-5 h-5 rounded"
                                     />
-                                </div>
-
-                                <div className="flex items-end pb-2">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            name="isActive"
-                                            checked={form.isActive}
-                                            onChange={handleChange}
-                                            className="w-5 h-5 rounded"
-                                        />
-                                        <span className="text-gray-700">Активна</span>
-                                    </label>
-                                </div>
+                                    <span className="text-gray-700">Активна</span>
+                                </label>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4">
+                            <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
                                     onClick={handleCancel}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 font-medium"
                                 >
                                     Отмена
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2 disabled:opacity-50"
+                                    className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
                                     <Save className="w-4 h-4" />
-                                    {saving ? 'Сохранение...' : 'Сохранить'}
+                                    {saving ? '...' : 'Сохранить'}
                                 </button>
                             </div>
                         </form>
@@ -282,75 +232,51 @@ export function AdminCategoriesPage() {
                 </div>
             )}
 
-            {/* Table */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <table className="w-full">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Порядок</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Slug</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Название</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Товаров</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Статус</th>
-                            <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {loading ? (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                                    Загрузка...
-                                </td>
-                            </tr>
-                        ) : categories.length === 0 ? (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                                    Категории не найдены
-                                </td>
-                            </tr>
-                        ) : (
-                            categories.map((category) => (
-                                <tr key={category.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-sm text-gray-600">{category.sortOrder}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 font-mono">{category.slug}</td>
-                                    <td className="px-6 py-4">
-                                        <div>
-                                            <div className="font-medium text-gray-900">{category.nameRu}</div>
-                                            {category.nameUz && (
-                                                <div className="text-sm text-gray-500">{category.nameUz}</div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">
-                                        {category._count?.products || 0}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${category.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            {/* Categories List */}
+            <div className="space-y-3">
+                {loading ? (
+                    <div className="bg-white rounded-xl p-8 text-center text-gray-500">
+                        Загрузка...
+                    </div>
+                ) : categories.length === 0 ? (
+                    <div className="bg-white rounded-xl p-8 text-center text-gray-500">
+                        Категории не найдены
+                    </div>
+                ) : (
+                    categories.map((category) => (
+                        <div key={category.id} className="bg-white rounded-xl p-4 shadow-sm">
+                            <div className="flex items-center justify-between">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-medium text-gray-900">{category.nameRu}</h3>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${category.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                             }`}>
                                             {category.isActive ? 'Активна' : 'Скрыта'}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => handleEdit(category)}
-                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            >
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(category.id, category.nameRu, category._count?.products || 0)}
-                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                    </div>
+                                    <p className="text-sm text-gray-500 mt-0.5">
+                                        {category.slug} • {category._count?.products || 0} товаров
+                                    </p>
+                                </div>
+
+                                <div className="flex items-center gap-1 ml-2">
+                                    <button
+                                        onClick={() => handleEdit(category)}
+                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(category.id, category.nameRu, category._count?.products || 0)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </AdminLayout>
     )

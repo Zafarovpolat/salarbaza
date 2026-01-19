@@ -30,14 +30,14 @@ export function AdminDashboardPage() {
     }
 
     const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('uz-UZ').format(price) + ' сум'
+        return new Intl.NumberFormat('uz-UZ').format(price)
     }
 
     if (loading) {
         return (
             <AdminLayout>
                 <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
                 </div>
             </AdminLayout>
         )
@@ -47,25 +47,27 @@ export function AdminDashboardPage() {
         { label: 'Товары', value: stats?.productsCount || 0, icon: Package, color: 'bg-blue-500' },
         { label: 'Категории', value: stats?.categoriesCount || 0, icon: FolderTree, color: 'bg-green-500' },
         { label: 'Заказы', value: stats?.ordersCount || 0, icon: ShoppingCart, color: 'bg-purple-500' },
-        { label: 'Выручка', value: formatPrice(stats?.totalRevenue || 0), icon: TrendingUp, color: 'bg-orange-500' },
+        { label: 'Выручка', value: formatPrice(stats?.totalRevenue || 0), icon: TrendingUp, color: 'bg-orange-500', suffix: ' сум' },
     ]
 
     return (
         <AdminLayout>
-            <h1 className="text-2xl font-bold text-gray-900 mb-8">Дашборд</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Дашборд</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {cards.map((card) => {
                     const Icon = card.icon
                     return (
-                        <div key={card.label} className="bg-white rounded-2xl p-6 shadow-sm">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 ${card.color} rounded-xl flex items-center justify-center`}>
-                                    <Icon className="w-6 h-6 text-white" />
+                        <div key={card.label} className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <div className={`w-10 h-10 sm:w-12 sm:h-12 ${card.color} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                 </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">{card.label}</p>
-                                    <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                                <div className="min-w-0">
+                                    <p className="text-xs sm:text-sm text-gray-500">{card.label}</p>
+                                    <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
+                                        {card.value}{card.suffix || ''}
+                                    </p>
                                 </div>
                             </div>
                         </div>
