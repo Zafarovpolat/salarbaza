@@ -61,6 +61,28 @@ export const adminService = {
         return data.data
     },
 
+    // Product Images
+    async addProductImage(productId: string, url: string, isMain: boolean = false) {
+        const res = await fetch(`${API_URL}/admin/products/${productId}/images`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ url, alt: '', isMain })
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async deleteProductImage(productId: string, imageId: string) {
+        const res = await fetch(`${API_URL}/admin/products/${productId}/images/${imageId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
     // Categories
     async getCategories() {
         const res = await fetch(`${API_URL}/admin/categories`, { headers: getHeaders() })
