@@ -278,7 +278,6 @@ export function AdminProductEditPage() {
                                     onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
                                     required
-                                    disabled={!isNew}
                                 />
                             </div>
 
