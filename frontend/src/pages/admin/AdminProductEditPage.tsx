@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Save, ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { Save, ArrowLeft, Plus, Trash2, Upload, Link, X, Loader2 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { adminService } from '@/services/adminService'
+import { uploadImage } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
 interface ProductForm {
@@ -52,12 +53,15 @@ export function AdminProductEditPage() {
     const { id } = useParams()
     const navigate = useNavigate()
     const isNew = !id || id === 'new'
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [form, setForm] = useState<ProductForm>(initialForm)
     const [categories, setCategories] = useState<Category[]>([])
     const [images, setImages] = useState<ProductImage[]>([])
     const [loading, setLoading] = useState(!isNew)
     const [saving, setSaving] = useState(false)
+    const [uploadingImage, setUploadingImage] = useState(false)
+    const [showUrlInput, setShowUrlInput] = useState(false)
     const [newImageUrl, setNewImageUrl] = useState('')
 
     useEffect(() => {
@@ -141,28 +145,96 @@ export function AdminProductEditPage() {
         }
     }
 
-    const handleAddImage = () => {
-        if (!newImageUrl.trim()) return
+    // Загрузка файла с устройства
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files || files.length === 0) return
 
-        const newImage: ProductImage = {
-            id: `temp-${Date.now()}`,
-            url: newImageUrl.trim(),
-            isMain: images.length === 0
+        setUploadingImage(true)
+
+        for (const file of Array.from(files)) {
+            try {
+                const url = await uploadImage(file, 'products')
+
+                if (url) {
+                    if (isNew) {
+                        // Для нового товара - добавляем в локальный массив
+                        const newImage: ProductImage = {
+                            id: `temp-${Date.now()}`,
+                            url,
+                            isMain: images.length === 0
+                        }
+                        setImages(prev => [...prev, newImage])
+                    } else {
+                        // Для существующего товара - сохраняем в БД сразу
+                        const savedImage = await adminService.addProductImage(id!, url, images.length === 0)
+                        setImages(prev => [...prev, savedImage])
+                    }
+                    toast.success('Фото загружено')
+                } else {
+                    toast.error('Ошибка загрузки файла')
+                }
+            } catch (error) {
+                toast.error('Ошибка загрузки')
+            }
         }
 
-        setImages(prev => [...prev, newImage])
-        setNewImageUrl('')
+        setUploadingImage(false)
+        // Сбрасываем input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
     }
 
-    const handleRemoveImage = (imageId: string) => {
-        setImages(prev => prev.filter(img => img.id !== imageId))
+    // Добавление по URL
+    const handleAddImageUrl = async () => {
+        if (!newImageUrl.trim()) return
+
+        try {
+            if (isNew) {
+                const newImage: ProductImage = {
+                    id: `temp-${Date.now()}`,
+                    url: newImageUrl.trim(),
+                    isMain: images.length === 0
+                }
+                setImages(prev => [...prev, newImage])
+            } else {
+                const savedImage = await adminService.addProductImage(id!, newImageUrl.trim(), images.length === 0)
+                setImages(prev => [...prev, savedImage])
+                toast.success('Фото добавлено')
+            }
+
+            setNewImageUrl('')
+            setShowUrlInput(false)
+        } catch (error) {
+            toast.error('Ошибка добавления фото')
+        }
     }
 
+    // Удаление фото
+    const handleRemoveImage = async (imageId: string) => {
+        try {
+            if (isNew || imageId.startsWith('temp-')) {
+                // Для нового товара или временных - просто удаляем из массива
+                setImages(prev => prev.filter(img => img.id !== imageId))
+            } else {
+                // Для существующего товара - удаляем из БД
+                await adminService.deleteProductImage(id!, imageId)
+                setImages(prev => prev.filter(img => img.id !== imageId))
+                toast.success('Фото удалено')
+            }
+        } catch (error) {
+            toast.error('Ошибка удаления фото')
+        }
+    }
+
+    // Установка главного фото
     const handleSetMainImage = (imageId: string) => {
         setImages(prev => prev.map(img => ({
             ...img,
             isMain: img.id === imageId
         })))
+        // TODO: Добавить API для обновления isMain
     }
 
     if (loading) {
@@ -308,7 +380,12 @@ export function AdminProductEditPage() {
 
                     {/* Images */}
                     <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
-                        <h2 className="font-semibold text-gray-900">Изображения</h2>
+                        <div className="flex items-center justify-between">
+                            <h2 className="font-semibold text-gray-900">Изображения</h2>
+                            {uploadingImage && (
+                                <Loader2 className="w-5 h-5 animate-spin text-green-600" />
+                            )}
+                        </div>
 
                         {/* Image Grid */}
                         {images.length > 0 && (
@@ -320,12 +397,16 @@ export function AdminProductEditPage() {
                                             alt=""
                                             className={`w-full h-full object-cover rounded-lg border-2 ${img.isMain ? 'border-green-500' : 'border-gray-200'
                                                 }`}
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=Error'
+                                            }}
                                         />
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
                                             <button
                                                 type="button"
                                                 onClick={() => handleSetMainImage(img.id)}
                                                 className="p-1.5 bg-white rounded text-xs"
+                                                title="Сделать главной"
                                             >
                                                 ⭐
                                             </button>
@@ -333,6 +414,7 @@ export function AdminProductEditPage() {
                                                 type="button"
                                                 onClick={() => handleRemoveImage(img.id)}
                                                 className="p-1.5 bg-red-500 text-white rounded"
+                                                title="Удалить"
                                             >
                                                 <Trash2 className="w-3 h-3" />
                                             </button>
@@ -347,23 +429,67 @@ export function AdminProductEditPage() {
                             </div>
                         )}
 
-                        {/* Add Image */}
+                        {/* Upload Buttons */}
                         <div className="flex gap-2">
+                            {/* File Upload */}
                             <input
-                                type="url"
-                                value={newImageUrl}
-                                onChange={(e) => setNewImageUrl(e.target.value)}
-                                placeholder="URL изображения..."
-                                className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleFileUpload}
+                                className="hidden"
                             />
                             <button
                                 type="button"
-                                onClick={handleAddImage}
-                                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingImage}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                             >
-                                <Plus className="w-5 h-5" />
+                                <Upload className="w-5 h-5" />
+                                <span>Загрузить фото</span>
+                            </button>
+
+                            {/* URL Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowUrlInput(!showUrlInput)}
+                                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                title="Добавить по ссылке"
+                            >
+                                <Link className="w-5 h-5" />
                             </button>
                         </div>
+
+                        {/* URL Input */}
+                        {showUrlInput && (
+                            <div className="flex gap-2">
+                                <input
+                                    type="url"
+                                    value={newImageUrl}
+                                    onChange={(e) => setNewImageUrl(e.target.value)}
+                                    placeholder="https://..."
+                                    className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddImageUrl}
+                                    className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowUrlInput(false)
+                                        setNewImageUrl('')
+                                    }}
+                                    className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Flags */}
