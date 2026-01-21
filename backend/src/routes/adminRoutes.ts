@@ -128,11 +128,13 @@ router.post('/products', async (req, res) => {
 
 router.put('/products/:id', async (req, res) => {
     try {
-        const { nameRu, nameUz, descriptionRu, descriptionUz, categoryId, price, oldPrice, material, dimensions, inStock, stockQuantity, isActive, isNew, isFeatured } = req.body
+        const { code, slug, nameRu, nameUz, descriptionRu, descriptionUz, categoryId, price, oldPrice, material, dimensions, inStock, stockQuantity, isActive, isNew, isFeatured } = req.body
 
         const product = await prisma.product.update({
             where: { id: req.params.id },
             data: {
+                code,
+                slug: slug || (code ? code.toLowerCase().replace(/\\s+/g, '-') : undefined),
                 nameRu,
                 nameUz,
                 descriptionRu,
