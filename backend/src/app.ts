@@ -9,10 +9,7 @@ import { logger } from './utils/logger'
 
 const app = express()
 
-// Security
-app.use(helmet())
-
-// CORS - разрешаем x-admin-password
+// ✅ CORS - ПЕРВЫМ! До helmet!
 app.use(cors({
     origin: [
         'https://dekorhouse-web.onrender.com',
@@ -25,8 +22,14 @@ app.use(cors({
         'Content-Type',
         'Authorization',
         'X-Telegram-Init-Data',
-        'X-Admin-Password'  // ← Добавили это
+        'X-Admin-Password'
     ]
+}))
+
+// ✅ Helmet ПОСЛЕ cors, с настройкой для cross-origin
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'unsafe-none' }
 }))
 
 // Rate limiting
