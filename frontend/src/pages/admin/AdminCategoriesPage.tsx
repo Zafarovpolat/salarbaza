@@ -117,12 +117,12 @@ export function AdminCategoriesPage() {
     }
 
     const handleDelete = async (id: string, name: string, productsCount: number) => {
-        if (productsCount > 0) {
-            toast.error(`Нельзя удалить категорию с ${productsCount} товарами`)
-            return
-        }
+        // Предупреждаем если есть товары, но разрешаем удалить
+        const message = productsCount > 0
+            ? `Удалить категорию "${name}"?\n\n⚠️ ${productsCount} товаров останутся без категории.`
+            : `Удалить категорию "${name}"?`
 
-        if (!confirm(`Удалить категорию "${name}"?`)) return
+        if (!confirm(message)) return
 
         try {
             await adminService.deleteCategory(id)
