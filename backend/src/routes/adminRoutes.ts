@@ -273,28 +273,6 @@ router.put('/categories/:id', async (req, res) => {
     }
 })
 
-router.delete('/categories/:id', async (req, res) => {
-    try {
-        const productsCount = await prisma.product.count({
-            where: { categoryId: req.params.id }
-        })
-
-        if (productsCount > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot delete category with ${productsCount} products`
-            })
-        }
-
-        await prisma.category.delete({
-            where: { id: req.params.id }
-        })
-        res.json({ success: true, message: 'Category deleted' })
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' })
-    }
-})
-
 // ==================== ORDERS ====================
 router.get('/orders', async (req, res) => {
     try {
