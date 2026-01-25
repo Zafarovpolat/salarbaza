@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -79,8 +80,8 @@ model Product {
   descriptionRu   String?
   descriptionUz   String?
   
-  categoryId      String
-  category        Category  @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  category        Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   
   price           Int
   oldPrice        Int?
