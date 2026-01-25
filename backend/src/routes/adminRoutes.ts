@@ -336,7 +336,7 @@ router.put('/orders/:id/status', async (req, res) => {
 
 router.delete('/categories/:id', async (req, res) => {
     try {
-        // Сначала убираем categoryId у товаров
+        // Сначала убираем categoryId у всех товаров этой категории
         await prisma.product.updateMany({
             where: { categoryId: req.params.id },
             data: { categoryId: null }
@@ -349,6 +349,7 @@ router.delete('/categories/:id', async (req, res) => {
 
         res.json({ success: true, message: 'Category deleted' })
     } catch (error) {
+        console.error('Delete category error:', error)
         res.status(500).json({ success: false, message: 'Server error' })
     }
 })
