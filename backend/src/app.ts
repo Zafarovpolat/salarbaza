@@ -9,7 +9,7 @@ import { logger } from './utils/logger'
 
 const app = express()
 
-// ✅ CORS - ПЕРВЫМ! До helmet!
+// ✅ CORS - ПЕРВЫМ!
 app.use(cors({
     origin: [
         'https://dekorhouse-web.onrender.com',
@@ -26,32 +26,34 @@ app.use(cors({
     ]
 }))
 
-// ✅ Helmet ПОСЛЕ cors, с настройкой для cross-origin
+// Helmet после CORS
 app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     crossOriginOpenerPolicy: { policy: 'unsafe-none' }
 }))
 
-// Rate limiting
-app.use(rateLimiter)
-
 // Body parsing
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Request logging
-app.use((req, res, next) => {
-    logger.info(`${req.method} ${req.path}`)
-    next()
-})
-
-// Health check
+// ✅ Health check - ДО rate limiter!
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'ok',
         timestamp: new Date().toISOString(),
         service: 'dekorhouse-api'
     })
+})
+
+// Rate limiting - ПОСЛЕ health check
+app.use(rateLimiter)
+
+// Request logging (не логировать health check)
+app.use((req, res, next) => {
+    if (req.path !== '/health') {
+        logger.info(`${req.method} ${req.path}`)
+    }
+    next()
 })
 
 // API routes

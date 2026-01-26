@@ -12,23 +12,46 @@ export function initTelegramBot() {
         return null
     }
 
-    bot = new TelegramBot(config.botToken, { polling: true })
+    bot = new TelegramBot(config.botToken, {
+        polling: {
+            interval: 1000,
+            autoStart: true,
+            params: {
+                timeout: 10
+            }
+        }
+    })
 
     // Commands
     bot.onText(/\/start/, (msg) => handleStart(bot!, msg))
     bot.onText(/\/help/, (msg) => handleHelp(bot!, msg))
 
-    // Callback queries (button clicks)
+    // Callback queries
     bot.on('callback_query', (query) => handleCallbackQuery(bot!, query))
 
     // Error handling
-    bot.on('polling_error', (error) => {
-        logger.error('Bot polling error:', error)
+    bot.on('polling_error', (error: any) => {
+        if (error.code === 'ETELEGRAM' && error.message?.includes('409')) {
+            logger.warn('Bot polling conflict, will retry...')
+            return
+        }
+        logger.error('Bot polling error:', error.message)
+    })
+
+    bot.on('error', (error) => {
+        logger.error('Bot error:', error.message)
     })
 
     logger.info('🤖 Telegram bot started')
-
     return bot
+}
+
+export function stopBot() {
+    if (bot) {
+        bot.stopPolling()
+        logger.info('🤖 Telegram bot stopped')
+        bot = null
+    }
 }
 
 export function getBot() {

@@ -4,23 +4,51 @@ import { logger } from './utils/logger'
 
 const PORT = config.port || 3001
 
+let stopBot: (() => void) | null = null
+
 async function bootstrap() {
     try {
         // Инициализируем Telegram бота только если есть токен
         if (config.botToken) {
-            // Динамический импорт с правильным путём
-            const { initTelegramBot } = await import('../bot/index')
-            initTelegramBot()
+            const botModule = await import('../bot/index')
+            botModule.initTelegramBot()
+            stopBot = botModule.stopBot
             logger.info('🤖 Telegram bot initialized')
         } else {
             logger.warn('⚠️ BOT_TOKEN not set, bot disabled')
         }
 
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             logger.info(`🚀 Server running on port ${PORT}`)
             logger.info(`📝 Environment: ${config.nodeEnv}`)
             logger.info(`🔗 Health check: http://localhost:${PORT}/health`)
         })
+
+        // Graceful shutdown
+        const shutdown = (signal: string) => {
+            logger.info(`${signal} received, shutting down...`)
+
+            // Останавливаем бота
+            if (stopBot) {
+                stopBot()
+            }
+
+            // Закрываем сервер
+            server.close(() => {
+                logger.info('Server closed')
+                process.exit(0)
+            })
+
+            // Форсированное завершение через 10 сек
+            setTimeout(() => {
+                logger.error('Forced shutdown')
+                process.exit(1)
+            }, 10000)
+        }
+
+        process.on('SIGTERM', () => shutdown('SIGTERM'))
+        process.on('SIGINT', () => shutdown('SIGINT'))
+
     } catch (error) {
         logger.error('Failed to start server:', error)
         process.exit(1)
