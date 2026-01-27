@@ -33,6 +33,10 @@ interface ProductImage {
     isMain: boolean
 }
 
+// ✅ Ключ для localStorage
+const SAVED_DESCRIPTION_KEY = 'admin_last_description'
+const SAVED_CATEGORY_KEY = 'admin_last_category'
+
 const initialForm: ProductForm = {
     code: '',
     nameRu: '',
@@ -68,8 +72,25 @@ export function AdminProductEditPage() {
         loadCategories()
         if (!isNew) {
             loadProduct()
+        } else {
+            // ✅ Для нового товара — загружаем сохранённые данные
+            loadSavedData()
         }
     }, [id])
+
+    // ✅ Загрузка сохранённых данных для нового товара
+    const loadSavedData = () => {
+        const savedDescription = localStorage.getItem(SAVED_DESCRIPTION_KEY)
+        const savedCategory = localStorage.getItem(SAVED_CATEGORY_KEY)
+
+        if (savedDescription || savedCategory) {
+            setForm(prev => ({
+                ...prev,
+                descriptionRu: savedDescription || '',
+                categoryId: savedCategory || ''
+            }))
+        }
+    }
 
     const loadCategories = async () => {
         try {
@@ -131,6 +152,11 @@ export function AdminProductEditPage() {
 
             if (isNew) {
                 await adminService.createProduct(productData)
+
+                // ✅ Сохраняем описание и категорию для следующего товара
+                localStorage.setItem(SAVED_DESCRIPTION_KEY, form.descriptionRu)
+                localStorage.setItem(SAVED_CATEGORY_KEY, form.categoryId)
+
                 toast.success('Товар создан')
             } else {
                 await adminService.updateProduct(id!, productData)
@@ -143,6 +169,18 @@ export function AdminProductEditPage() {
         } finally {
             setSaving(false)
         }
+    }
+
+    // ✅ Кнопка очистки сохранённых данных
+    const handleClearSaved = () => {
+        localStorage.removeItem(SAVED_DESCRIPTION_KEY)
+        localStorage.removeItem(SAVED_CATEGORY_KEY)
+        setForm(prev => ({
+            ...prev,
+            descriptionRu: '',
+            categoryId: ''
+        }))
+        toast.success('Шаблон очищен')
     }
 
     // Загрузка файла с устройства
@@ -158,7 +196,6 @@ export function AdminProductEditPage() {
 
                 if (url) {
                     if (isNew) {
-                        // Для нового товара - добавляем в локальный массив
                         const newImage: ProductImage = {
                             id: `temp-${Date.now()}`,
                             url,
@@ -166,7 +203,6 @@ export function AdminProductEditPage() {
                         }
                         setImages(prev => [...prev, newImage])
                     } else {
-                        // Для существующего товара - сохраняем в БД сразу
                         const savedImage = await adminService.addProductImage(id!, url, images.length === 0)
                         setImages(prev => [...prev, savedImage])
                     }
@@ -180,13 +216,11 @@ export function AdminProductEditPage() {
         }
 
         setUploadingImage(false)
-        // Сбрасываем input
         if (fileInputRef.current) {
             fileInputRef.current.value = ''
         }
     }
 
-    // Добавление по URL
     const handleAddImageUrl = async () => {
         if (!newImageUrl.trim()) return
 
@@ -211,14 +245,11 @@ export function AdminProductEditPage() {
         }
     }
 
-    // Удаление фото
     const handleRemoveImage = async (imageId: string) => {
         try {
             if (isNew || imageId.startsWith('temp-')) {
-                // Для нового товара или временных - просто удаляем из массива
                 setImages(prev => prev.filter(img => img.id !== imageId))
             } else {
-                // Для существующего товара - удаляем из БД
                 await adminService.deleteProductImage(id!, imageId)
                 setImages(prev => prev.filter(img => img.id !== imageId))
                 toast.success('Фото удалено')
@@ -228,13 +259,11 @@ export function AdminProductEditPage() {
         }
     }
 
-    // Установка главного фото
     const handleSetMainImage = (imageId: string) => {
         setImages(prev => prev.map(img => ({
             ...img,
             isMain: img.id === imageId
         })))
-        // TODO: Добавить API для обновления isMain
     }
 
     if (loading) {
@@ -251,16 +280,29 @@ export function AdminProductEditPage() {
         <AdminLayout>
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <button
-                        onClick={() => navigate('/admin/products')}
-                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-                        {isNew ? 'Новый товар' : 'Редактировать'}
-                    </h1>
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => navigate('/admin/products')}
+                            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <h1 className="text-lg sm:text-xl font-bold text-gray-900">
+                            {isNew ? 'Новый товар' : 'Редактировать'}
+                        </h1>
+                    </div>
+
+                    {/* ✅ Кнопка очистки шаблона для новых товаров */}
+                    {isNew && (form.descriptionRu || form.categoryId) && (
+                        <button
+                            type="button"
+                            onClick={handleClearSaved}
+                            className="text-sm text-gray-500 hover:text-red-500 transition-colors"
+                        >
+                            Очистить шаблон
+                        </button>
+                    )}
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -321,8 +363,14 @@ export function AdminProductEditPage() {
                             />
                         </div>
 
+                        {/* ✅ Описание с индикатором шаблона */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Описание (RU)</label>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="block text-sm font-medium text-gray-700">Описание (RU)</label>
+                                {isNew && localStorage.getItem(SAVED_DESCRIPTION_KEY) && (
+                                    <span className="text-xs text-green-600">📋 Из шаблона</span>
+                                )}
+                            </div>
                             <textarea
                                 name="descriptionRu"
                                 value={form.descriptionRu}
@@ -386,7 +434,6 @@ export function AdminProductEditPage() {
                             )}
                         </div>
 
-                        {/* Image Grid */}
                         {images.length > 0 && (
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                                 {images.map(img => (
@@ -394,8 +441,7 @@ export function AdminProductEditPage() {
                                         <img
                                             src={img.url}
                                             alt=""
-                                            className={`w-full h-full object-cover rounded-lg border-2 ${img.isMain ? 'border-green-500' : 'border-gray-200'
-                                                }`}
+                                            className={`w-full h-full object-cover rounded-lg border-2 ${img.isMain ? 'border-green-500' : 'border-gray-200'}`}
                                             onError={(e) => {
                                                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=Error'
                                             }}
@@ -428,9 +474,7 @@ export function AdminProductEditPage() {
                             </div>
                         )}
 
-                        {/* Upload Buttons */}
                         <div className="flex gap-2">
-                            {/* File Upload */}
                             <input
                                 ref={fileInputRef}
                                 type="file"
@@ -449,7 +493,6 @@ export function AdminProductEditPage() {
                                 <span>Загрузить фото</span>
                             </button>
 
-                            {/* URL Button */}
                             <button
                                 type="button"
                                 onClick={() => setShowUrlInput(!showUrlInput)}
@@ -460,7 +503,6 @@ export function AdminProductEditPage() {
                             </button>
                         </div>
 
-                        {/* URL Input */}
                         {showUrlInput && (
                             <div className="flex gap-2">
                                 <input
