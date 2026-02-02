@@ -120,6 +120,56 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
     }
 })
 
+// ✅ РЕКОМЕНДАЦИИ — добавь ПЕРЕД /:slug
+router.get('/:id/recommendations', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+        const { limit = '8' } = req.query
+
+        // Получаем текущий товар
+        const currentProduct = await prisma.product.findUnique({
+            where: { id },
+            select: { id: true, categoryId: true, price: true }
+        })
+
+        if (!currentProduct) {
+            return res.json({ success: true, data: [] })
+        }
+
+        // Ищем похожие товары
+        const recommendations = await prisma.product.findMany({
+            where: {
+                isActive: true,
+                id: { not: id }, // Исключаем текущий товар
+                OR: [
+                    // Из той же категории
+                    { categoryId: currentProduct.categoryId },
+                    // Или в похожем ценовом диапазоне (±30%)
+                    {
+                        price: {
+                            gte: Math.round(currentProduct.price * 0.7),
+                            lte: Math.round(currentProduct.price * 1.3)
+                        }
+                    }
+                ]
+            },
+            include: {
+                images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+                colors: true
+            },
+            orderBy: [
+                { isFeatured: 'desc' },  // Сначала рекомендуемые
+                { viewCount: 'desc' }     // Потом популярные
+            ],
+            take: parseInt(limit as string)
+        })
+
+        res.json({ success: true, data: recommendations })
+    } catch (error) {
+        next(error)
+    }
+})
+
 router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { slug } = req.params
