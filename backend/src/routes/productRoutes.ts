@@ -120,13 +120,34 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
     }
 })
 
-// ✅ РЕКОМЕНДАЦИИ — добавь ПЕРЕД /:slug
+// ✅ SALE — ПЕРЕД /:slug и /:id/recommendations
+router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { limit = '10' } = req.query
+        const products = await prisma.product.findMany({
+            where: {
+                isActive: true,
+                oldPrice: { not: null }
+            },
+            include: {
+                images: { orderBy: { sortOrder: 'asc' } },
+                colors: true
+            },
+            orderBy: { viewCount: 'desc' },
+            take: parseInt(limit as string),
+        })
+        res.json({ success: true, data: products })
+    } catch (error) {
+        next(error)
+    }
+})
+
+// РЕКОМЕНДАЦИИ
 router.get('/:id/recommendations', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const { limit = '8' } = req.query
 
-        // Получаем текущий товар
         const currentProduct = await prisma.product.findUnique({
             where: { id },
             select: { id: true, categoryId: true, price: true }
@@ -136,15 +157,12 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
             return res.json({ success: true, data: [] })
         }
 
-        // Ищем похожие товары
         const recommendations = await prisma.product.findMany({
             where: {
                 isActive: true,
-                id: { not: id }, // Исключаем текущий товар
+                id: { not: id },
                 OR: [
-                    // Из той же категории
                     { categoryId: currentProduct.categoryId },
-                    // Или в похожем ценовом диапазоне (±30%)
                     {
                         price: {
                             gte: Math.round(currentProduct.price * 0.7),
@@ -158,8 +176,8 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
                 colors: true
             },
             orderBy: [
-                { isFeatured: 'desc' },  // Сначала рекомендуемые
-                { viewCount: 'desc' }     // Потом популярные
+                { isFeatured: 'desc' },
+                { viewCount: 'desc' }
             ],
             take: parseInt(limit as string)
         })
@@ -170,6 +188,7 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
     }
 })
 
+// /:slug — ВСЕГДА В КОНЦЕ!
 router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { slug } = req.params
@@ -186,35 +205,12 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
             throw new AppError('Product not found', 404)
         }
 
-        // Increment view count
         await prisma.product.update({
             where: { id: product.id },
             data: { viewCount: { increment: 1 } },
         })
 
         res.json({ success: true, data: product })
-    } catch (error) {
-        next(error)
-    }
-})
-
-// ✅ Товары со скидками (спецпредложения)
-router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { limit = '10' } = req.query
-        const products = await prisma.product.findMany({
-            where: {
-                isActive: true,
-                oldPrice: { not: null }  // Только товары со старой ценой (скидкой)
-            },
-            include: {
-                images: { orderBy: { sortOrder: 'asc' } },
-                colors: true
-            },
-            orderBy: { viewCount: 'desc' },
-            take: parseInt(limit as string),
-        })
-        res.json({ success: true, data: products })
     } catch (error) {
         next(error)
     }
