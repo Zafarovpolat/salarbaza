@@ -1,13 +1,17 @@
-// frontend/src/components/order/OrderForm.tsx
 import { useState } from 'react'
-import { MapPin, Phone, User, MessageSquare } from 'lucide-react'
+import { MapPin, Phone, User, MessageSquare, Navigation, Loader2, CheckCircle } from 'lucide-react'
 import { useLanguageStore } from '@/store/languageStore'
+import { useTelegram } from '@/hooks/useTelegram'
 import { Input } from '../ui/Input'
+import toast from 'react-hot-toast'
 
 interface OrderFormData {
-    name: string
+    firstName: string
+    lastName: string
     phone: string
     address: string
+    latitude?: number
+    longitude?: number
     comment: string
 }
 
@@ -19,21 +23,27 @@ interface OrderFormProps {
 
 export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) {
     const { t, language } = useLanguageStore()
+    const { webApp } = useTelegram()
 
     const [formData, setFormData] = useState<OrderFormData>({
-        name: initialData?.name || '',
+        firstName: initialData?.firstName || '',
+        lastName: initialData?.lastName || '',
         phone: initialData?.phone || '',
         address: initialData?.address || '',
+        latitude: undefined,
+        longitude: undefined,
         comment: initialData?.comment || '',
     })
 
     const [errors, setErrors] = useState<Partial<Record<keyof OrderFormData, string>>>({})
+    const [isGettingLocation, setIsGettingLocation] = useState(false)
+    const [locationReceived, setLocationReceived] = useState(false)
 
     const validate = (): boolean => {
         const newErrors: typeof errors = {}
 
-        if (!formData.name.trim()) {
-            newErrors.name = language === 'uz' ? 'Ism kiritilishi shart' : 'Введите имя'
+        if (!formData.firstName.trim()) {
+            newErrors.firstName = language === 'uz' ? 'Ism kiritilishi shart' : 'Введите имя'
         }
 
         if (!formData.phone.trim()) {
@@ -67,18 +77,98 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
         }
     }
 
+    // Получение геолокации
+    const handleGetLocation = () => {
+        setIsGettingLocation(true)
+
+        // Пробуем через Telegram WebApp
+        if (webApp?.LocationManager) {
+            webApp.LocationManager.getLocation((location: any) => {
+                if (location) {
+                    setFormData(prev => ({
+                        ...prev,
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                    }))
+                    setLocationReceived(true)
+                    toast.success(
+                        language === 'uz' ? 'Joylashuv aniqlandi' : 'Местоположение определено',
+                        { icon: '📍' }
+                    )
+                } else {
+                    // Fallback to browser geolocation
+                    getBrowserLocation()
+                }
+                setIsGettingLocation(false)
+            })
+        } else {
+            // Fallback to browser geolocation
+            getBrowserLocation()
+        }
+    }
+
+    const getBrowserLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error(
+                language === 'uz'
+                    ? 'Geolokatsiya qo\'llab-quvvatlanmaydi'
+                    : 'Геолокация не поддерживается'
+            )
+            setIsGettingLocation(false)
+            return
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setFormData(prev => ({
+                    ...prev,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                }))
+                setLocationReceived(true)
+                setIsGettingLocation(false)
+                toast.success(
+                    language === 'uz' ? 'Joylashuv aniqlandi' : 'Местоположение определено',
+                    { icon: '📍' }
+                )
+            },
+            (error) => {
+                console.error('Geolocation error:', error)
+                setIsGettingLocation(false)
+                toast.error(
+                    language === 'uz'
+                        ? 'Joylashuvni aniqlab bo\'lmadi'
+                        : 'Не удалось определить местоположение'
+                )
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        )
+    }
+
     return (
-        <form id="order-form" onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
-            <Input
-                label={t('checkout.name')}
-                value={formData.name}
-                onChange={(e) => updateField('name', e.target.value)}
-                error={errors.name}
-                leftIcon={<User className="w-5 h-5" />}
-                placeholder={language === 'uz' ? 'Ismingizni kiriting' : 'Введите ваше имя'}
-                disabled={isLoading}
-            />
+        <form id="order-form" onSubmit={handleSubmit} className="space-y-5">
+            {/* Name Row */}
+            <div className="grid grid-cols-2 gap-3">
+                {/* First Name */}
+                <Input
+                    label={language === 'uz' ? 'Ism' : 'Имя'}
+                    value={formData.firstName}
+                    onChange={(e) => updateField('firstName', e.target.value)}
+                    error={errors.firstName}
+                    leftIcon={<User className="w-5 h-5" />}
+                    placeholder={language === 'uz' ? 'Ism' : 'Имя'}
+                    disabled={isLoading}
+                />
+
+                {/* Last Name */}
+                <Input
+                    label={language === 'uz' ? 'Familiya' : 'Фамилия'}
+                    value={formData.lastName}
+                    onChange={(e) => updateField('lastName', e.target.value)}
+                    placeholder={language === 'uz' ? 'Familiya' : 'Фамилия'}
+                    disabled={isLoading}
+                />
+            </div>
 
             {/* Phone */}
             <Input
@@ -102,6 +192,41 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                 placeholder={language === 'uz' ? 'Manzilingizni kiriting' : 'Введите адрес доставки'}
                 disabled={isLoading}
             />
+
+            {/* Geolocation Button */}
+            <div>
+                <button
+                    type="button"
+                    onClick={handleGetLocation}
+                    disabled={isLoading || isGettingLocation}
+                    className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${locationReceived
+                            ? 'bg-green-100 text-green-700 border border-green-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-[0.99]'
+                        } disabled:opacity-50`}
+                >
+                    {isGettingLocation ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            {language === 'uz' ? 'Aniqlanmoqda...' : 'Определяем...'}
+                        </>
+                    ) : locationReceived ? (
+                        <>
+                            <CheckCircle className="w-5 h-5" />
+                            {language === 'uz' ? 'Joylashuv aniqlandi ✓' : 'Местоположение определено ✓'}
+                        </>
+                    ) : (
+                        <>
+                            <Navigation className="w-5 h-5" />
+                            {language === 'uz' ? '📍 Joylashuvni yuborish' : '📍 Отправить местоположение'}
+                        </>
+                    )}
+                </button>
+                <p className="text-xs text-gray-500 mt-1.5 text-center">
+                    {language === 'uz'
+                        ? 'Tezroq yetkazib berish uchun joylashuvingizni yuboring'
+                        : 'Отправьте геолокацию для быстрой доставки'}
+                </p>
+            </div>
 
             {/* Comment */}
             <div>
