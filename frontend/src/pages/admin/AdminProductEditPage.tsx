@@ -26,6 +26,8 @@ interface ProductForm {
 interface Category {
     id: string
     nameRu: string
+    descriptionRu?: string
+    descriptionUz?: string
 }
 
 interface WholesaleTemplate {
@@ -153,6 +155,25 @@ export function AdminProductEditPage() {
             ...prev,
             [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
         }))
+    }
+
+    // Автозаполнение описания из шаблона категории
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const categoryId = e.target.value
+        setForm(prev => ({ ...prev, categoryId }))
+
+        // Только для новых товаров и если описание ещё не заполнено
+        if (isNew && categoryId && !form.descriptionRu) {
+            const category = categories.find(c => c.id === categoryId)
+            if (category?.descriptionRu) {
+                setForm(prev => ({
+                    ...prev,
+                    categoryId,
+                    descriptionRu: category.descriptionRu || '',
+                    descriptionUz: category.descriptionUz || ''
+                }))
+            }
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -345,7 +366,7 @@ export function AdminProductEditPage() {
                                 <select
                                     name="categoryId"
                                     value={form.categoryId}
-                                    onChange={handleChange}
+                                    onChange={handleCategoryChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base bg-white"
                                     required
                                 >
@@ -354,6 +375,9 @@ export function AdminProductEditPage() {
                                         <option key={cat.id} value={cat.id}>{cat.nameRu}</option>
                                     ))}
                                 </select>
+                                {isNew && categories.find(c => c.id === form.categoryId)?.descriptionRu && (
+                                    <p className="text-xs text-green-600 mt-1">📋 Шаблон описания доступен</p>
+                                )}
                             </div>
                         </div>
 
