@@ -149,9 +149,9 @@ export const adminService = {
         const data = await res.json()
         if (!data.success) throw new Error(data.message)
         return data.data
-    }
+    },
 
-        // Wholesale Templates
+    // Wholesale Templates
     async getWholesaleTemplates() {
         const res = await fetch(`${API_URL}/admin/wholesale-templates`, { headers: getHeaders() })
         const data = await res.json()
