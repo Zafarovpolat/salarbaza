@@ -5,7 +5,7 @@ import { prisma } from '../config/database'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 import { AppError } from '../middleware/errorHandler'
 import { config } from '../config'
-import { generateOrderNumber } from '../utils/helpers'
+import { generateOrderNumber, serializeBigInt } from '../utils/helpers'
 import { OrderStatus } from '@prisma/client'
 import { sendOrderNotification } from '../services/telegramService'
 import { logger } from '../utils/logger'
@@ -40,7 +40,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
             include: { items: true },
             orderBy: { createdAt: 'desc' },
         })
-        res.json({ success: true, data: orders })
+        res.json({ success: true, data: serializeBigInt(orders) })
     } catch (error) {
         next(error)
     }
@@ -54,7 +54,7 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
             include: { items: true },
         })
         if (!order) throw new AppError('Order not found', 404)
-        res.json({ success: true, data: order })
+        res.json({ success: true, data: serializeBigInt(order) })
     } catch (error) {
         next(error)
     }
@@ -171,7 +171,7 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
             // Не прерываем — заказ уже создан
         }
 
-        res.status(201).json({ success: true, data: order })
+        res.status(201).json({ success: true, data: serializeBigInt(order) })
     } catch (error: any) {
         logger.error(`❌ === ORDER ERROR ===`)
         logger.error(`❌ Message: ${error.message}`)
@@ -192,7 +192,7 @@ router.patch('/:id/cancel', async (req: AuthRequest, res: Response, next: NextFu
             data: { status: OrderStatus.CANCELLED, cancelledAt: new Date() },
             include: { items: true },
         })
-        res.json({ success: true, data: updated })
+        res.json({ success: true, data: serializeBigInt(updated) })
     } catch (error) {
         next(error)
     }
