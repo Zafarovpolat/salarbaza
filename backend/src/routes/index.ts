@@ -5,6 +5,7 @@ import cartRoutes from './cartRoutes'
 import orderRoutes from './orderRoutes'
 import userRoutes from './userRoutes'
 import adminRoutes from './adminRoutes'
+import testRoutes from './testRoutes'  // TEST endpoint
 
 const router = Router()
 
@@ -18,7 +19,8 @@ router.get('/', (req, res) => {
             products: '/api/products',
             cart: '/api/cart',
             orders: '/api/orders',
-            user: '/api/user'
+            user: '/api/user',
+            test: '/api/test'  // TEST endpoint
         }
     })
 })
@@ -29,5 +31,6 @@ router.use('/cart', cartRoutes)
 router.use('/orders', orderRoutes)
 router.use('/admin', adminRoutes)
 router.use('/user', userRoutes)
+router.use('/test', testRoutes)  // TEST endpoint
 
 export default router
