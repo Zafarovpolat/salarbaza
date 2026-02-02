@@ -184,19 +184,19 @@ export function ProductRecommendations({ productId, className }: ProductRecommen
                                         <h4 className="text-sm text-gray-900 line-clamp-2 leading-tight min-h-[2.25rem]">
                                             {name}
                                         </h4>
-                                        <div className="mt-1.5 flex items-baseline gap-1.5">
+                                        <div className="mt-2 flex items-baseline gap-1">
                                             <span className="text-sm font-bold text-green-600">
                                                 {formatPrice(product.price)}
                                             </span>
+                                            <span className="text-xs text-gray-500">
+                                                {language === 'uz' ? 'soʻm' : 'сўм'}
+                                            </span>
                                             {product.oldPrice && (
-                                                <span className="text-[10px] text-gray-400 line-through">
+                                                <span className="text-[10px] text-gray-400 line-through ml-1">
                                                     {formatPrice(product.oldPrice)}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-[10px] text-gray-400">
-                                            {language === 'uz' ? 'soʻm' : 'сўм'}
-                                        </p>
                                     </div>
                                 </div>
                             </Link>
