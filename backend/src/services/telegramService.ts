@@ -92,9 +92,6 @@ ${itemsList}
                         { text: '✅ Tasdiqlash', callback_data: `confirm_${order.id}` },
                         { text: '❌ Bekor qilish', callback_data: `cancel_${order.id}` },
                     ],
-                    [
-                        { text: '📞 Qo\'ng\'iroq qilish', url: `tel:${order.customerPhone}` },
-                    ],
                 ],
             },
         })
