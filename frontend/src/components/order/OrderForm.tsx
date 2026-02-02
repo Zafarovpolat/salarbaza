@@ -50,8 +50,11 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
             newErrors.phone = language === 'uz' ? "Noto'g'ri telefon raqam" : 'Неверный номер телефона'
         }
 
-        if (!formData.address.trim()) {
-            newErrors.address = language === 'uz' ? 'Manzil kiritilishi shart' : 'Введите адрес'
+        // ✅ Адрес обязателен ТОЛЬКО если нет геолокации
+        if (!formData.address.trim() && !formData.latitude) {
+            newErrors.address = language === 'uz'
+                ? 'Manzil kiriting yoki joylashuvni yuboring'
+                : 'Введите адрес или отправьте геолокацию'
         }
 
         setErrors(newErrors)
@@ -75,7 +78,6 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
         }
     }
 
-    // Получение геолокации через браузер
     const handleGetLocation = () => {
         if (!navigator.geolocation) {
             toast.error(
@@ -97,6 +99,12 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                 }))
                 setLocationReceived(true)
                 setIsGettingLocation(false)
+
+                // ✅ Убираем ошибку адреса если была
+                if (errors.address) {
+                    setErrors(prev => ({ ...prev, address: undefined }))
+                }
+
                 toast.success(
                     language === 'uz' ? 'Joylashuv aniqlandi' : 'Местоположение определено',
                     { icon: '📍' }
@@ -126,7 +134,6 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
         <form id="order-form" onSubmit={handleSubmit} className="space-y-5">
             {/* Name Row */}
             <div className="grid grid-cols-2 gap-3">
-                {/* First Name */}
                 <Input
                     label={language === 'uz' ? 'Ism' : 'Имя'}
                     value={formData.firstName}
@@ -137,7 +144,6 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                     disabled={isLoading}
                 />
 
-                {/* Last Name */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                         {language === 'uz' ? 'Familiya' : 'Фамилия'}
@@ -169,18 +175,7 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                 disabled={isLoading}
             />
 
-            {/* Address */}
-            <Input
-                label={t('checkout.address')}
-                value={formData.address}
-                onChange={(e) => updateField('address', e.target.value)}
-                error={errors.address}
-                leftIcon={<MapPin className="w-5 h-5" />}
-                placeholder={language === 'uz' ? 'Manzilingizni kiriting' : 'Введите адрес доставки'}
-                disabled={isLoading}
-            />
-
-            {/* Geolocation Button */}
+            {/* Geolocation Button — ПЕРЕД адресом */}
             <div>
                 <button
                     type="button"
@@ -188,7 +183,7 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                     disabled={isLoading || isGettingLocation}
                     className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${locationReceived
                             ? 'bg-green-100 text-green-700 border border-green-200'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-[0.99]'
+                            : 'bg-green-500 text-white hover:bg-green-600 active:scale-[0.99]'
                         } disabled:opacity-50`}
                 >
                     {isGettingLocation ? (
@@ -199,20 +194,46 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                     ) : locationReceived ? (
                         <>
                             <CheckCircle className="w-5 h-5" />
-                            {language === 'uz' ? 'Joylashuv aniqlandi' : 'Местоположение определено'}
+                            {language === 'uz' ? 'Joylashuv aniqlandi ✓' : 'Геолокация получена ✓'}
                         </>
                     ) : (
                         <>
                             <Navigation className="w-5 h-5" />
-                            {language === 'uz' ? 'Joylashuvni yuborish' : 'Отправить местоположение'}
+                            {language === 'uz' ? '📍 Joylashuvni yuborish' : '📍 Отправить геолокацию'}
                         </>
                     )}
                 </button>
-                <p className="text-xs text-gray-500 mt-1.5 text-center">
-                    {language === 'uz'
-                        ? 'Tezroq yetkazib berish uchun joylashuvingizni yuboring'
-                        : 'Отправьте геолокацию для быстрой доставки'}
-                </p>
+                {!locationReceived && (
+                    <p className="text-xs text-gray-500 mt-1.5 text-center">
+                        {language === 'uz'
+                            ? 'Yoki quyida manzilni kiriting'
+                            : 'Или введите адрес ниже'}
+                    </p>
+                )}
+            </div>
+
+            {/* Address — опциональный если есть геолокация */}
+            <div>
+                <Input
+                    label={
+                        locationReceived
+                            ? (language === 'uz' ? 'Manzil (ixtiyoriy)' : 'Адрес (необязательно)')
+                            : t('checkout.address')
+                    }
+                    value={formData.address}
+                    onChange={(e) => updateField('address', e.target.value)}
+                    error={errors.address}
+                    leftIcon={<MapPin className="w-5 h-5" />}
+                    placeholder={language === 'uz' ? 'Manzilingizni kiriting' : 'Введите адрес доставки'}
+                    disabled={isLoading}
+                />
+                {locationReceived && !formData.address && (
+                    <p className="text-xs text-green-600 mt-1">
+                        {language === 'uz'
+                            ? '✓ Joylashuv yuborildi, manzil kiritish shart emas'
+                            : '✓ Геолокация отправлена, адрес необязателен'}
+                    </p>
+                )}
             </div>
 
             {/* Comment */}

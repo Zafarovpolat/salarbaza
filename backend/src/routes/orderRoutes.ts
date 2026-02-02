@@ -7,11 +7,11 @@ import { AppError } from '../middleware/errorHandler'
 import { config } from '../config'
 import { generateOrderNumber } from '../utils/helpers'
 import { OrderStatus } from '@prisma/client'
+import { sendOrderNotification } from '../services/telegramService'
 
 const router = Router()
 router.use(authMiddleware)
 
-// ✅ Обновлённая схема валидации
 const createOrderSchema = z.object({
     deliveryType: z.enum(['PICKUP', 'DELIVERY']),
     customerFirstName: z.string().min(2),
@@ -22,7 +22,16 @@ const createOrderSchema = z.object({
     longitude: z.number().optional(),
     customerNote: z.string().optional(),
     paymentMethod: z.enum(['CASH', 'CARD', 'PAYME', 'CLICK', 'UZUM']),
-})
+    items: z.array(z.object({
+        productId: z.string(),
+        quantity: z.number().min(1),
+        colorId: z.string().optional(),
+    })).min(1, 'Cart is empty'),
+}).refine(
+    // ✅ Либо адрес, либо геолокация
+    (data) => data.address || data.latitude,
+    { message: 'Address or location required', path: ['address'] }
+)
 
 router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
@@ -55,32 +64,41 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
     try {
         const data = createOrderSchema.parse(req.body)
 
-        const cart = await prisma.cart.findUnique({
-            where: { userId: req.user!.id },
+        const productIds = data.items.map(item => item.productId)
+        const products = await prisma.product.findMany({
+            where: { id: { in: productIds } },
             include: {
-                items: {
-                    include: {
-                        product: { include: { images: { where: { isMain: true }, take: 1 }, colors: true } },
-                    },
-                },
+                images: { where: { isMain: true }, take: 1 },
+                colors: true
             },
         })
 
-        if (!cart || cart.items.length === 0) throw new AppError('Cart is empty', 400)
+        if (products.length === 0) {
+            throw new AppError('No valid products found', 400)
+        }
+
+        const productMap = new Map(products.map(p => [p.id, p]))
 
         let subtotal = 0
-        const orderItems = cart.items.map(item => {
-            const color = item.colorId ? item.product.colors.find(c => c.id === item.colorId) : null
+        const orderItems = data.items.map(item => {
+            const product = productMap.get(item.productId)
+            if (!product) {
+                throw new AppError(`Product ${item.productId} not found`, 400)
+            }
+
+            const color = item.colorId
+                ? product.colors.find(c => c.id === item.colorId)
+                : null
             const priceModifier = color?.priceModifier || 0
-            const unitPrice = item.product.price + priceModifier
+            const unitPrice = product.price + priceModifier
             const itemTotal = unitPrice * item.quantity
             subtotal += itemTotal
 
             return {
                 productId: item.productId,
-                productName: item.product.nameRu,
-                productCode: item.product.code,
-                productImage: item.product.images[0]?.url || null,
+                productName: product.nameRu,
+                productCode: product.code,
+                productImage: product.images[0]?.url || null,
                 colorName: color?.nameRu || null,
                 price: unitPrice,
                 quantity: item.quantity,
@@ -91,11 +109,10 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
         const deliveryFee = data.deliveryType === 'DELIVERY' && subtotal < config.freeDeliveryThreshold
             ? config.deliveryFee : 0
 
-        const deliveryAddress = data.address
-            ? { address: data.address, lat: data.latitude, lng: data.longitude }
+        const deliveryAddress = data.address || data.latitude
+            ? { address: data.address || 'Геолокация', lat: data.latitude, lng: data.longitude }
             : Prisma.JsonNull
 
-        // ✅ Формируем полное имя
         const customerName = data.customerLastName
             ? `${data.customerFirstName} ${data.customerLastName}`
             : data.customerFirstName
@@ -121,10 +138,11 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
                 paymentMethod: data.paymentMethod,
                 items: { create: orderItems },
             },
-            include: { items: true },
+            include: { items: true, user: true },
         })
 
-        await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
+        // ✅ Отправляем уведомление
+        await sendOrderNotification(order)
 
         res.status(201).json({ success: true, data: order })
     } catch (error) {
