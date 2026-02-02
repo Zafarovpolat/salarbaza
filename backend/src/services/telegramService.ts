@@ -19,7 +19,6 @@ export function getBot() {
     return bot
 }
 
-// ✅ Используем any для гибкости с Prisma типами
 export async function sendOrderNotification(order: any) {
     if (!bot || !config.adminChatId) {
         logger.warn('Cannot send notification: bot or admin chat not configured')
@@ -44,12 +43,23 @@ export async function sendOrderNotification(order: any) {
         return `  • ${item.productName}${color}\n    ${item.quantity} × ${formatPrice(item.price)} = ${formatPrice(item.total)} so'm`
     }).join('\n')
 
-    const address = order.deliveryAddress
-        ? `\n📍 Manzil: ${typeof order.deliveryAddress === 'object' ? order.deliveryAddress.address : order.deliveryAddress}`
-        : ''
+    // Адрес
+    let addressText = ''
+    if (order.deliveryAddress) {
+        const addr = typeof order.deliveryAddress === 'object'
+            ? order.deliveryAddress.address
+            : order.deliveryAddress
+        addressText = `\n📍 *Manzil:* ${addr}`
+    }
+
+    // Ссылка на Яндекс Карты (если есть координаты)
+    let locationLink = ''
+    if (order.latitude && order.longitude) {
+        locationLink = `\n🗺 *Xaritada:* [Yandex Maps](https://yandex.uz/maps/?pt=${order.longitude},${order.latitude}&z=17&l=map)`
+    }
 
     const note = order.customerNote
-        ? `\n💬 Izoh: ${order.customerNote}`
+        ? `\n💬 *Izoh:* ${order.customerNote}`
         : ''
 
     const user = order.user || {}
@@ -57,26 +67,32 @@ export async function sendOrderNotification(order: any) {
         ? `@${user.username}`
         : user.firstName || 'Noma\'lum'
 
+    // Полное имя клиента
+    const customerFullName = order.customerLastName
+        ? `${order.customerFirstName || order.customerName} ${order.customerLastName}`
+        : (order.customerFirstName || order.customerName)
+
     const message = `
 🆕 *YANGI BUYURTMA*
 
 📋 *Buyurtma:* \`${order.orderNumber}\`
-👤 *Mijoz:* ${order.customerName}
+👤 *Mijoz:* ${customerFullName}
 📞 *Telefon:* ${order.customerPhone}
 🔗 *Telegram:* ${userInfo}
 
-${deliveryTypeText}${address}
+${deliveryTypeText}${addressText}${locationLink}
 💳 *To'lov:* ${paymentMethodText[order.paymentMethod] || order.paymentMethod}
 
 📦 *Mahsulotlar:*
 ${itemsList}
 
 💰 *Jami:* ${formatPrice(order.subtotal)} so'm
-🚚 *Yetkazish:* ${order.deliveryFee > 0 ? formatPrice(order.deliveryFee) + " so'm" : 'Bepul'}
+🚚 *Yetkazash:* ${order.deliveryFee > 0 ? formatPrice(order.deliveryFee) + " so'm" : 'Bepul'}
 ✅ *Umumiy:* *${formatPrice(order.total)} so'm*${note}
 `.trim()
 
     try {
+        // Отправляем основное сообщение
         await bot.sendMessage(config.adminChatId, message, {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -91,9 +107,19 @@ ${itemsList}
                 ],
             },
         })
+
+        // Если есть координаты — отправляем локацию отдельным сообщением
+        if (order.latitude && order.longitude) {
+            await bot.sendLocation(config.adminChatId, order.latitude, order.longitude)
+        }
+
         logger.info(`Order notification sent for ${order.orderNumber}`)
-    } catch (error) {
-        logger.error('Failed to send order notification:', error)
+    } catch (error: any) {
+        logger.error('Failed to send order notification:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code,
+            orderNumber: order.orderNumber
+        })
     }
 }
 
@@ -105,11 +131,11 @@ export async function sendStatusUpdateToUser(
     if (!bot) return
 
     const statusMessages: Record<string, string> = {
-        CONFIRMED: `✅ Buyurtmangiz #${orderNumber} tasdiqlandi!`,
+        CONFIRMED: `✅ Buyurtmangiz #${orderNumber} tasdiqlandi! Tez orada siz bilan bog'lanamiz.`,
         PROCESSING: `📦 Buyurtmangiz #${orderNumber} tayyorlanmoqda...`,
-        SHIPPED: `🚚 Buyurtmangiz #${orderNumber} yo'lga chiqdi!`,
-        DELIVERED: `🎉 Buyurtmangiz #${orderNumber} yetkazib berildi! Xaridingiz uchun rahmat!`,
-        CANCELLED: `❌ Buyurtmangiz #${orderNumber} bekor qilindi.`,
+        SHIPPED: `🚚 Buyurtmangiz #${orderNumber} yo'lga chiqdi! Yetkazib beruvchi tez orada siz bilan bog'lanadi.`,
+        DELIVERED: `🎉 Buyurtmangiz #${orderNumber} yetkazib berildi!\n\nXaridingiz uchun rahmat! Yana kutib qolamiz 💚`,
+        CANCELLED: `❌ Buyurtmangiz #${orderNumber} bekor qilindi.\n\nSavollar bo'lsa, biz bilan bog'laning.`,
     }
 
     const message = statusMessages[status]
@@ -117,7 +143,11 @@ export async function sendStatusUpdateToUser(
 
     try {
         await bot.sendMessage(telegramId.toString(), message)
-    } catch (error) {
-        logger.error('Failed to send status update:', error)
+    } catch (error: any) {
+        logger.error('Failed to send status update:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code,
+            telegramId: telegramId.toString()
+        })
     }
 }

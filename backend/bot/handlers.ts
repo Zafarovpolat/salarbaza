@@ -44,8 +44,12 @@ export async function handleCallbackQuery(
             await handleOrderDetails(bot, query, orderId, chatId)
         }
 
-    } catch (error) {
-        logger.error('Callback query error:', error)
+    } catch (error: any) {
+        logger.error('Callback query error:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code,
+            data: data
+        })
         await bot.answerCallbackQuery(query.id, {
             text: 'Xatolik yuz berdi!',
             show_alert: true,
