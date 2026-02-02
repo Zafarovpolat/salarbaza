@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sparkles, Heart, ShoppingBag, ChevronRight } from 'lucide-react'
+import { Heart, ShoppingBag, Sparkles } from 'lucide-react'
 import { useLanguageStore } from '@/store/languageStore'
 import { useFavoritesStore } from '@/store/favoritesStore'
 import { useCartStore } from '@/store/cartStore'
@@ -16,7 +16,6 @@ interface Product {
     nameUz: string
     price: number
     oldPrice?: number
-    isNew?: boolean
     images: { url: string }[]
 }
 
@@ -83,13 +82,10 @@ export function ProductRecommendations({ productId, className }: ProductRecommen
     if (loading) {
         return (
             <div className={cn('', className)}>
-                <div className="flex items-center gap-2 mb-4">
-                    <Skeleton height={24} width={24} className="rounded-lg" />
-                    <Skeleton height={24} width={180} />
-                </div>
+                <Skeleton height={24} width={180} className="mb-4" />
                 <div className="flex gap-3 overflow-x-auto pb-2">
                     {[1, 2, 3, 4].map(i => (
-                        <Skeleton key={i} height={240} width={160} className="flex-shrink-0 rounded-2xl" />
+                        <Skeleton key={i} height={220} width={150} className="flex-shrink-0 rounded-2xl" />
                     ))}
                 </div>
             </div>
@@ -101,31 +97,17 @@ export function ProductRecommendations({ productId, className }: ProductRecommen
     return (
         <div className={className}>
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                        <Sparkles className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-gray-900">
-                            {language === 'uz' ? 'Sizga yoqishi mumkin' : 'Вам может понравиться'}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                            {language === 'uz' ? 'O\'xshash mahsulotlar' : 'Похожие товары'}
-                        </p>
-                    </div>
+            <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-green-600" />
                 </div>
-                <Link
-                    to="/catalog"
-                    className="flex items-center gap-1 text-sm text-purple-600 font-medium hover:text-purple-700"
-                >
-                    {language === 'uz' ? 'Hammasi' : 'Все'}
-                    <ChevronRight className="w-4 h-4" />
-                </Link>
+                <h3 className="font-semibold text-gray-900">
+                    {language === 'uz' ? 'Sizga yoqishi mumkin' : 'Вам может понравиться'}
+                </h3>
             </div>
 
             {/* Products Carousel */}
-            <div className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {products.map((product, index) => {
                     const name = getProductName(product, language)
                     const image = product.images?.[0]?.url
@@ -137,92 +119,82 @@ export function ProductRecommendations({ productId, className }: ProductRecommen
                     return (
                         <motion.div
                             key={product.id}
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="snap-start"
+                            transition={{ delay: index * 0.03 }}
                         >
                             <Link
                                 to={`/product/${product.slug}`}
-                                className="flex-shrink-0 w-40 block group"
+                                className="flex-shrink-0 w-36 block group"
                             >
                                 {/* Card */}
-                                <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200">
+                                <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
                                     {/* Image Container */}
-                                    <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
+                                    <div className="aspect-square bg-gray-50 relative overflow-hidden">
                                         {image ? (
                                             <img
                                                 src={image}
                                                 alt={name}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 loading="lazy"
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-4xl text-gray-200">
+                                            <div className="w-full h-full flex items-center justify-center text-3xl text-gray-200">
                                                 🌿
                                             </div>
                                         )}
 
-                                        {/* Badges */}
-                                        <div className="absolute top-2 left-2 flex flex-col gap-1">
-                                            {product.isNew && (
-                                                <span className="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full">
-                                                    NEW
-                                                </span>
-                                            )}
-                                            {discount > 0 && (
-                                                <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full">
-                                                    -{discount}%
-                                                </span>
-                                            )}
-                                        </div>
+                                        {/* Discount Badge */}
+                                        {discount > 0 && (
+                                            <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded">
+                                                -{discount}%
+                                            </span>
+                                        )}
 
-                                        {/* Quick Actions */}
-                                        <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <motion.button
-                                                whileTap={{ scale: 0.9 }}
-                                                onClick={(e) => handleToggleFavorite(e, product)}
-                                                className={cn(
-                                                    'w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-colors',
-                                                    isProductFavorite
-                                                        ? 'bg-red-500 text-white'
-                                                        : 'bg-white/90 text-gray-400 hover:text-red-500'
-                                                )}
-                                            >
-                                                <Heart
-                                                    className="w-4 h-4"
-                                                    fill={isProductFavorite ? 'currentColor' : 'none'}
-                                                />
-                                            </motion.button>
-                                        </div>
+                                        {/* Favorite Button */}
+                                        <motion.button
+                                            whileTap={{ scale: 0.9 }}
+                                            onClick={(e) => handleToggleFavorite(e, product)}
+                                            className={cn(
+                                                'absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-colors',
+                                                isProductFavorite
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-white/80 text-gray-400 hover:text-green-500'
+                                            )}
+                                        >
+                                            <Heart
+                                                className="w-3.5 h-3.5"
+                                                fill={isProductFavorite ? 'currentColor' : 'none'}
+                                            />
+                                        </motion.button>
 
-                                        {/* Add to Cart - Bottom */}
+                                        {/* Add to Cart Button */}
                                         <motion.button
                                             whileTap={{ scale: 0.95 }}
                                             onClick={(e) => handleAddToCart(e, product)}
-                                            className="absolute bottom-2 left-2 right-2 py-2 bg-white/95 backdrop-blur-sm rounded-xl text-xs font-semibold text-gray-900 flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg hover:bg-green-500 hover:text-white"
+                                            className="absolute bottom-2 left-2 right-2 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-xs font-medium text-gray-700 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-500 hover:text-white"
                                         >
-                                            <ShoppingBag className="w-3.5 h-3.5" />
+                                            <ShoppingBag className="w-3 h-3" />
                                             {language === 'uz' ? 'Savatga' : 'В корзину'}
                                         </motion.button>
                                     </div>
 
                                     {/* Info */}
-                                    <div className="p-3">
-                                        <h4 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight min-h-[2.5rem] group-hover:text-purple-600 transition-colors">
+                                    <div className="p-2.5">
+                                        <h4 className="text-sm text-gray-900 line-clamp-2 leading-tight min-h-[2.25rem]">
                                             {name}
                                         </h4>
-                                        <div className="mt-2 flex items-baseline gap-2">
-                                            <span className="text-base font-bold text-gray-900">
+                                        <div className="mt-1.5 flex items-baseline gap-1.5">
+                                            <span className="text-sm font-bold text-green-600">
                                                 {formatPrice(product.price)}
                                             </span>
                                             {product.oldPrice && (
-                                                <span className="text-xs text-gray-400 line-through">
+                                                <span className="text-[10px] text-gray-400 line-through">
                                                     {formatPrice(product.oldPrice)}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-[10px] text-gray-400 mt-0.5">
+                                        <p className="text-[10px] text-gray-400">
                                             {language === 'uz' ? 'soʻm' : 'сўм'}
                                         </p>
                                     </div>
@@ -231,26 +203,6 @@ export function ProductRecommendations({ productId, className }: ProductRecommen
                         </motion.div>
                     )
                 })}
-
-                {/* See All Card */}
-                <Link
-                    to="/catalog"
-                    className="flex-shrink-0 w-40 snap-start"
-                >
-                    <div className="h-full min-h-[280px] bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl border-2 border-dashed border-purple-200 flex flex-col items-center justify-center gap-3 hover:border-purple-400 hover:from-purple-100 hover:to-pink-100 transition-all group">
-                        <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                            <ChevronRight className="w-6 h-6 text-purple-500 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                        <div className="text-center">
-                            <p className="font-semibold text-purple-600">
-                                {language === 'uz' ? 'Barcha tovarlar' : 'Все товары'}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                                {language === 'uz' ? 'Katalogga o\'tish' : 'Перейти в каталог'}
-                            </p>
-                        </div>
-                    </div>
-                </Link>
             </div>
         </div>
     )
