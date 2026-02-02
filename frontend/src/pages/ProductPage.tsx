@@ -19,6 +19,7 @@ import { QuantitySelector } from '@/components/ui/QuantitySelector'
 import { CartButton } from '@/components/cart/CartButton'
 import { WholesalePrices } from '@/components/product/WholesalePrices'
 import toast from 'react-hot-toast'
+import { ProductRecommendations } from '@/components/product/ProductRecommendations'
 
 export function ProductPage() {
     const { slug } = useParams<{ slug: string }>()
@@ -284,6 +285,9 @@ export function ProductPage() {
                             </Badge>
                         </div>
                     )}
+
+                    {/* ✅ Рекомендации — ДОБАВЬ ЗДЕСЬ */}
+                    <ProductRecommendations productId={product.id} className="pt-4" />
                 </Container>
             </section>
 
