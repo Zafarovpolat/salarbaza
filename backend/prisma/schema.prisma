@@ -86,6 +86,10 @@ model Product {
   price           Int
   oldPrice        Int?
   
+  // ✅ ДОБАВЬ ЭТО: Оптовые цены
+  wholesaleTemplateId String?
+  wholesaleTemplate   WholesalePriceTemplate? @relation("ProductWholesaleTemplate", fields: [wholesaleTemplateId], references: [id], onDelete: SetNull)
+  
   material        String?
   dimensions      Json?
   
@@ -113,6 +117,7 @@ model Product {
   @@index([price])
   @@index([isActive, isFeatured])
   @@index([slug])
+  @@index([wholesaleTemplateId])
   @@map("products")
 }
 
@@ -257,6 +262,37 @@ model Favorite {
   
   @@unique([userId, productId])
   @@map("favorites")
+}
+
+// ==================== WHOLESALE PRICES ====================
+
+// Шаблон оптовых цен (для переиспользования)
+model WholesalePriceTemplate {
+  id              String    @id @default(cuid())
+  name            String    // Например: "Стандартный", "Для горшков", "Агрессивный"
+  description     String?
+  isDefault       Boolean   @default(false)
+  
+  tiers           WholesalePriceTier[]
+  products        Product[] @relation("ProductWholesaleTemplate")
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("wholesale_price_templates")
+}
+
+// Пороги скидок в шаблоне
+model WholesalePriceTier {
+  id              String    @id @default(cuid())
+  templateId      String
+  template        WholesalePriceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  
+  minQuantity     Int       // От какого количества
+  discountPercent Int       // Процент скидки (5, 10, 15...)
+  
+  @@unique([templateId, minQuantity])
+  @@map("wholesale_price_tiers")
 }
 
 enum OrderStatus {

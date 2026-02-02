@@ -1,4 +1,3 @@
-// frontend/src/pages/ProductPage.tsx
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,6 +17,7 @@ import { ColorSelector } from '@/components/product/ColorSelector'
 import { PriceDisplay } from '@/components/product/PriceDisplay'
 import { QuantitySelector } from '@/components/ui/QuantitySelector'
 import { CartButton } from '@/components/cart/CartButton'
+import { WholesalePrices } from '@/components/product/WholesalePrices'
 import toast from 'react-hot-toast'
 
 export function ProductPage() {
@@ -34,7 +34,6 @@ export function ProductPage() {
     const [quantity, setQuantity] = useState(1)
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
-    // Set default color when product loads
     useEffect(() => {
         if (product?.colors && product.colors.length > 0) {
             setSelectedColor(product.colors[0])
@@ -209,6 +208,14 @@ export function ProductPage() {
                         price={price}
                         oldPrice={product.oldPrice}
                         size="lg"
+                    />
+
+                    {/* ✅ Оптовые цены */}
+                    <WholesalePrices
+                        productId={product.id}
+                        basePrice={price}
+                        currentQuantity={quantity}
+                        onQuantityChange={setQuantity}
                     />
 
                     {/* Colors */}
