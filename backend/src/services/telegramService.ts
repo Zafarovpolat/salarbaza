@@ -1,27 +1,18 @@
-import TelegramBot from 'node-telegram-bot-api'
 import { config } from '../config'
 import { formatPrice } from '../utils/helpers'
 import { logger } from '../utils/logger'
-
-let bot: TelegramBot | null = null
-
-export function initBot() {
-    if (!config.botToken) {
-        logger.warn('Telegram bot token not configured')
-        return null
-    }
-
-    bot = new TelegramBot(config.botToken, { polling: false })
-    return bot
-}
-
-export function getBot() {
-    return bot
-}
+import { getBot } from '../../bot/index'
 
 export async function sendOrderNotification(order: any) {
-    if (!bot || !config.adminChatId) {
-        logger.warn('Cannot send notification: bot or admin chat not configured')
+    const bot = getBot()
+
+    if (!bot) {
+        logger.warn('Cannot send notification: bot not initialized')
+        return
+    }
+
+    if (!config.adminChatId) {
+        logger.warn('Cannot send notification: admin chat not configured')
         return
     }
 
@@ -128,7 +119,12 @@ export async function sendStatusUpdateToUser(
     orderNumber: string,
     status: string
 ) {
-    if (!bot) return
+    const bot = getBot()
+
+    if (!bot) {
+        logger.warn('Cannot send status update: bot not initialized')
+        return
+    }
 
     const statusMessages: Record<string, string> = {
         CONFIRMED: `✅ Buyurtmangiz #${orderNumber} tasdiqlandi! Tez orada siz bilan bog'lanamiz.`,
