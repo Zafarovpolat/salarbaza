@@ -315,9 +315,20 @@ router.get('/orders', async (req, res) => {
             },
             orderBy: { createdAt: 'desc' }
         })
-        res.json({ success: true, data: orders })
+
+        // ✅ Конвертируем BigInt в строку для JSON сериализации
+        const serializedOrders = orders.map(order => ({
+            ...order,
+            user: order.user ? {
+                ...order.user,
+                telegramId: order.user.telegramId.toString()
+            } : null
+        }))
+
+        res.json({ success: true, data: serializedOrders })
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' })
+        console.error('Get orders error:', error)
+        res.status(500).json({ success: false, message: 'Server error', error: String(error) })
     }
 })
 
