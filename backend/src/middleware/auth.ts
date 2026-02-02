@@ -22,8 +22,12 @@ export async function authMiddleware(
     try {
         const initData = req.headers['x-telegram-init-data'] as string
 
+        logger.info(`🔐 Auth check: ${req.method} ${req.path}`)
+        logger.info(`📱 InitData present: ${!!initData}, length: ${initData?.length || 0}`)
+
         if (!initData) {
             if (config.nodeEnv === 'development') {
+                logger.info('🧪 Dev mode - using test user')
                 const testUser = await prisma.user.upsert({
                     where: { telegramId: BigInt(123456789) },
                     update: {},
@@ -44,6 +48,7 @@ export async function authMiddleware(
                 return next()
             }
 
+            logger.warn('❌ No initData and not in dev mode')
             return res.status(401).json({
                 success: false,
                 message: 'Authorization required',
@@ -112,9 +117,13 @@ export async function authMiddleware(
             lastName: user.lastName,
         }
 
+        logger.info(`✅ Auth successful: User ${user.id} (${user.firstName})`)
         next()
-    } catch (error) {
-        logger.error('Auth error:', error)
+    } catch (error: any) {
+        logger.error('Auth error:', {
+            message: error?.message || 'Unknown error',
+            stack: error?.stack?.split('\n').slice(0, 3).join('\n')
+        })
         res.status(401).json({
             success: false,
             message: 'Authorization failed',
