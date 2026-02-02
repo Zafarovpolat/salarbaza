@@ -1,4 +1,3 @@
-// frontend/src/pages/CheckoutPage.tsx
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -14,7 +13,7 @@ import { Button } from '@/components/ui/Button'
 
 export function CheckoutPage() {
     const navigate = useNavigate()
-    const { language, t } = useLanguageStore()
+    const { language } = useLanguageStore()
     const { items, clearCart } = useCartStore()
     const { haptic, user } = useTelegram()
 
@@ -34,16 +33,29 @@ export function CheckoutPage() {
     }, [items])
 
     const handleSubmit = async (formData: {
-        name: string
+        firstName: string
+        lastName: string
         phone: string
         address: string
+        latitude?: number
+        longitude?: number
         comment: string
     }) => {
         try {
             setIsLoading(true)
             haptic.impact('medium')
 
-            const order = await orderService.createOrder(formData)
+            const order = await orderService.createOrder({
+                deliveryType: 'DELIVERY',
+                customerFirstName: formData.firstName,
+                customerLastName: formData.lastName || undefined,
+                customerPhone: formData.phone,
+                address: formData.address,
+                latitude: formData.latitude,
+                longitude: formData.longitude,
+                customerNote: formData.comment || undefined,
+                paymentMethod: 'CASH',
+            })
 
             haptic.notification('success')
             clearCart()
@@ -112,7 +124,8 @@ export function CheckoutPage() {
                     </h2>
                     <OrderForm
                         initialData={{
-                            name: user?.first_name || '',
+                            firstName: user?.first_name || '',
+                            lastName: user?.last_name || '',
                         }}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}

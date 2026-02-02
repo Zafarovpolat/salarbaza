@@ -1,12 +1,16 @@
-// frontend/src/services/orderService.ts
 import { Order } from '@/types'
 import { get, post, patch } from './api'
 
 interface CreateOrderData {
-    name: string
-    phone: string
-    address: string
-    comment?: string
+    deliveryType: 'PICKUP' | 'DELIVERY'
+    customerFirstName: string
+    customerLastName?: string
+    customerPhone: string
+    address?: string
+    latitude?: number
+    longitude?: number
+    customerNote?: string
+    paymentMethod: 'CASH' | 'CARD' | 'PAYME' | 'CLICK' | 'UZUM'
 }
 
 export const orderService = {
@@ -21,14 +25,7 @@ export const orderService = {
     },
 
     async createOrder(data: CreateOrderData): Promise<Order> {
-        const response = await post<{ success: boolean; data: Order }>('/orders', {
-            deliveryType: 'DELIVERY',
-            paymentMethod: 'CASH',
-            customerName: data.name,
-            customerPhone: data.phone,
-            address: data.address,
-            customerNote: data.comment,
-        })
+        const response = await post<{ success: boolean; data: Order }>('/orders', data)
         return response.data
     },
 

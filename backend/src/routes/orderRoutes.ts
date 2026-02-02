@@ -11,11 +11,15 @@ import { OrderStatus } from '@prisma/client'
 const router = Router()
 router.use(authMiddleware)
 
+// ✅ Обновлённая схема валидации
 const createOrderSchema = z.object({
     deliveryType: z.enum(['PICKUP', 'DELIVERY']),
-    customerName: z.string().min(2),
+    customerFirstName: z.string().min(2),
+    customerLastName: z.string().optional(),
     customerPhone: z.string().min(9),
     address: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
     customerNote: z.string().optional(),
     paymentMethod: z.enum(['CASH', 'CARD', 'PAYME', 'CLICK', 'UZUM']),
 })
@@ -74,10 +78,10 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
             return {
                 productId: item.productId,
-                productName: item.product.nameUz,
+                productName: item.product.nameRu,
                 productCode: item.product.code,
                 productImage: item.product.images[0]?.url || null,
-                colorName: color?.nameUz || null,
+                colorName: color?.nameRu || null,
                 price: unitPrice,
                 quantity: item.quantity,
                 total: itemTotal,
@@ -87,10 +91,14 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
         const deliveryFee = data.deliveryType === 'DELIVERY' && subtotal < config.freeDeliveryThreshold
             ? config.deliveryFee : 0
 
-        // Исправление: правильная обработка deliveryAddress для Prisma JSON
         const deliveryAddress = data.address
-            ? { address: data.address }
+            ? { address: data.address, lat: data.latitude, lng: data.longitude }
             : Prisma.JsonNull
+
+        // ✅ Формируем полное имя
+        const customerName = data.customerLastName
+            ? `${data.customerFirstName} ${data.customerLastName}`
+            : data.customerFirstName
 
         const order = await prisma.order.create({
             data: {
@@ -103,8 +111,12 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
                 total: subtotal + deliveryFee,
                 deliveryType: data.deliveryType,
                 deliveryAddress,
-                customerName: data.customerName,
+                customerFirstName: data.customerFirstName,
+                customerLastName: data.customerLastName || null,
+                customerName,
                 customerPhone: data.customerPhone,
+                latitude: data.latitude || null,
+                longitude: data.longitude || null,
                 customerNote: data.customerNote,
                 paymentMethod: data.paymentMethod,
                 items: { create: orderItems },
