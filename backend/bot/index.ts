@@ -83,7 +83,7 @@ export function initTelegramBot() {
 }
 
 export function stopBot() {
-    if (bot \u0026\u0026 config.nodeEnv === 'development') {
+    if (bot && config.nodeEnv === 'development') {
         bot.stopPolling()
         logger.info('🤖 Telegram bot stopped')
         bot = null
