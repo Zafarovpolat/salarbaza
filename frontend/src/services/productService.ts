@@ -1,6 +1,6 @@
 // frontend/src/services/productService.ts
 import { Product, PaginatedResponse } from '@/types'
-import { get } from './api'
+import api, { get } from './api'
 
 export const productService = {
     async getProducts(params: {
@@ -47,6 +47,11 @@ export const productService = {
         const response = await get<{ success: boolean; data: Product[] }>(
             `/products/search?q=${encodeURIComponent(query)}&limit=${limit}`
         )
+        return response.data
+    },
+
+    async getSaleProducts(limit: number = 10): Promise<Product[]> {
+        const response = await get<{ success: boolean; data: Product[] }>(`/products/sale?limit=${limit}`)
         return response.data
     },
 }

@@ -36,6 +36,10 @@ export function ProductPage() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
     useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [slug])
+
+    useEffect(() => {
         if (product?.colors && product.colors.length > 0) {
             setSelectedColor(product.colors[0])
         }
