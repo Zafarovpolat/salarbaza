@@ -160,19 +160,18 @@ export function AdminProductEditPage() {
     // Автозаполнение описания из шаблона категории
     const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const categoryId = e.target.value
-        setForm(prev => ({ ...prev, categoryId }))
+        const category = categories.find(c => c.id === categoryId)
 
-        // Только для новых товаров и если описание ещё не заполнено
-        if (isNew && categoryId && !form.descriptionRu) {
-            const category = categories.find(c => c.id === categoryId)
-            if (category?.descriptionRu) {
-                setForm(prev => ({
-                    ...prev,
-                    categoryId,
-                    descriptionRu: category.descriptionRu || '',
-                    descriptionUz: category.descriptionUz || ''
-                }))
-            }
+        // Для новых товаров всегда заполняем описание из шаблона категории
+        if (isNew && category) {
+            setForm(prev => ({
+                ...prev,
+                categoryId,
+                descriptionRu: category.descriptionRu || '',
+                descriptionUz: category.descriptionUz || ''
+            }))
+        } else {
+            setForm(prev => ({ ...prev, categoryId }))
         }
     }
 
@@ -414,6 +413,17 @@ export function AdminProductEditPage() {
                             <textarea
                                 name="descriptionRu"
                                 value={form.descriptionRu}
+                                onChange={handleChange}
+                                rows={3}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base resize-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Описание (UZ)</label>
+                            <textarea
+                                name="descriptionUz"
+                                value={form.descriptionUz}
                                 onChange={handleChange}
                                 rows={3}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base resize-none"

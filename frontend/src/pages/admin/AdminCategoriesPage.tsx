@@ -13,6 +13,7 @@ interface Category {
     nameRu: string
     nameUz: string
     descriptionRu?: string
+    descriptionUz?: string
     sortOrder: number
     isActive: boolean
     _count?: { products: number }
@@ -72,7 +73,7 @@ export function AdminCategoriesPage() {
             nameRu: category.nameRu,
             nameUz: category.nameUz || '',
             descriptionRu: category.descriptionRu || '',
-            descriptionUz: '',
+            descriptionUz: category.descriptionUz || '',
             image: '',
             sortOrder: category.sortOrder,
             isActive: category.isActive
@@ -205,6 +206,30 @@ export function AdminCategoriesPage() {
                                     value={form.nameUz}
                                     onChange={handleChange}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Шаблон описания (RU)</label>
+                                <textarea
+                                    name="descriptionRu"
+                                    value={form.descriptionRu}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none resize-none"
+                                    placeholder="Шаблон описания для товаров этой категории"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Шаблон описания (UZ)</label>
+                                <textarea
+                                    name="descriptionUz"
+                                    value={form.descriptionUz}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none resize-none"
+                                    placeholder="Tovarlar uchun shablon tavsifi"
                                 />
                             </div>
 
