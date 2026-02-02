@@ -28,6 +28,8 @@ import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage'
 import { AdminCategoryProductsPage } from './pages/admin/AdminCategoryProductsPage'
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
 import { AdminWholesalePage } from './pages/admin/AdminWholesalePage'
+import { AdminCustomersPage } from './pages/admin/AdminCustomersPage'
+import { AdminCustomerDetailPage } from './pages/admin/AdminCustomerDetailPage'
 
 function MainRoutes() {
     return (
@@ -62,6 +64,8 @@ function AdminRoutes() {
             <Route path="/admin/categories/:categoryId/products" element={<AdminCategoryProductsPage />} /> {/* ✅ Новый роут */}
             <Route path="/admin/wholesale" element={<AdminWholesalePage />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
+            <Route path="/admin/customers" element={<AdminCustomersPage />} />
+            <Route path="/admin/customers/:id" element={<AdminCustomerDetailPage />} />
         </Routes>
     )
 }
