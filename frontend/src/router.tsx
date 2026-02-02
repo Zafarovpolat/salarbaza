@@ -27,6 +27,7 @@ import { AdminProductEditPage } from './pages/admin/AdminProductEditPage'
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage'
 import { AdminCategoryProductsPage } from './pages/admin/AdminCategoryProductsPage'
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
+import { AdminWholesalePage } from './pages/admin/AdminWholesalePage'
 
 function MainRoutes() {
     return (
@@ -59,6 +60,7 @@ function AdminRoutes() {
             <Route path="/admin/products/:id" element={<AdminProductEditPage />} />
             <Route path="/admin/categories" element={<AdminCategoriesPage />} />
             <Route path="/admin/categories/:categoryId/products" element={<AdminCategoryProductsPage />} /> {/* ✅ Новый роут */}
+            <Route path="/admin/wholesale" element={<AdminWholesalePage />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
         </Routes>
     )

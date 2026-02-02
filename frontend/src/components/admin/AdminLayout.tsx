@@ -8,7 +8,8 @@ import {
     LogOut,
     Home,
     Menu,
-    X
+    X,
+    Percent  // ✅ Добавь иконку
 } from 'lucide-react'
 
 interface AdminLayoutProps {
@@ -19,6 +20,7 @@ const menuItems = [
     { path: '/admin/dashboard', label: 'Дашборд', icon: LayoutDashboard },
     { path: '/admin/products', label: 'Товары', icon: Package },
     { path: '/admin/categories', label: 'Категории', icon: FolderTree },
+    { path: '/admin/wholesale', label: 'Оптовые цены', icon: Percent },  // ✅ Добавь
     { path: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
 ]
 
@@ -34,7 +36,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }
     }, [navigate])
 
-    // Закрываем сайдбар при смене страницы
     useEffect(() => {
         setSidebarOpen(false)
     }, [location.pathname])
@@ -56,7 +57,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         <Menu className="w-6 h-6" />
                     </button>
                     <h1 className="font-bold text-gray-900">🏠 DekorHouse</h1>
-                    <div className="w-10" /> {/* Spacer */}
+                    <div className="w-10" />
                 </div>
             </header>
 
@@ -70,11 +71,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Sidebar */}
             <aside className={`
-        fixed top-0 left-0 h-full bg-white shadow-lg z-50 w-64
-        transform transition-transform duration-300 ease-in-out
-        lg:translate-x-0
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+                fixed top-0 left-0 h-full bg-white shadow-lg z-50 w-64
+                transform transition-transform duration-300 ease-in-out
+                lg:translate-x-0
+                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
                 {/* Sidebar Header */}
                 <div className="flex items-center justify-between p-4 border-b">
                     <div>
@@ -100,8 +101,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                                 key={item.path}
                                 to={item.path}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
                                 <Icon className="w-5 h-5" />
