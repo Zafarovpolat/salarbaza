@@ -3,6 +3,21 @@ import { prisma } from '../config/database'
 import { logger } from '../utils/logger'
 import { generateOrderNumber } from '../utils/helpers'
 
+// Helper function to convert BigInt to string for JSON serialization
+const serializeBigInt = (obj: any): any => {
+    if (obj === null || obj === undefined) return obj
+    if (typeof obj === 'bigint') return obj.toString()
+    if (Array.isArray(obj)) return obj.map(serializeBigInt)
+    if (typeof obj === 'object') {
+        const result: any = {}
+        for (const key in obj) {
+            result[key] = serializeBigInt(obj[key])
+        }
+        return result
+    }
+    return obj
+}
+
 const router = Router()
 
 // TEST endpoint - БЕЗ авторизации для тестирования
@@ -62,7 +77,7 @@ router.post('/test-order', async (req, res, next) => {
         res.json({
             success: true,
             message: 'Test order created successfully',
-            data: order
+            data: serializeBigInt(order)
         })
     } catch (error: any) {
         logger.error('🧪 ❌ Test order error:', {

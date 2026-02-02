@@ -1,0 +1,6 @@
+{
+    "customerFirstName": "Test",
+    "customerPhone": "+998901234567",
+    "deliveryType": "PICKUP",
+    "paymentMethod": "CASH"
+}
