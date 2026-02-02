@@ -104,7 +104,13 @@ router.get('/products/:id', async (req, res) => {
 
 router.post('/products', async (req, res) => {
     try {
-        const { code, slug, nameRu, nameUz, descriptionRu, descriptionUz, categoryId, price, oldPrice, material, dimensions, inStock, stockQuantity, isActive, isNew, isFeatured, images } = req.body
+        const {
+            code, slug, nameRu, nameUz, descriptionRu, descriptionUz,
+            categoryId, price, oldPrice, material, dimensions,
+            inStock, stockQuantity, isActive, isNew, isFeatured,
+            images,
+            wholesaleTemplateId  // ✅ Добавь
+        } = req.body
 
         const product = await prisma.product.create({
             data: {
@@ -124,6 +130,7 @@ router.post('/products', async (req, res) => {
                 isActive: isActive ?? true,
                 isNew: isNew ?? false,
                 isFeatured: isFeatured ?? false,
+                wholesaleTemplateId: wholesaleTemplateId || null,  // ✅ Добавь
                 images: images ? {
                     create: images.map((img: any, index: number) => ({
                         url: img.url,
@@ -147,13 +154,18 @@ router.post('/products', async (req, res) => {
 
 router.put('/products/:id', async (req, res) => {
     try {
-        const { code, slug, nameRu, nameUz, descriptionRu, descriptionUz, categoryId, price, oldPrice, material, dimensions, inStock, stockQuantity, isActive, isNew, isFeatured } = req.body
+        const {
+            code, slug, nameRu, nameUz, descriptionRu, descriptionUz,
+            categoryId, price, oldPrice, material, dimensions,
+            inStock, stockQuantity, isActive, isNew, isFeatured,
+            wholesaleTemplateId  // ✅ Добавь
+        } = req.body
 
         const product = await prisma.product.update({
             where: { id: req.params.id },
             data: {
                 code,
-                slug: slug || (code ? code.toLowerCase().replace(/\\s+/g, '-') : undefined),
+                slug: slug || (code ? code.toLowerCase().replace(/\s+/g, '-') : undefined),
                 nameRu,
                 nameUz,
                 descriptionRu,
@@ -167,7 +179,8 @@ router.put('/products/:id', async (req, res) => {
                 stockQuantity: parseInt(stockQuantity) || 0,
                 isActive,
                 isNew,
-                isFeatured
+                isFeatured,
+                wholesaleTemplateId: wholesaleTemplateId || null  // ✅ Добавь
             },
             include: {
                 category: true,

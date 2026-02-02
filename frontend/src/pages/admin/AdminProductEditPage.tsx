@@ -13,6 +13,7 @@ interface ProductForm {
     descriptionRu: string
     descriptionUz: string
     categoryId: string
+    wholesaleTemplateId: string  // ✅ Добавлено
     price: string
     oldPrice: string
     material: string
@@ -27,13 +28,19 @@ interface Category {
     nameRu: string
 }
 
+interface WholesaleTemplate {
+    id: string
+    name: string
+    isDefault: boolean
+    tiers: { minQuantity: number; discountPercent: number }[]
+}
+
 interface ProductImage {
     id: string
     url: string
     isMain: boolean
 }
 
-// ✅ Ключ для localStorage
 const SAVED_DESCRIPTION_KEY = 'admin_last_description'
 const SAVED_CATEGORY_KEY = 'admin_last_category'
 
@@ -44,6 +51,7 @@ const initialForm: ProductForm = {
     descriptionRu: '',
     descriptionUz: '',
     categoryId: '',
+    wholesaleTemplateId: '',  // ✅ Добавлено
     price: '',
     oldPrice: '',
     material: '',
@@ -61,6 +69,7 @@ export function AdminProductEditPage() {
 
     const [form, setForm] = useState<ProductForm>(initialForm)
     const [categories, setCategories] = useState<Category[]>([])
+    const [wholesaleTemplates, setWholesaleTemplates] = useState<WholesaleTemplate[]>([])  // ✅ Добавлено
     const [images, setImages] = useState<ProductImage[]>([])
     const [loading, setLoading] = useState(!isNew)
     const [saving, setSaving] = useState(false)
@@ -70,15 +79,14 @@ export function AdminProductEditPage() {
 
     useEffect(() => {
         loadCategories()
+        loadWholesaleTemplates()  // ✅ Добавлено
         if (!isNew) {
             loadProduct()
         } else {
-            // ✅ Для нового товара — загружаем сохранённые данные
             loadSavedData()
         }
     }, [id])
 
-    // ✅ Загрузка сохранённых данных для нового товара
     const loadSavedData = () => {
         const savedDescription = localStorage.getItem(SAVED_DESCRIPTION_KEY)
         const savedCategory = localStorage.getItem(SAVED_CATEGORY_KEY)
@@ -101,6 +109,16 @@ export function AdminProductEditPage() {
         }
     }
 
+    // ✅ Новая функция
+    const loadWholesaleTemplates = async () => {
+        try {
+            const data = await adminService.getWholesaleTemplates()
+            setWholesaleTemplates(data)
+        } catch (error) {
+            console.error('Ошибка загрузки шаблонов оптовых цен')
+        }
+    }
+
     const loadProduct = async () => {
         try {
             const product = await adminService.getProduct(id!)
@@ -110,7 +128,8 @@ export function AdminProductEditPage() {
                 nameUz: product.nameUz || '',
                 descriptionRu: product.descriptionRu || '',
                 descriptionUz: product.descriptionUz || '',
-                categoryId: product.categoryId,
+                categoryId: product.categoryId || '',
+                wholesaleTemplateId: product.wholesaleTemplateId || '',  // ✅ Добавлено
                 price: String(product.price),
                 oldPrice: product.oldPrice ? String(product.oldPrice) : '',
                 material: product.material || '',
@@ -146,17 +165,15 @@ export function AdminProductEditPage() {
                 price: parseInt(form.price),
                 oldPrice: form.oldPrice ? parseInt(form.oldPrice) : null,
                 stockQuantity: parseInt(form.stockQuantity),
+                wholesaleTemplateId: form.wholesaleTemplateId || null,  // ✅ Добавлено
                 slug: form.code.toLowerCase().replace(/\s+/g, '-'),
                 images: isNew ? images.map(img => ({ url: img.url, alt: form.nameRu })) : undefined
             }
 
             if (isNew) {
                 await adminService.createProduct(productData)
-
-                // ✅ Сохраняем описание и категорию для следующего товара
                 localStorage.setItem(SAVED_DESCRIPTION_KEY, form.descriptionRu)
                 localStorage.setItem(SAVED_CATEGORY_KEY, form.categoryId)
-
                 toast.success('Товар создан')
             } else {
                 await adminService.updateProduct(id!, productData)
@@ -171,7 +188,6 @@ export function AdminProductEditPage() {
         }
     }
 
-    // ✅ Кнопка очистки сохранённых данных
     const handleClearSaved = () => {
         localStorage.removeItem(SAVED_DESCRIPTION_KEY)
         localStorage.removeItem(SAVED_CATEGORY_KEY)
@@ -183,7 +199,6 @@ export function AdminProductEditPage() {
         toast.success('Шаблон очищен')
     }
 
-    // Загрузка файла с устройства
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
         if (!files || files.length === 0) return
@@ -266,6 +281,9 @@ export function AdminProductEditPage() {
         })))
     }
 
+    // ✅ Получить выбранный шаблон для превью
+    const selectedTemplate = wholesaleTemplates.find(t => t.id === form.wholesaleTemplateId)
+
     if (loading) {
         return (
             <AdminLayout>
@@ -293,7 +311,6 @@ export function AdminProductEditPage() {
                         </h1>
                     </div>
 
-                    {/* ✅ Кнопка очистки шаблона для новых товаров */}
                     {isNew && (form.descriptionRu || form.categoryId) && (
                         <button
                             type="button"
@@ -363,7 +380,6 @@ export function AdminProductEditPage() {
                             />
                         </div>
 
-                        {/* ✅ Описание с индикатором шаблона */}
                         <div>
                             <div className="flex items-center justify-between mb-1">
                                 <label className="block text-sm font-medium text-gray-700">Описание (RU)</label>
@@ -423,6 +439,55 @@ export function AdminProductEditPage() {
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    {/* ✅ Wholesale Template - НОВЫЙ БЛОК */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
+                        <h2 className="font-semibold text-gray-900">Оптовые цены</h2>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Шаблон скидок
+                            </label>
+                            <select
+                                name="wholesaleTemplateId"
+                                value={form.wholesaleTemplateId}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base bg-white"
+                            >
+                                <option value="">По умолчанию</option>
+                                {wholesaleTemplates.map(template => (
+                                    <option key={template.id} value={template.id}>
+                                        {template.name} {template.isDefault ? '(по умолчанию)' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Preview выбранного шаблона */}
+                        {selectedTemplate && (
+                            <div className="bg-green-50 rounded-lg p-3">
+                                <p className="text-sm font-medium text-green-800 mb-2">
+                                    Пороги скидок:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {selectedTemplate.tiers.map((tier, i) => (
+                                        <span
+                                            key={i}
+                                            className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium"
+                                        >
+                                            {tier.minQuantity}+ шт → -{tier.discountPercent}%
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {!form.wholesaleTemplateId && (
+                            <p className="text-sm text-gray-500">
+                                Будет использован шаблон по умолчанию
+                            </p>
+                        )}
                     </div>
 
                     {/* Images */}
