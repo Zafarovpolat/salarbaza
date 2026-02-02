@@ -45,15 +45,14 @@ export function CheckoutPage() {
             setIsLoading(true)
             haptic.impact('medium')
 
-            // ✅ Формируем товары из корзины
             const orderItems = items.map(item => ({
                 productId: item.product.id,
                 quantity: item.quantity,
                 colorId: item.color?.id,
             }))
 
-            const order = await orderService.createOrder({
-                deliveryType: 'DELIVERY',
+            const orderData = {
+                deliveryType: 'DELIVERY' as const,
                 customerFirstName: formData.firstName,
                 customerLastName: formData.lastName || undefined,
                 customerPhone: formData.phone,
@@ -61,15 +60,25 @@ export function CheckoutPage() {
                 latitude: formData.latitude,
                 longitude: formData.longitude,
                 customerNote: formData.comment || undefined,
-                paymentMethod: 'CASH',
+                paymentMethod: 'CASH' as const,
                 items: orderItems,
-            })
+            }
+
+            console.log('📦 Sending order:', orderData)
+
+            const order = await orderService.createOrder(orderData)
 
             haptic.notification('success')
             clearCart()
 
             navigate(`/order-success/${order.id}`, { replace: true })
-        } catch (error) {
+        } catch (error: any) {
+            console.error('❌ Order failed:', error)
+
+            // ✅ Показываем ошибку пользователю
+            const errorMsg = error.message || 'Unknown error'
+            alert(`Error: ${errorMsg}`)
+
             haptic.notification('error')
             toast.error(
                 language === 'uz'
