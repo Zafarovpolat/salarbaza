@@ -196,5 +196,50 @@ export const adminService = {
         const data = await res.json()
         if (!data.success) throw new Error(data.message)
         return data.data
-    }
+    },
+
+    // Customers
+    async getCustomers(params?: {
+        page?: number
+        limit?: number
+        search?: string
+        sortBy?: string
+        sortOrder?: 'asc' | 'desc'
+        hasOrders?: 'all' | 'yes' | 'no'
+    }) {
+        const queryParams = new URLSearchParams()
+        if (params?.page) queryParams.append('page', params.page.toString())
+        if (params?.limit) queryParams.append('limit', params.limit.toString())
+        if (params?.search) queryParams.append('search', params.search)
+        if (params?.sortBy) queryParams.append('sortBy', params.sortBy)
+        if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+        if (params?.hasOrders) queryParams.append('hasOrders', params.hasOrders)
+
+        const queryString = queryParams.toString()
+        const url = `${API_URL}/admin/customers${queryString ? `?${queryString}` : ''}`
+
+        const res = await fetch(url, { headers: getHeaders() })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async getCustomersStats() {
+        const res = await fetch(`${API_URL}/admin/customers/stats`, { headers: getHeaders() })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async getCustomer(id: string) {
+        const res = await fetch(`${API_URL}/admin/customers/${id}`, { headers: getHeaders() })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async exportCustomers() {
+        const res = await fetch(`${API_URL}/admin/customers-export`, { headers: getHeaders() })
+        return res.blob()
+    },
 }

@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
     LayoutDashboard,
+    Users,
     Package,
     FolderTree,
     ShoppingCart,
@@ -22,6 +23,7 @@ const menuItems = [
     { path: '/admin/categories', label: 'Категории', icon: FolderTree },
     { path: '/admin/wholesale', label: 'Оптовые цены', icon: Percent },  // ✅ Добавь
     { path: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
+    { path: '/admin/customers', label: 'Клиенты', icon: Users },  // ✅ Добавьте эту строку
 ]
 
 export function AdminLayout({ children }: AdminLayoutProps) {
