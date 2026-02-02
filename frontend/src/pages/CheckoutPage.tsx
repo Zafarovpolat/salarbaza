@@ -45,16 +45,24 @@ export function CheckoutPage() {
             setIsLoading(true)
             haptic.impact('medium')
 
+            // ✅ Формируем товары из корзины
+            const orderItems = items.map(item => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+                colorId: item.color?.id,
+            }))
+
             const order = await orderService.createOrder({
                 deliveryType: 'DELIVERY',
                 customerFirstName: formData.firstName,
                 customerLastName: formData.lastName || undefined,
                 customerPhone: formData.phone,
-                address: formData.address,
+                address: formData.address || undefined,
                 latitude: formData.latitude,
                 longitude: formData.longitude,
                 customerNote: formData.comment || undefined,
                 paymentMethod: 'CASH',
+                items: orderItems,
             })
 
             haptic.notification('success')
@@ -73,7 +81,6 @@ export function CheckoutPage() {
         }
     }
 
-    // Redirect if cart is empty
     if (items.length === 0) {
         navigate('/cart', { replace: true })
         return null
@@ -136,7 +143,6 @@ export function CheckoutPage() {
             {/* Bottom Summary & Submit */}
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 z-30">
                 <Container>
-                    {/* Price Summary */}
                     <div className="space-y-2 mb-4">
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-500">
@@ -160,7 +166,6 @@ export function CheckoutPage() {
                         </div>
                     </div>
 
-                    {/* Submit Button */}
                     <Button
                         type="submit"
                         form="order-form"

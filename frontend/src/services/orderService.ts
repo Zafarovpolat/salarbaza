@@ -1,6 +1,12 @@
 import { Order } from '@/types'
 import { get, post, patch } from './api'
 
+interface OrderItem {
+    productId: string
+    quantity: number
+    colorId?: string
+}
+
 interface CreateOrderData {
     deliveryType: 'PICKUP' | 'DELIVERY'
     customerFirstName: string
@@ -11,6 +17,7 @@ interface CreateOrderData {
     longitude?: number
     customerNote?: string
     paymentMethod: 'CASH' | 'CARD' | 'PAYME' | 'CLICK' | 'UZUM'
+    items: OrderItem[]
 }
 
 export const orderService = {
