@@ -49,8 +49,28 @@ async function bootstrap() {
         process.on('SIGTERM', () => shutdown('SIGTERM'))
         process.on('SIGINT', () => shutdown('SIGINT'))
 
-    } catch (error) {
-        logger.error('Failed to start server:', error)
+        // Global error handlers to prevent crashes
+        process.on('uncaughtException', (error: Error) => {
+            logger.error('Uncaught Exception:', {
+                message: error.message,
+                stack: error.stack?.split('\n').slice(0, 5).join('\n') // Only first 5 lines of stack
+            })
+            // Don't exit - log and continue
+        })
+
+        process.on('unhandledRejection', (reason: any) => {
+            logger.error('Unhandled Promise Rejection:', {
+                message: reason?.message || String(reason),
+                code: reason?.code
+            })
+            // Don't exit - log and continue
+        })
+
+    } catch (error: any) {
+        logger.error('Failed to start server:', {
+            message: error?.message || 'Unknown error',
+            stack: error?.stack?.split('\n').slice(0, 5).join('\n')
+        })
         process.exit(1)
     }
 }

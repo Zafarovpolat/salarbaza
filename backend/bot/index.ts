@@ -22,24 +22,52 @@ export function initTelegramBot() {
         }
     })
 
-    // Commands
-    bot.onText(/\/start/, (msg) => handleStart(bot!, msg))
-    bot.onText(/\/help/, (msg) => handleHelp(bot!, msg))
-
-    // Callback queries
-    bot.on('callback_query', (query) => handleCallbackQuery(bot!, query))
-
-    // Error handling
-    bot.on('polling_error', (error: any) => {
-        if (error.code === 'ETELEGRAM' && error.message?.includes('409')) {
-            logger.warn('Bot polling conflict, will retry...')
-            return
+    // Commands with error handling
+    bot.onText(/\/start/, async (msg) => {
+        try {
+            await handleStart(bot!, msg)
+        } catch (error: any) {
+            logger.error('Error in /start command:', error?.message || 'Unknown error')
         }
-        logger.error('Bot polling error:', error.message)
     })
 
-    bot.on('error', (error) => {
-        logger.error('Bot error:', error.message)
+    bot.onText(/\/help/, async (msg) => {
+        try {
+            await handleHelp(bot!, msg)
+        } catch (error: any) {
+            logger.error('Error in /help command:', error?.message || 'Unknown error')
+        }
+    })
+
+    // Callback queries with error handling
+    bot.on('callback_query', async (query) => {
+        try {
+            await handleCallbackQuery(bot!, query)
+        } catch (error: any) {
+            logger.error('Error in callback query:', error?.message || 'Unknown error')
+        }
+    })
+
+    // Error handling - only log essential info, not full objects
+    bot.on('polling_error', (error: any) => {
+        if (error.code === 'ETELEGRAM' && error.message?.includes('409')) {
+            logger.warn('Bot polling conflict detected, will retry...')
+            return
+        }
+        // Only log message and code, not the full error object
+        logger.error('Bot polling error:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code || 'N/A',
+            statusCode: error?.response?.statusCode
+        })
+    })
+
+    bot.on('error', (error: any) => {
+        // Only log message and code, not the full error object  
+        logger.error('Bot error:', {
+            message: error?.message || 'Unknown error',
+            code: error?.code || 'N/A'
+        })
     })
 
     logger.info('🤖 Telegram bot started')
