@@ -13,28 +13,40 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
     (config) => {
+        // ✅ Добавь логирование
+        console.log('🔗 API Request:', config.method?.toUpperCase(), config.url)
+        console.log('📱 WebApp.initData exists:', !!WebApp.initData)
+        console.log('📱 WebApp.initData length:', WebApp.initData?.length || 0)
+
         // Add Telegram init data for authentication
         if (WebApp.initData) {
             config.headers['X-Telegram-Init-Data'] = WebApp.initData
+        } else {
+            console.warn('⚠️ No initData - request may fail auth')
         }
         return config
     },
     (error) => {
+        console.error('❌ Request interceptor error:', error)
         return Promise.reject(error)
     }
 )
 
 // Response interceptor
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        console.log('✅ API Response:', response.status, response.config.url)
+        return response
+    },
     (error: AxiosError) => {
+        console.error('❌ API Error:', error.response?.status, error.config?.url)
+        console.error('❌ Error data:', error.response?.data)
+
         if (error.response) {
-            // Server responded with error
             const message = (error.response.data as { message?: string })?.message ||
                 'An error occurred'
             return Promise.reject(new Error(message))
         } else if (error.request) {
-            // Request made but no response
             return Promise.reject(new Error('Network error. Please check your connection.'))
         } else {
             return Promise.reject(error)
@@ -48,6 +60,7 @@ export async function get<T>(url: string, config?: AxiosRequestConfig): Promise<
 }
 
 export async function post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+    console.log('📤 POST data:', JSON.stringify(data).substring(0, 500))
     const response = await api.post<T>(url, data, config)
     return response.data
 }
