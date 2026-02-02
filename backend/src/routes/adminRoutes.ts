@@ -48,7 +48,25 @@ router.get('/stats', async (req, res) => {
 // ==================== PRODUCTS ====================
 router.get('/products', async (req, res) => {
     try {
+        const { categoryId, search } = req.query
+
+        // Формируем условия фильтрации
+        const where: any = {}
+
+        if (categoryId && typeof categoryId === 'string') {
+            where.categoryId = categoryId
+        }
+
+        if (search && typeof search === 'string') {
+            where.OR = [
+                { nameRu: { contains: search, mode: 'insensitive' } },
+                { nameUz: { contains: search, mode: 'insensitive' } },
+                { code: { contains: search, mode: 'insensitive' } }
+            ]
+        }
+
         const products = await prisma.product.findMany({
+            where,
             include: {
                 category: true,
                 images: true,
@@ -56,6 +74,7 @@ router.get('/products', async (req, res) => {
             },
             orderBy: { createdAt: 'desc' }
         })
+
         res.json({ success: true, data: products })
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' })
