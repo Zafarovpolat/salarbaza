@@ -5,11 +5,12 @@ import { config } from './config'
 import { errorHandler } from './middleware/errorHandler'
 import { rateLimiter } from './middleware/rateLimiter'
 import routes from './routes'
+import wholesaleRoutes from './routes/wholesaleRoutes'
 import { logger } from './utils/logger'
 
 const app = express()
 
-// ✅ CORS - ПЕРВЫМ!
+// CORS
 app.use(cors({
     origin: [
         'https://dekorhouse-web.onrender.com',
@@ -26,7 +27,7 @@ app.use(cors({
     ]
 }))
 
-// Helmet после CORS
+// Helmet
 app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     crossOriginOpenerPolicy: { policy: 'unsafe-none' }
@@ -36,7 +37,7 @@ app.use(helmet({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// ✅ Health check - ДО rate limiter!
+// Health check
 app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'ok',
@@ -45,10 +46,10 @@ app.get('/health', (req, res) => {
     })
 })
 
-// Rate limiting - ПОСЛЕ health check
+// Rate limiting
 app.use(rateLimiter)
 
-// Request logging (не логировать health check)
+// Request logging
 app.use((req, res, next) => {
     if (req.path !== '/health') {
         logger.info(`${req.method} ${req.path}`)
@@ -58,6 +59,7 @@ app.use((req, res, next) => {
 
 // API routes
 app.use('/api', routes)
+app.use('/api/wholesale', wholesaleRoutes)  // ✅ Добавлено
 
 // 404 handler
 app.use((req, res) => {
