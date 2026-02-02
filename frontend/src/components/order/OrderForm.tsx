@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { MapPin, Phone, User, MessageSquare, Navigation, Loader2, CheckCircle } from 'lucide-react'
 import { useLanguageStore } from '@/store/languageStore'
-import { useTelegram } from '@/hooks/useTelegram'
 import { Input } from '../ui/Input'
 import toast from 'react-hot-toast'
 
@@ -23,7 +22,6 @@ interface OrderFormProps {
 
 export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) {
     const { t, language } = useLanguageStore()
-    const { webApp } = useTelegram()
 
     const [formData, setFormData] = useState<OrderFormData>({
         firstName: initialData?.firstName || '',
@@ -77,46 +75,18 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
         }
     }
 
-    // Получение геолокации
+    // Получение геолокации через браузер
     const handleGetLocation = () => {
-        setIsGettingLocation(true)
-
-        // Пробуем через Telegram WebApp
-        if (webApp?.LocationManager) {
-            webApp.LocationManager.getLocation((location: any) => {
-                if (location) {
-                    setFormData(prev => ({
-                        ...prev,
-                        latitude: location.latitude,
-                        longitude: location.longitude,
-                    }))
-                    setLocationReceived(true)
-                    toast.success(
-                        language === 'uz' ? 'Joylashuv aniqlandi' : 'Местоположение определено',
-                        { icon: '📍' }
-                    )
-                } else {
-                    // Fallback to browser geolocation
-                    getBrowserLocation()
-                }
-                setIsGettingLocation(false)
-            })
-        } else {
-            // Fallback to browser geolocation
-            getBrowserLocation()
-        }
-    }
-
-    const getBrowserLocation = () => {
         if (!navigator.geolocation) {
             toast.error(
                 language === 'uz'
                     ? 'Geolokatsiya qo\'llab-quvvatlanmaydi'
                     : 'Геолокация не поддерживается'
             )
-            setIsGettingLocation(false)
             return
         }
+
+        setIsGettingLocation(true)
 
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -135,11 +105,18 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
             (error) => {
                 console.error('Geolocation error:', error)
                 setIsGettingLocation(false)
-                toast.error(
-                    language === 'uz'
-                        ? 'Joylashuvni aniqlab bo\'lmadi'
-                        : 'Не удалось определить местоположение'
-                )
+
+                let message = language === 'uz'
+                    ? 'Joylashuvni aniqlab bo\'lmadi'
+                    : 'Не удалось определить местоположение'
+
+                if (error.code === 1) {
+                    message = language === 'uz'
+                        ? 'Joylashuvga ruxsat berilmadi'
+                        : 'Доступ к геолокации запрещён'
+                }
+
+                toast.error(message)
             },
             { enableHighAccuracy: true, timeout: 10000 }
         )
@@ -161,13 +138,23 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                 />
 
                 {/* Last Name */}
-                <Input
-                    label={language === 'uz' ? 'Familiya' : 'Фамилия'}
-                    value={formData.lastName}
-                    onChange={(e) => updateField('lastName', e.target.value)}
-                    placeholder={language === 'uz' ? 'Familiya' : 'Фамилия'}
-                    disabled={isLoading}
-                />
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        {language === 'uz' ? 'Familiya' : 'Фамилия'}
+                    </label>
+                    <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => updateField('lastName', e.target.value)}
+                        placeholder={language === 'uz' ? 'Familiya' : 'Фамилия'}
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 bg-gray-100 border border-transparent rounded-xl
+                            text-gray-900 placeholder-gray-400
+                            focus:outline-none focus:border-primary-500 focus:bg-white
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            transition-all duration-200"
+                    />
+                </div>
             </div>
 
             {/* Phone */}
@@ -212,12 +199,12 @@ export function OrderForm({ initialData, onSubmit, isLoading }: OrderFormProps) 
                     ) : locationReceived ? (
                         <>
                             <CheckCircle className="w-5 h-5" />
-                            {language === 'uz' ? 'Joylashuv aniqlandi ✓' : 'Местоположение определено ✓'}
+                            {language === 'uz' ? 'Joylashuv aniqlandi' : 'Местоположение определено'}
                         </>
                     ) : (
                         <>
                             <Navigation className="w-5 h-5" />
-                            {language === 'uz' ? '📍 Joylashuvni yuborish' : '📍 Отправить местоположение'}
+                            {language === 'uz' ? 'Joylashuvni yuborish' : 'Отправить местоположение'}
                         </>
                     )}
                 </button>
