@@ -198,4 +198,26 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
     }
 })
 
+// ✅ Товары со скидками (спецпредложения)
+router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { limit = '10' } = req.query
+        const products = await prisma.product.findMany({
+            where: {
+                isActive: true,
+                oldPrice: { not: null }  // Только товары со старой ценой (скидкой)
+            },
+            include: {
+                images: { orderBy: { sortOrder: 'asc' } },
+                colors: true
+            },
+            orderBy: { viewCount: 'desc' },
+            take: parseInt(limit as string),
+        })
+        res.json({ success: true, data: products })
+    } catch (error) {
+        next(error)
+    }
+})
+
 export default router
