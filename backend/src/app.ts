@@ -49,9 +49,22 @@ app.get('/health', (req, res) => {
 // Rate limiting
 app.use(rateLimiter)
 
-// Request logging
+// EARLY logging - log EVERYTHING to debug
 app.use((req, res, next) => {
-    if (req.path !== '/health') {
+    const logData = {
+        method: req.method,
+        path: req.path,
+        query: req.query,
+        headers: {
+            'content-type': req.headers['content-type'],
+            'x-telegram-init-data': req.headers['x-telegram-init-data'] ? `present (${req.headers['x-telegram-init-data']?.toString().length} chars)` : 'missing',
+            'origin': req.headers['origin']
+        }
+    }
+
+    if (req.method === 'POST' || req.method === 'PATCH' || req.method === 'PUT') {
+        logger.warn(`🔥 ${req.method} ${req.path}`, logData)
+    } else if (req.path !== '/health') {
         logger.info(`${req.method} ${req.path}`)
     }
     next()
