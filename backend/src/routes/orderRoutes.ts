@@ -8,6 +8,7 @@ import { config } from '../config'
 import { generateOrderNumber } from '../utils/helpers'
 import { OrderStatus } from '@prisma/client'
 import { sendOrderNotification } from '../services/telegramService'
+import { logger } from '../utils/logger'
 
 const router = Router()
 router.use(authMiddleware)
@@ -28,7 +29,6 @@ const createOrderSchema = z.object({
         colorId: z.string().optional(),
     })).min(1, 'Cart is empty'),
 }).refine(
-    // ✅ Либо адрес, либо геолокация
     (data) => data.address || data.latitude,
     { message: 'Address or location required', path: ['address'] }
 )
@@ -62,9 +62,23 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
 
 router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const data = createOrderSchema.parse(req.body)
+        logger.info('📦 === NEW ORDER REQUEST ===')
+        logger.info(`📦 Body: ${JSON.stringify(req.body)}`)
+        logger.info(`👤 User ID: ${req.user?.id}`)
+
+        const parseResult = createOrderSchema.safeParse(req.body)
+
+        if (!parseResult.success) {
+            logger.error(`❌ Validation failed: ${JSON.stringify(parseResult.error.errors)}`)
+            throw new AppError(`Validation error: ${parseResult.error.errors.map(e => e.message).join(', ')}`, 400)
+        }
+
+        const data = parseResult.data
+        logger.info('✅ Validation passed')
 
         const productIds = data.items.map(item => item.productId)
+        logger.info(`🛒 Product IDs: ${productIds.join(', ')}`)
+
         const products = await prisma.product.findMany({
             where: { id: { in: productIds } },
             include: {
@@ -72,6 +86,7 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
                 colors: true
             },
         })
+        logger.info(`📦 Found ${products.length} products`)
 
         if (products.length === 0) {
             throw new AppError('No valid products found', 400)
@@ -106,6 +121,8 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
             }
         })
 
+        logger.info(`💰 Subtotal: ${subtotal}`)
+
         const deliveryFee = data.deliveryType === 'DELIVERY' && subtotal < config.freeDeliveryThreshold
             ? config.deliveryFee : 0
 
@@ -116,6 +133,8 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
         const customerName = data.customerLastName
             ? `${data.customerFirstName} ${data.customerLastName}`
             : data.customerFirstName
+
+        logger.info('📝 Creating order in database...')
 
         const order = await prisma.order.create({
             data: {
@@ -141,11 +160,22 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
             include: { items: true, user: true },
         })
 
-        // ✅ Отправляем уведомление
-        await sendOrderNotification(order)
+        logger.info(`✅ Order created: ${order.orderNumber}`)
+
+        // Отправляем уведомление
+        try {
+            await sendOrderNotification(order)
+            logger.info('📨 Notification sent')
+        } catch (notifError: any) {
+            logger.error(`⚠️ Notification failed: ${notifError.message}`)
+            // Не прерываем — заказ уже создан
+        }
 
         res.status(201).json({ success: true, data: order })
-    } catch (error) {
+    } catch (error: any) {
+        logger.error(`❌ === ORDER ERROR ===`)
+        logger.error(`❌ Message: ${error.message}`)
+        logger.error(`❌ Stack: ${error.stack}`)
         next(error)
     }
 })
