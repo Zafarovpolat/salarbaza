@@ -150,4 +150,51 @@ export const adminService = {
         if (!data.success) throw new Error(data.message)
         return data.data
     }
+
+        // Wholesale Templates
+    async getWholesaleTemplates() {
+        const res = await fetch(`${API_URL}/admin/wholesale-templates`, { headers: getHeaders() })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async getWholesaleTemplate(id: string) {
+        const res = await fetch(`${API_URL}/admin/wholesale-templates/${id}`, { headers: getHeaders() })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async createWholesaleTemplate(template: any) {
+        const res = await fetch(`${API_URL}/admin/wholesale-templates`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(template)
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async updateWholesaleTemplate(id: string, template: any) {
+        const res = await fetch(`${API_URL}/admin/wholesale-templates/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(template)
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    },
+
+    async deleteWholesaleTemplate(id: string) {
+        const res = await fetch(`${API_URL}/admin/wholesale-templates/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        })
+        const data = await res.json()
+        if (!data.success) throw new Error(data.message)
+        return data.data
+    }
 }
