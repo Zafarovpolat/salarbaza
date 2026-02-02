@@ -1,3 +1,5 @@
+// services/adminService.ts
+
 const API_URL = import.meta.env.VITE_API_URL
 
 const getHeaders = () => ({
@@ -14,9 +16,16 @@ export const adminService = {
         return data.data
     },
 
-    // Products
-    async getProducts() {
-        const res = await fetch(`${API_URL}/admin/products`, { headers: getHeaders() })
+    // Products - ✅ ОБНОВЛЕНО: добавлена поддержка фильтров
+    async getProducts(params?: { categoryId?: string; search?: string }) {
+        const queryParams = new URLSearchParams()
+        if (params?.categoryId) queryParams.append('categoryId', params.categoryId)
+        if (params?.search) queryParams.append('search', params.search)
+
+        const queryString = queryParams.toString()
+        const url = `${API_URL}/admin/products${queryString ? `?${queryString}` : ''}`
+
+        const res = await fetch(url, { headers: getHeaders() })
         const data = await res.json()
         if (!data.success) throw new Error(data.message)
         return data.data

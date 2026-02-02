@@ -1,5 +1,8 @@
+// pages/admin/AdminCategoriesPage.tsx
+
 import { useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, Save, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, Edit, Trash2, Save, X, ChevronRight, Package } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { adminService } from '@/services/adminService'
 import toast from 'react-hot-toast'
@@ -38,6 +41,7 @@ const initialForm: CategoryForm = {
 }
 
 export function AdminCategoriesPage() {
+    const navigate = useNavigate()
     const [categories, setCategories] = useState<Category[]>([])
     const [loading, setLoading] = useState(true)
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -60,7 +64,8 @@ export function AdminCategoriesPage() {
         }
     }
 
-    const handleEdit = (category: Category) => {
+    const handleEdit = (e: React.MouseEvent, category: Category) => {
+        e.stopPropagation() // ✅ Предотвращаем переход на товары
         setEditingId(category.id)
         setForm({
             slug: category.slug,
@@ -116,8 +121,9 @@ export function AdminCategoriesPage() {
         }
     }
 
-    const handleDelete = async (id: string, name: string, productsCount: number) => {
-        // Предупреждаем если есть товары, но разрешаем удалить
+    const handleDelete = async (e: React.MouseEvent, id: string, name: string, productsCount: number) => {
+        e.stopPropagation() // ✅ Предотвращаем переход на товары
+
         const message = productsCount > 0
             ? `Удалить категорию "${name}"?\n\n⚠️ ${productsCount} товаров останутся без категории.`
             : `Удалить категорию "${name}"?`
@@ -131,6 +137,11 @@ export function AdminCategoriesPage() {
         } catch (error: any) {
             toast.error(error.message || 'Ошибка удаления')
         }
+    }
+
+    // ✅ Переход к товарам категории
+    const handleCategoryClick = (categoryId: string) => {
+        navigate(`/admin/categories/${categoryId}/products`)
     }
 
     return (
@@ -244,7 +255,11 @@ export function AdminCategoriesPage() {
                     </div>
                 ) : (
                     categories.map((category) => (
-                        <div key={category.id} className="bg-white rounded-xl p-4 shadow-sm">
+                        <div
+                            key={category.id}
+                            onClick={() => handleCategoryClick(category.id)}
+                            className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all active:scale-[0.99]"
+                        >
                             <div className="flex items-center justify-between">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
@@ -254,24 +269,34 @@ export function AdminCategoriesPage() {
                                             {category.isActive ? 'Активна' : 'Скрыта'}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-0.5">
-                                        {category.slug} • {category._count?.products || 0} товаров
-                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <p className="text-sm text-gray-500">
+                                            {category.slug}
+                                        </p>
+                                        <span className="text-gray-300">•</span>
+                                        <div className="flex items-center gap-1 text-sm text-blue-600">
+                                            <Package className="w-3.5 h-3.5" />
+                                            <span>{category._count?.products || 0} товаров</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-1 ml-2">
                                     <button
-                                        onClick={() => handleEdit(category)}
+                                        onClick={(e) => handleEdit(e, category)}
                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                        title="Редактировать категорию"
                                     >
                                         <Edit className="w-4 h-4" />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(category.id, category.nameRu, category._count?.products || 0)}
+                                        onClick={(e) => handleDelete(e, category.id, category.nameRu, category._count?.products || 0)}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                        title="Удалить категорию"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
+                                    <ChevronRight className="w-5 h-5 text-gray-400 ml-1" />
                                 </div>
                             </div>
                         </div>

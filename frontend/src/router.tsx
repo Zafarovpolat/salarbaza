@@ -1,3 +1,5 @@
+// router.tsx - добавляем новый роут
+
 import { Routes, Route, useLocation } from 'react-router-dom'
 
 // Layout
@@ -23,6 +25,7 @@ import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
 import { AdminProductsPage } from './pages/admin/AdminProductsPage'
 import { AdminProductEditPage } from './pages/admin/AdminProductEditPage'
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage'
+import { AdminCategoryProductsPage } from './pages/admin/AdminCategoryProductsPage'
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
 
 function MainRoutes() {
@@ -55,6 +58,7 @@ function AdminRoutes() {
             <Route path="/admin/products/new" element={<AdminProductEditPage />} />
             <Route path="/admin/products/:id" element={<AdminProductEditPage />} />
             <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+            <Route path="/admin/categories/:categoryId/products" element={<AdminCategoryProductsPage />} /> {/* ✅ Новый роут */}
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
         </Routes>
     )
