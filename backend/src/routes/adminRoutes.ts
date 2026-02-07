@@ -249,7 +249,10 @@ router.get('/categories', async (req, res) => {
     try {
         const categories = await prisma.category.findMany({
             include: {
-                _count: { select: { products: true } }
+                _count: { select: { products: true } },
+                wholesaleTemplate: {
+                    select: { id: true, name: true }
+                }
             },
             orderBy: { sortOrder: 'asc' }
         })
@@ -261,7 +264,7 @@ router.get('/categories', async (req, res) => {
 
 router.post('/categories', async (req, res) => {
     try {
-        const { slug, nameRu, nameUz, descriptionRu, descriptionUz, image, sortOrder, isActive } = req.body
+        const { slug, nameRu, nameUz, descriptionRu, descriptionUz, image, sortOrder, isActive, wholesaleTemplateId } = req.body
 
         const category = await prisma.category.create({
             data: {
@@ -272,7 +275,8 @@ router.post('/categories', async (req, res) => {
                 descriptionUz,
                 image,
                 sortOrder: sortOrder || 0,
-                isActive: isActive ?? true
+                isActive: isActive ?? true,
+                wholesaleTemplateId: wholesaleTemplateId || null
             }
         })
 
@@ -284,7 +288,7 @@ router.post('/categories', async (req, res) => {
 
 router.put('/categories/:id', async (req, res) => {
     try {
-        const { nameRu, nameUz, descriptionRu, descriptionUz, image, sortOrder, isActive } = req.body
+        const { nameRu, nameUz, descriptionRu, descriptionUz, image, sortOrder, isActive, wholesaleTemplateId } = req.body
 
         const category = await prisma.category.update({
             where: { id: req.params.id },
@@ -295,7 +299,8 @@ router.put('/categories/:id', async (req, res) => {
                 descriptionUz,
                 image,
                 sortOrder,
-                isActive
+                isActive,
+                wholesaleTemplateId: wholesaleTemplateId || null
             }
         })
 
@@ -820,7 +825,17 @@ router.get('/customers/:id', async (req, res) => {
                     updatedAt: customer.updatedAt,
                 },
                 addresses: customer.addresses,
-                orders: customer.orders,
+                                orders: customer.orders.map(order => ({
+                    ...order,
+                    customerPhone: order.customerPhone,  // ✅ Добавляем телефон
+                    items: order.items.map(item => ({
+                        productName: item.productName,
+                        productCode: item.productCode,  // ✅ Код товара
+                        productImage: item.productImage,  // ✅ Фото товара
+                        quantity: item.quantity,
+                        price: item.price,
+                    }))
+                })),
                 favorites: customer.favorites.map(f => ({
                     id: f.product.id,
                     nameRu: f.product.nameRu,

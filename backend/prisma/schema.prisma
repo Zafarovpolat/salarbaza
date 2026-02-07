@@ -46,19 +46,21 @@ model Address {
 }
 
 model Category {
-  id            String    @id @default(cuid())
-  slug          String    @unique
-  nameRu        String
-  nameUz        String
-  descriptionRu String?
-  descriptionUz String?
-  image         String?
-  icon          String?
-  sortOrder     Int       @default(0)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  products      Product[]
+  id                  String                  @id @default(cuid())
+  slug                String                  @unique
+  nameRu              String
+  nameUz              String
+  descriptionRu       String?
+  descriptionUz       String?
+  image               String?
+  icon                String?
+  sortOrder           Int                     @default(0)
+  isActive            Boolean                 @default(true)
+  wholesaleTemplateId String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  products            Product[]
+  wholesaleTemplate   WholesalePriceTemplate? @relation("CategoryWholesaleTemplate", fields: [wholesaleTemplateId], references: [id])
 
   @@map("categories")
 }
@@ -233,6 +235,7 @@ model WholesalePriceTemplate {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   products    Product[]            @relation("ProductWholesaleTemplate")
+  categories  Category[]           @relation("CategoryWholesaleTemplate")
   tiers       WholesalePriceTier[]
 
   @@map("wholesale_price_templates")

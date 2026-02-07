@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Save, ArrowLeft, Plus, Trash2, Upload, Link, X, Loader2 } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { adminService } from '@/services/adminService'
@@ -13,7 +13,7 @@ interface ProductForm {
     descriptionRu: string
     descriptionUz: string
     categoryId: string
-    wholesaleTemplateId: string  // ✅ Добавлено
+    wholesaleTemplateId: string
     price: string
     oldPrice: string
     material: string
@@ -53,7 +53,7 @@ const initialForm: ProductForm = {
     descriptionRu: '',
     descriptionUz: '',
     categoryId: '',
-    wholesaleTemplateId: '',  // ✅ Добавлено
+    wholesaleTemplateId: '',
     price: '',
     oldPrice: '',
     material: '',
@@ -66,12 +66,19 @@ const initialForm: ProductForm = {
 export function AdminProductEditPage() {
     const { id } = useParams()
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const isNew = !id || id === 'new'
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    const [form, setForm] = useState<ProductForm>(initialForm)
+    // ✅ Получаем categoryId из URL параметров
+    const initialCategoryId = searchParams.get('categoryId') || ''
+
+    const [form, setForm] = useState<ProductForm>({
+        ...initialForm,
+        categoryId: initialCategoryId
+    })
     const [categories, setCategories] = useState<Category[]>([])
-    const [wholesaleTemplates, setWholesaleTemplates] = useState<WholesaleTemplate[]>([])  // ✅ Добавлено
+    const [wholesaleTemplates, setWholesaleTemplates] = useState<WholesaleTemplate[]>([])
     const [images, setImages] = useState<ProductImage[]>([])
     const [loading, setLoading] = useState(!isNew)
     const [saving, setSaving] = useState(false)
@@ -81,26 +88,38 @@ export function AdminProductEditPage() {
 
     useEffect(() => {
         loadCategories()
-        loadWholesaleTemplates()  // ✅ Добавлено
+        loadWholesaleTemplates()
         if (!isNew) {
             loadProduct()
-        } else {
-            loadSavedData()
         }
     }, [id])
 
-    const loadSavedData = () => {
-        const savedDescription = localStorage.getItem(SAVED_DESCRIPTION_KEY)
-        const savedCategory = localStorage.getItem(SAVED_CATEGORY_KEY)
+    // ✅ Автозаполнение из категории после загрузки категорий
+    useEffect(() => {
+        if (isNew && initialCategoryId && categories.length > 0) {
+            const category = categories.find(c => c.id === initialCategoryId)
+            if (category) {
+                setForm(prev => ({
+                    ...prev,
+                    categoryId: initialCategoryId,
+                    descriptionRu: prev.descriptionRu || category.descriptionRu || '',
+                    descriptionUz: prev.descriptionUz || category.descriptionUz || ''
+                }))
+            }
+        } else if (isNew && !initialCategoryId) {
+            // Загружаем сохранённые данные только если не пришли из категории
+            const savedDescription = localStorage.getItem(SAVED_DESCRIPTION_KEY)
+            const savedCategory = localStorage.getItem(SAVED_CATEGORY_KEY)
 
-        if (savedDescription || savedCategory) {
-            setForm(prev => ({
-                ...prev,
-                descriptionRu: savedDescription || '',
-                categoryId: savedCategory || ''
-            }))
+            if (savedDescription || savedCategory) {
+                setForm(prev => ({
+                    ...prev,
+                    descriptionRu: prev.descriptionRu || savedDescription || '',
+                    categoryId: prev.categoryId || savedCategory || ''
+                }))
+            }
         }
-    }
+    }, [categories, initialCategoryId, isNew])
 
     const loadCategories = async () => {
         try {
@@ -111,7 +130,6 @@ export function AdminProductEditPage() {
         }
     }
 
-    // ✅ Новая функция
     const loadWholesaleTemplates = async () => {
         try {
             const data = await adminService.getWholesaleTemplates()
@@ -131,7 +149,7 @@ export function AdminProductEditPage() {
                 descriptionRu: product.descriptionRu || '',
                 descriptionUz: product.descriptionUz || '',
                 categoryId: product.categoryId || '',
-                wholesaleTemplateId: product.wholesaleTemplateId || '',  // ✅ Добавлено
+                wholesaleTemplateId: product.wholesaleTemplateId || '',
                 price: String(product.price),
                 oldPrice: product.oldPrice ? String(product.oldPrice) : '',
                 material: product.material || '',
@@ -143,7 +161,7 @@ export function AdminProductEditPage() {
             setImages(product.images || [])
         } catch (error) {
             toast.error('Ошибка загрузки товара')
-            navigate('/admin/products')
+            handleBack()
         } finally {
             setLoading(false)
         }
@@ -175,6 +193,17 @@ export function AdminProductEditPage() {
         }
     }
 
+    // ✅ Функция для возврата назад
+    const handleBack = () => {
+        if (initialCategoryId) {
+            navigate(`/admin/categories/${initialCategoryId}/products`)
+        } else if (form.categoryId) {
+            navigate(`/admin/categories/${form.categoryId}/products`)
+        } else {
+            navigate('/admin/products')
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSaving(true)
@@ -185,7 +214,7 @@ export function AdminProductEditPage() {
                 price: parseInt(form.price),
                 oldPrice: form.oldPrice ? parseInt(form.oldPrice) : null,
                 stockQuantity: parseInt(form.stockQuantity),
-                wholesaleTemplateId: form.wholesaleTemplateId || null,  // ✅ Добавлено
+                wholesaleTemplateId: form.wholesaleTemplateId || null,
                 slug: form.code.toLowerCase().replace(/\s+/g, '-'),
                 images: isNew ? images.map(img => ({ url: img.url, alt: form.nameRu })) : undefined
             }
@@ -200,7 +229,14 @@ export function AdminProductEditPage() {
                 toast.success('Товар обновлён')
             }
 
-            navigate('/admin/products')
+            // ✅ Возвращаемся в категорию если пришли оттуда
+            if (initialCategoryId) {
+                navigate(`/admin/categories/${initialCategoryId}/products`)
+            } else if (form.categoryId) {
+                navigate(`/admin/categories/${form.categoryId}/products`)
+            } else {
+                navigate('/admin/products')
+            }
         } catch (error: any) {
             toast.error(error.message || 'Ошибка сохранения')
         } finally {
@@ -214,6 +250,7 @@ export function AdminProductEditPage() {
         setForm(prev => ({
             ...prev,
             descriptionRu: '',
+            descriptionUz: '',
             categoryId: ''
         }))
         toast.success('Шаблон очищен')
@@ -232,7 +269,7 @@ export function AdminProductEditPage() {
                 if (url) {
                     if (isNew) {
                         const newImage: ProductImage = {
-                            id: `temp-${Date.now()}`,
+                            id: `temp-${Date.now()}-${Math.random()}`,
                             url,
                             isMain: images.length === 0
                         }
@@ -301,7 +338,7 @@ export function AdminProductEditPage() {
         })))
     }
 
-    // ✅ Получить выбранный шаблон для превью
+    // Получить выбранный шаблон для превью
     const selectedTemplate = wholesaleTemplates.find(t => t.id === form.wholesaleTemplateId)
 
     if (loading) {
@@ -321,7 +358,7 @@ export function AdminProductEditPage() {
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => navigate('/admin/products')}
+                            onClick={handleBack}
                             className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5" />
@@ -331,7 +368,7 @@ export function AdminProductEditPage() {
                         </h1>
                     </div>
 
-                    {isNew && (form.descriptionRu || form.categoryId) && (
+                    {isNew && (form.descriptionRu || form.categoryId) && !initialCategoryId && (
                         <button
                             type="button"
                             onClick={handleClearSaved}
@@ -375,7 +412,7 @@ export function AdminProductEditPage() {
                                     ))}
                                 </select>
                                 {isNew && categories.find(c => c.id === form.categoryId)?.descriptionRu && (
-                                    <p className="text-xs text-green-600 mt-1">📋 Шаблон описания доступен</p>
+                                    <p className="text-xs text-green-600 mt-1">📋 Шаблон описания применён</p>
                                 )}
                             </div>
                         </div>
@@ -406,8 +443,8 @@ export function AdminProductEditPage() {
                         <div>
                             <div className="flex items-center justify-between mb-1">
                                 <label className="block text-sm font-medium text-gray-700">Описание (RU)</label>
-                                {isNew && localStorage.getItem(SAVED_DESCRIPTION_KEY) && (
-                                    <span className="text-xs text-green-600">📋 Из шаблона</span>
+                                {isNew && initialCategoryId && (
+                                    <span className="text-xs text-green-600">📋 Из категории</span>
                                 )}
                             </div>
                             <textarea
@@ -475,7 +512,7 @@ export function AdminProductEditPage() {
                         </div>
                     </div>
 
-                    {/* ✅ Wholesale Template - НОВЫЙ БЛОК */}
+                    {/* Wholesale Template */}
                     <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
                         <h2 className="font-semibold text-gray-900">Оптовые цены</h2>
 
@@ -489,10 +526,10 @@ export function AdminProductEditPage() {
                                 onChange={handleChange}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none text-base bg-white"
                             >
-                                <option value="">По умолчанию</option>
+                                <option value="">По умолчанию (из категории или универсальный)</option>
                                 {wholesaleTemplates.map(template => (
                                     <option key={template.id} value={template.id}>
-                                        {template.name} {template.isDefault ? '(по умолчанию)' : ''}
+                                        {template.name} {template.isDefault ? '(универсальный)' : ''}
                                     </option>
                                 ))}
                             </select>
@@ -519,7 +556,7 @@ export function AdminProductEditPage() {
 
                         {!form.wholesaleTemplateId && (
                             <p className="text-sm text-gray-500">
-                                Будет использован шаблон по умолчанию
+                                Приоритет: товар → категория → универсальный шаблон
                             </p>
                         )}
                     </div>
@@ -676,7 +713,7 @@ export function AdminProductEditPage() {
                     <div className="flex gap-3 sticky bottom-4">
                         <button
                             type="button"
-                            onClick={() => navigate('/admin/products')}
+                            onClick={handleBack}
                             className="flex-1 px-4 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 font-medium bg-white"
                         >
                             Отмена
