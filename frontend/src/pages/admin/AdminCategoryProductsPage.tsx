@@ -133,7 +133,7 @@ export function AdminCategoryProductsPage() {
                     </div>
                 </div>
                 <button
-                    onClick={() => navigate('/admin/products/new')}
+                    onClick={() => navigate(`/admin/products/new?categoryId=${categoryId}`)}
                     className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl hover:bg-green-700 transition-colors text-sm font-medium"
                 >
                     <Plus className="w-5 h-5" />
@@ -164,7 +164,7 @@ export function AdminCategoryProductsPage() {
                             {searchQuery ? 'Товары не найдены' : 'В этой категории пока нет товаров'}
                         </p>
                         <button
-                            onClick={() => navigate('/admin/products/new')}
+                            onClick={() => navigate(`/admin/products/new?categoryId=${categoryId}`)}
                             className="mt-4 text-green-600 font-medium hover:underline"
                         >
                             Добавить первый товар
