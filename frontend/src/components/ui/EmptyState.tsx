@@ -3,46 +3,53 @@ import { LucideIcon } from 'lucide-react'
 import { Button } from './Button'
 
 interface EmptyStateProps {
-    icon: LucideIcon
-    title: string
-    description?: string
-    action?: {
-        label: string
-        onClick: () => void
-    }
+  icon: LucideIcon
+  title: string
+  description?: string
+  action?: {
+    label: string
+    onClick: () => void
+  }
 }
 
 export function EmptyState({
-    icon: Icon,
-    title,
-    description,
-    action,
+  icon: Icon,
+  title,
+  description,
+  action,
 }: EmptyStateProps) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-12 px-4 text-center"
-        >
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Icon className="w-10 h-10 text-gray-400" />
-            </div>
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col items-center justify-center py-16 px-4 text-center"
+    >
+      {/* Icon container — gradient как в features */}
+      <div className="
+        w-20 h-20
+        bg-gradient-to-br from-forest to-sage
+        rounded-3xl
+        flex items-center justify-center
+        mb-5
+      ">
+        <Icon className="w-10 h-10 text-white" strokeWidth={1.5} />
+      </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                {title}
-            </h3>
+      <h3 className="font-display text-xl font-medium text-charcoal mb-2">
+        {title}
+      </h3>
 
-            {description && (
-                <p className="text-gray-500 mb-6 max-w-xs">
-                    {description}
-                </p>
-            )}
+      {description && (
+        <p className="text-medium-gray text-[15px] mb-8 max-w-xs leading-relaxed">
+          {description}
+        </p>
+      )}
 
-            {action && (
-                <Button onClick={action.onClick}>
-                    {action.label}
-                </Button>
-            )}
-        </motion.div>
-    )
+      {action && (
+        <Button variant="green" onClick={action.onClick}>
+          {action.label}
+        </Button>
+      )}
+    </motion.div>
+  )
 }

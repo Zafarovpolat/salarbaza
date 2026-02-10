@@ -1,42 +1,46 @@
 import { cn } from '@/utils/helpers'
 
 interface BadgeProps {
-    children: React.ReactNode
-    variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
-    size?: 'sm' | 'md'
-    className?: string
+  children: React.ReactNode
+  variant?: 'default' | 'forest' | 'sale' | 'success' | 'warning' | 'danger' | 'outline' | 'new'
+  size?: 'sm' | 'md'
+  className?: string
 }
 
 export function Badge({
-    children,
-    variant = 'default',
-    size = 'md',
-    className,
+  children,
+  variant = 'default',
+  size = 'md',
+  className,
 }: BadgeProps) {
-    const variants = {
-        default: 'bg-gray-100 text-gray-700',
-        primary: 'bg-primary-100 text-primary-700',
-        success: 'bg-green-100 text-green-700',
-        warning: 'bg-yellow-100 text-yellow-700',
-        danger: 'bg-red-100 text-red-700',
-        info: 'bg-blue-100 text-blue-700',
-    }
+  const variants = {
+    default:  'bg-sand text-dark-gray',
+    forest:   'bg-forest text-white',
+    sale:     'bg-terracotta text-white',
+    new:      'bg-forest text-white',
+    success:  'bg-success/15 text-success',
+    warning:  'bg-warning/15 text-warning',
+    danger:   'bg-error/15 text-error',
+    outline:  'bg-white/15 backdrop-blur-[10px] border border-white/20 text-white',
+  }
 
-    const sizes = {
-        sm: 'px-2 py-0.5 text-xs',
-        md: 'px-2.5 py-1 text-sm',
-    }
+  const sizes = {
+    sm: 'px-2.5 py-1 text-[10px] tracking-[0.08em]',
+    md: 'px-3 py-1.5 text-[11px] tracking-[0.05em]',
+  }
 
-    return (
-        <span
-            className={cn(
-                'inline-flex items-center font-medium rounded-full',
-                variants[variant],
-                sizes[size],
-                className
-            )}
-        >
-            {children}
-        </span>
-    )
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5',
+        'font-sans font-bold uppercase',
+        'rounded-full',
+        variants[variant],
+        sizes[size],
+        className
+      )}
+    >
+      {children}
+    </span>
+  )
 }

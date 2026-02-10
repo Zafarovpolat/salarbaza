@@ -1,13 +1,8 @@
-# 🏠 DekorHouse - Telegram Mini App
+# DekorHouse - Telegram Mini App
 
-## Project Review & Technical Documentation
-**Обновлено:** Февраль 3, 2026
+## Документация проекта
 
-> ⚠️ **Примечание:** Данный файл содержит старую документацию проекта.  
-> Актуальная версия: см. [`README.md`](./README.md) в корне проекта.
-> 
-> 🎉 **ТЗ 2.0 ЗАВЕРШЕНО:** Все функции ТЗ 2.0 успешно реализованы (3 февраля 2026).
-
+**Обновлено:** Февраль 11, 2026
 
 ---
 
@@ -15,34 +10,39 @@
 
 1. [Обзор проекта](#обзор-проекта)
 2. [Технологический стек](#технологический-стек)
-3. [Структура проекта (фактическая)](#структура-проекта-фактическая)
+3. [Структура проекта](#структура-проекта)
 4. [База данных](#база-данных)
 5. [API Endpoints](#api-endpoints)
 6. [Функциональность](#функциональность)
-7. [Статус реализации](#статус-реализации)
-8. [Известные проблемы](#известные-проблемы)
-9. [Деплой](#деплой)
+7. [Новое в ТЗ 3.0](#новое-в-тз-30)
+8. [Деплой](#деплой)
+9. [Тестирование](#тестирование)
 
 ---
 
 ## 🎯 Обзор проекта
 
 ### Описание
+
 **DekorHouse** — Telegram Mini App для продажи декоративных товаров для дома и сада:
+
 - 🪴 Горшки и кашпо (пластик, металл, плетёные)
-- 🌿 Искусственные растения
+- 🌿 Искусственные растения и деревья
 - 🏗️ Подставки для растений
 
 ### Целевая аудитория
+
 - Розничные покупатели в Узбекистане
 - Оптовые клиенты (магазины, дизайнеры интерьера)
 - Возраст: 25-55 лет
 
 ### Языки
+
 - 🇺🇿 Узбекский (основной)
 - 🇷🇺 Русский
 
 ### Валюта
+
 - UZS (сўм)
 
 ---
@@ -51,56 +51,57 @@
 
 ### Frontend
 
-| Технология | Версия | Назначение |
-|------------|--------|------------|
-| **React** | 18.3.1 | UI Framework |
-| **TypeScript** | 5.4.2 | Type Safety |
-| **Vite** | 5.4.21 | Build Tool |
-| **Tailwind CSS** | 3.4.19 | Styling |
-| **Framer Motion** | 11.18.2 | Animations |
-| **Zustand** | 4.5.7 | State Management |
-| **React Router** | 6.30.2 | Routing |
-| **@twa-dev/sdk** | 7.10.1 | Telegram Web App SDK |
-| **Axios** | 1.13.2 | HTTP Client |
-| **React Hot Toast** | 2.6.0 | Notifications |
-| **Lucide React** | 0.344.0 | Icons |
-| **clsx** | 2.1.1 | Class Names Utility |
+| Технология          | Версия  | Назначение           |
+| ------------------- | ------- | -------------------- |
+| **React**           | 18.3.1  | UI Framework         |
+| **TypeScript**      | 5.4.2   | Type Safety          |
+| **Vite**            | 5.4.21  | Build Tool           |
+| **Tailwind CSS**    | 3.4.19  | Styling              |
+| **Framer Motion**   | 11.18.2 | Animations           |
+| **Zustand**         | 4.5.7   | State Management     |
+| **React Router**    | 6.30.2  | Routing              |
+| **@twa-dev/sdk**    | 7.10.1  | Telegram Web App SDK |
+| **Axios**           | 1.13.2  | HTTP Client          |
+| **React Hot Toast** | 2.6.0   | Notifications        |
+| **Lucide React**    | 0.344.0 | Icons                |
 
 ### Backend
 
-| Технология | Версия | Назначение |
-|------------|--------|------------|
-| **Node.js** | 20.x | Runtime |
-| **Express.js** | 4.18.3 | API Framework |
-| **PostgreSQL** | - | Database |
-| **Prisma** | 5.22.0 | ORM |
-| **node-telegram-bot-api** | 0.64.0 | Telegram Bot API |
-| **Zod** | 3.22.4 | Schema Validation |
-| **Helmet** | 7.1.0 | Security Headers |
-| **Winston** | 3.12.0 | Logging |
-| **express-rate-limit** | 7.2.0 | Rate Limiting |
+| Технология                | Версия | Назначение          |
+| ------------------------- | ------ | ------------------- |
+| **Node.js**               | 20.x   | Runtime             |
+| **Express.js**            | 4.18.3 | API Framework       |
+| **PostgreSQL**            | -      | Database (Supabase) |
+| **Prisma**                | 5.22.0 | ORM                 |
+| **node-telegram-bot-api** | 0.64.0 | Telegram Bot API    |
+| **Zod**                   | 3.22.4 | Schema Validation   |
+| **Helmet**                | 7.1.0  | Security Headers    |
+| **Winston**               | 3.12.0 | Logging             |
 
 ### Infrastructure
 
-| Технология | Назначение |
-|------------|------------|
-| **Render** | Backend & Frontend Hosting |
-| **Docker** | Контейнеризация (Dockerfile готов) |
+| Технология   | Назначение                    |
+| ------------ | ----------------------------- |
+| **Render**   | Backend & Frontend Hosting    |
+| **Supabase** | PostgreSQL Database & Storage |
+| **Docker**   | Контейнеризация               |
 
 ---
 
-## 📁 Структура проекта (фактическая)
+## 📁 Структура проекта
 
 ```
 salarbaza/
-├── 📁 frontend/                    # React SPA
+├── 📁 frontend/
 │   ├── 📁 src/
-│   │   ├── 📁 components/          # 28 компонентов
+│   │   ├── 📁 components/
+│   │   │   ├── 📁 admin/           # (1 файл)
+│   │   │   │   └── AdminLayout.tsx
 │   │   │   ├── 📁 cart/            # (4 файла)
-│   │   │   │   ├── CartItem.tsx
+│   │   │   │   ├── CartItem.tsx        # ✅ Отображение размера
 │   │   │   │   ├── CartList.tsx
 │   │   │   │   ├── CartSummary.tsx
-│   │   │   │   └── CartButton.tsx
+│   │   │   │   └── CartButton.tsx      # ✅ Поддержка variant
 │   │   │   ├── 📁 category/        # (2 файла)
 │   │   │   │   ├── CategoryCard.tsx
 │   │   │   │   └── CategoryList.tsx
@@ -116,367 +117,386 @@ salarbaza/
 │   │   │   ├── 📁 order/           # (2 файла)
 │   │   │   │   ├── OrderForm.tsx
 │   │   │   │   └── OrderCard.tsx
-│   │   │   ├── 📁 product/         # (4 файла)
-│   │   │   │   ├── ProductCard.tsx
+│   │   │   ├── 📁 product/         # (6 файлов)
+│   │   │   │   ├── ProductCard.tsx     # ✅ Ценовой диапазон
 │   │   │   │   ├── ProductGrid.tsx
 │   │   │   │   ├── ProductGallery.tsx
-│   │   │   │   └── ColorSelector.tsx
+│   │   │   │   ├── ColorSelector.tsx
+│   │   │   │   ├── SizeSelector.tsx    # 🆕 Выбор размера
+│   │   │   │   └── PriceDisplay.tsx
 │   │   │   └── 📁 ui/              # (9 файлов)
-│   │   │       ├── Badge.tsx
-│   │   │       ├── Button.tsx
-│   │   │       ├── Card.tsx
-│   │   │       ├── EmptyState.tsx
-│   │   │       ├── Input.tsx
-│   │   │       ├── Modal.tsx
-│   │   │       ├── QuantitySelector.tsx
-│   │   │       ├── Skeleton.tsx
-│   │   │       └── index.ts
 │   │   │
-│   │   ├── 📁 pages/               # (12 страниц)
-│   │   │   ├── HomePage.tsx        # Главная с баннерами и категориями
-│   │   │   ├── CatalogPage.tsx     # Каталог с фильтрами
-│   │   │   ├── CategoryPage.tsx    # Страница категории
-│   │   │   ├── ProductPage.tsx     # Карточка товара (14.6KB)
-│   │   │   ├── CartPage.tsx        # Корзина
-│   │   │   ├── CheckoutPage.tsx    # Оформление заказа
-│   │   │   ├── OrderSuccessPage.tsx# Успешный заказ
-│   │   │   ├── OrdersPage.tsx      # История заказов
-│   │   │   ├── FavoritesPage.tsx   # Избранное
-│   │   │   ├── ProfilePage.tsx     # Профиль и настройки
-│   │   │   ├── SearchPage.tsx      # Поиск товаров
-│   │   │   └── NotFoundPage.tsx    # 404
+│   │   ├── 📁 pages/               # (12 + 10 admin)
+│   │   │   ├── HomePage.tsx
+│   │   │   ├── CatalogPage.tsx
+│   │   │   ├── CategoryPage.tsx
+│   │   │   ├── ProductPage.tsx         # ✅ SizeSelector + оптовая таблица
+│   │   │   ├── CartPage.tsx
+│   │   │   ├── CheckoutPage.tsx        # ✅ Размер в summary
+│   │   │   ├── OrderSuccessPage.tsx
+│   │   │   ├── OrdersPage.tsx
+│   │   │   ├── FavoritesPage.tsx
+│   │   │   ├── ProfilePage.tsx
+│   │   │   ├── SearchPage.tsx
+│   │   │   ├── NotFoundPage.tsx
+│   │   │   └── 📁 admin/              # (10 файлов)
+│   │   │       ├── AdminDashboardPage.tsx
+│   │   │       ├── AdminLoginPage.tsx
+│   │   │       ├── AdminProductsPage.tsx     # ✅ Колонка размеров
+│   │   │       ├── AdminProductEditPage.tsx  # ✅ Секция вариантов
+│   │   │       ├── AdminCategoriesPage.tsx   # ✅ Оптовый шаблон
+│   │   │       ├── AdminCategoryProductsPage.tsx
+│   │   │       ├── AdminOrdersPage.tsx       # ✅ Размер в заказах
+│   │   │       ├── AdminCustomersPage.tsx
+│   │   │       ├── AdminCustomerDetailPage.tsx
+│   │   │       └── AdminWholesalePage.tsx    # ✅ Счётчик категорий
 │   │   │
 │   │   ├── 📁 store/               # (4 Zustand хранилища)
-│   │   │   ├── cartStore.ts        # ✅ Корзина + persist
-│   │   │   ├── favoritesStore.ts   # ✅ Избранное + persist
-│   │   │   ├── languageStore.ts    # ✅ i18n (UZ/RU) + persist
-│   │   │   └── userStore.ts        # ✅ Данные пользователя
+│   │   │   ├── cartStore.ts            # ✅ variantId support
+│   │   │   ├── favoritesStore.ts
+│   │   │   ├── languageStore.ts
+│   │   │   └── userStore.ts
 │   │   │
 │   │   ├── 📁 services/            # (6 сервисов)
-│   │   │   ├── api.ts              # ✅ Axios + Telegram auth
-│   │   │   ├── cartService.ts      # API корзины
-│   │   │   ├── categoryService.ts  # API категорий
-│   │   │   ├── productService.ts   # API товаров
-│   │   │   ├── orderService.ts     # API заказов
-│   │   │   └── mockData.ts         # 📦 Демо-данные (7.5KB)
-│   │   │
-│   │   ├── 📁 hooks/               # (5 хуков)
-│   │   ├── 📁 types/               # (1 файл index.ts)
-│   │   ├── 📁 utils/               # (3 файла)
-│   │   ├── 📁 styles/              # (1 файл)
-│   │   │
-│   │   ├── App.tsx                 # ✅ Telegram WebApp SDK init
-│   │   ├── router.tsx              # ✅ 12 роутов
-│   │   ├── main.tsx                # Entry point
-│   │   └── global.css              # Global styles
-│   │
-│   ├── .env / .env.example         # Переменные окружения
-│   ├── .env.production             # Production env
-│   ├── index.html                  # HTML template
-│   ├── tailwind.config.js          # Tailwind конфигурация
-│   ├── vite.config.ts              # Vite конфигурация
-│   └── package.json                # Dependencies
-│
-├── 📁 backend/                     # Express API
-│   ├── 📁 src/
-│   │   ├── 📁 config/              # (3 файла)
-│   │   │   ├── database.ts         # ✅ Prisma client
-│   │   │   ├── telegram.ts         # Telegram config
-│   │   │   └── index.ts            # Config exports
-│   │   │
-│   │   ├── 📁 controllers/         # (5 контроллеров)
-│   │   │   ├── productController.ts
-│   │   │   ├── categoryController.ts
-│   │   │   ├── cartController.ts
-│   │   │   ├── orderController.ts  # ✅ Zod validation
-│   │   │   └── userController.ts
-│   │   │
-│   │   ├── 📁 services/            # (6 сервисов)
-│   │   │   ├── productService.ts
+│   │   │   ├── api.ts
+│   │   │   ├── cartService.ts          # ✅ variantId в addItem
 │   │   │   ├── categoryService.ts
-│   │   │   ├── cartService.ts
+│   │   │   ├── productService.ts
 │   │   │   ├── orderService.ts
+│   │   │   └── adminService.ts
+│   │   │
+│   │   ├── 📁 hooks/
+│   │   ├── 📁 types/
+│   │   │   └── index.ts                # ✅ ProductVariant, WholesalePriceTier
+│   │   └── 📁 utils/
+│
+├── 📁 backend/
+│   ├── 📁 src/
+│   │   ├── 📁 config/
+│   │   ├── 📁 controllers/         # (5 контроллеров)
+│   │   ├── 📁 services/            # (6 сервисов)
+│   │   │   ├── productService.ts       # ✅ enrichProductData + variants
+│   │   │   ├── categoryService.ts      # ✅ getWholesaleDiscount()
+│   │   │   ├── cartService.ts          # ✅ variant + wholesale calc
+│   │   │   ├── orderService.ts         # ✅ variant + wholesale in order
 │   │   │   ├── userService.ts
-│   │   │   └── telegramService.ts  # ✅ Уведомления админу
-│   │   │
-│   │   ├── 📁 middleware/          # (4 файла)
-│   │   │   ├── auth.ts             # ✅ Telegram initData auth
-│   │   │   ├── errorHandler.ts     # Обработка ошибок
-│   │   │   ├── rateLimiter.ts      # Rate limiting
-│   │   │   └── cors.ts             # CORS config
-│   │   │
-│   │   ├── 📁 routes/              # (6 файлов)
-│   │   │   ├── index.ts            # ✅ Роутер
+│   │   │   └── telegramService.ts
+│   │   ├── 📁 middleware/
+│   │   ├── 📁 routes/              # (7 файлов)
+│   │   │   ├── index.ts
 │   │   │   ├── productRoutes.ts
 │   │   │   ├── categoryRoutes.ts
 │   │   │   ├── cartRoutes.ts
 │   │   │   ├── orderRoutes.ts
-│   │   │   └── userRoutes.ts
-│   │   │
-│   │   ├── 📁 utils/               # (3 файла)
-│   │   │   ├── logger.ts           # ✅ Winston logger
-│   │   │   ├── helpers.ts
-│   │   │   └── validators.ts
-│   │   │
-│   │   ├── 📁 types/               # (1 файл)
-│   │   ├── app.ts                  # ✅ Express + Helmet + CORS
-│   │   └── server.ts               # Server startup
+│   │   │   ├── userRoutes.ts
+│   │   │   ├── adminRoutes.ts          # ✅ CRUD variants
+│   │   │   └── wholesaleRoutes.ts      # ✅ Через категорию
+│   │   └── 📁 utils/
 │   │
-│   ├── 📁 bot/                     # (4 TS + compiled JS)
-│   │   ├── index.ts                # ✅ Bot initialization
-│   │   ├── commands.ts             # ✅ /start, /catalog, /cart
-│   │   ├── handlers.ts             # ✅ Admin callbacks
-│   │   └── keyboards.ts            # Inline keyboards
+│   ├── 📁 bot/
+│   │   ├── index.ts
+│   │   ├── commands.ts
+│   │   ├── handlers.ts
+│   │   └── keyboards.ts
 │   │
 │   ├── 📁 prisma/
-│   │   ├── schema.prisma           # ✅ 11 моделей + 4 enum
-│   │   ├── seed.ts                 # ✅ Seeding script (16KB)
-│   │   └── 📁 migrations/          # DB migrations
+│   │   ├── schema.prisma               # ✅ 12 моделей + 4 enum
+│   │   ├── seed.ts
+│   │   └── test-seed.ts                # 🆕 Тестовые данные
 │   │
-│   ├── 📁 data/                    # JSON данные товаров
-│   │   ├── pots.json               # 📦 117KB - горшки
-│   │   ├── artificial_plants.json  # 📦 17KB - искусств. растения
-│   │   └── plant_stands.json       # 📦 29KB - подставки
-│   │
-│   ├── Dockerfile                  # ✅ Production ready
-│   ├── .env / .env.example         # Переменные окружения
-│   └── package.json                # Dependencies
+│   └── 📁 data/
 │
-├── render.yaml                     # ✅ Render deployment config
-├── project_review.md               # ◀ Этот файл
-├── README.md                       # Документация проекта
-└── .gitignore
+├── render.yaml
+├── README.md                           # ◀ Этот файл
+└── project_review.md                   # Старая документация
 ```
 
 ---
 
 ## 🗄️ База данных
 
-### Prisma Schema (11 моделей + 4 enum)
+### Prisma Schema (12 моделей + 4 enum)
 
-| Модель | Описание | Связи |
-|--------|----------|-------|
-| `User` | Пользователи Telegram | → Cart, Orders, Favorites, Addresses |
-| `Address` | Адреса доставки | → User, Orders |
-| `Category` | Категории товаров | → Products |
-| `Product` | Товары (горшки, растения, подставки) | → Category, Images, Colors, CartItems |
-| `ProductImage` | Изображения товаров | → Product |
-| `ProductColor` | Варианты цветов с модификатором цены | → Product |
-| `Cart` | Корзина пользователя | → User, CartItems |
-| `CartItem` | Товары в корзине | → Cart, Product |
-| `Order` | Заказы | → User, Address, OrderItems |
-| `OrderItem` | Товары в заказе (снапшот данных) | → Order, Product |
-| `Favorite` | Избранные товары | → User, Product |
+| Модель                   | Описание                         | Связи                                               |
+| ------------------------ | -------------------------------- | --------------------------------------------------- |
+| `User`                   | Пользователи Telegram            | → Cart, Orders, Favorites, Addresses                |
+| `Address`                | Адреса доставки                  | → User, Orders                                      |
+| `Category`               | Категории товаров                | → Products, **WholesaleTemplate**                   |
+| `Product`                | Товары                           | → Category, Images, Colors, **Variants**, CartItems |
+| `ProductImage`           | Изображения товаров              | → Product                                           |
+| `ProductColor`           | Варианты цветов                  | → Product                                           |
+| **`ProductVariant`**     | **🆕 Варианты размеров (S/M/L)** | **→ Product, CartItems, OrderItems**                |
+| `Cart`                   | Корзина пользователя             | → User, CartItems                                   |
+| `CartItem`               | Товары в корзине                 | → Cart, Product, **Variant**                        |
+| `Order`                  | Заказы                           | → User, Address, OrderItems                         |
+| `OrderItem`              | Товары в заказе                  | → Order, Product, **Variant**                       |
+| `Favorite`               | Избранные товары                 | → User, Product                                     |
+| `WholesalePriceTemplate` | Шаблоны оптовых скидок           | → **Categories**, Tiers                             |
+| `WholesalePriceTier`     | Пороги скидок (от X шт = Y%)     | → Template                                          |
+
+### 🆕 Модель ProductVariant
+
+```prisma
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String
+  size          String        // "S", "M", "L", "XL"
+  labelRu       String        // "Маленький (50 см)"
+  labelUz       String        // "Kichik (50 sm)"
+  price         Int           // Своя цена для каждого размера
+  oldPrice      Int?
+  sku           String?       // Артикул варианта
+  inStock       Boolean  @default(true)
+  stockQuantity Int      @default(0)
+  dimensions    Json?         // { height_cm: 50, diameter_cm: 25 }
+  sortOrder     Int      @default(0)
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@unique([productId, size])
+  @@map("product_variants")
+}
+```
+
+### Архитектура оптовых цен
+
+```
+WholesalePriceTemplate
+  ├── tiers: [5шт→5%, 10шт→10%, 25шт→15%, 50шт→20%]
+  │
+  ├── → Category "Искусственные деревья"
+  │     ├── Product "Дерево X" → автоматически получает скидку
+  │     ├── Product "Пальма Y" → автоматически получает скидку
+  │     └── Product "Бамбук Z" → автоматически получает скидку
+  │
+  └── → Category "Горшки"
+        ├── Product "Горшок A" → автоматически получает скидку
+        └── Product "Горшок B" → автоматически получает скидку
+```
 
 ### Enums
 
 ```prisma
 enum OrderStatus {
-  PENDING      // Ожидает подтверждения
-  CONFIRMED    // Подтверждён
-  PROCESSING   // Готовится
-  SHIPPED      // Отправлен
-  DELIVERED    // Доставлен
-  CANCELLED    // Отменён
-  RETURNED     // Возврат
+  PENDING | CONFIRMED | PROCESSING | SHIPPED | DELIVERED | CANCELLED | RETURNED
 }
 
 enum DeliveryType {
-  PICKUP       // Самовывоз
-  DELIVERY     // Доставка
+  PICKUP | DELIVERY
 }
 
 enum PaymentMethod {
-  CASH         // Наличные
-  CARD         // Карта при получении
-  PAYME        // Payme
-  CLICK        // Click
-  UZUM         // Uzum Bank
+  CASH | CARD | PAYME | CLICK | UZUM
 }
 
 enum PaymentStatus {
-  PENDING      // Ожидает
-  PAID         // Оплачено
-  FAILED       // Ошибка
-  REFUNDED     // Возврат
+  PENDING | PAID | FAILED | REFUNDED
 }
 ```
-
-### Индексы для оптимизации
-
-- `products`: categoryId, price, isActive+isFeatured, slug
-- `orders`: userId, status, createdAt, orderNumber
 
 ---
 
 ## 🔌 API Endpoints
 
 ### Base URL
+
 ```
-Development: http://localhost:3001/api
-Production:  https://dekorhouse-api.onrender.com/api
+Production: https://dekorhouse-api.onrender.com/api
 ```
 
-### Реализованные Endpoints
+### 🏷️ Categories
 
-#### 🏷️ Categories
-| Method | Endpoint | Описание |
-|--------|----------|----------|
-| GET | `/categories` | Список всех категорий |
-| GET | `/categories/:slug` | Категория по slug |
+| Method | Endpoint            | Описание                             |
+| ------ | ------------------- | ------------------------------------ |
+| GET    | `/categories`       | Список категорий + wholesaleTemplate |
+| GET    | `/categories/:slug` | Категория по slug                    |
 
-#### 📦 Products
-| Method | Endpoint | Описание |
-|--------|----------|----------|
-| GET | `/products` | Пагинация, сортировка, фильтры |
-| GET | `/products/featured` | Популярные товары |
-| GET | `/products/new` | Новинки |
-| GET | `/products/search?q=` | Поиск по названию/коду |
-| GET | `/products/:slug` | Товар по slug |
+### 📦 Products
 
-#### 🛒 Cart
-| Method | Endpoint | Описание |
-|--------|----------|----------|
-| GET | `/cart` | Получить корзину |
-| POST | `/cart/items` | Добавить товар |
-| PATCH | `/cart/items/:id` | Изменить количество |
-| DELETE | `/cart/items/:id` | Удалить товар |
-| DELETE | `/cart` | Очистить корзину |
+| Method | Endpoint              | Описание                                          |
+| ------ | --------------------- | ------------------------------------------------- |
+| GET    | `/products`           | Пагинация, сортировка, фильтры                    |
+| GET    | `/products/featured`  | Популярные товары                                 |
+| GET    | `/products/new`       | Новинки                                           |
+| GET    | `/products/search?q=` | Поиск                                             |
+| GET    | `/products/:slug`     | Товар по slug **(+ variants, wholesaleTemplate)** |
 
-#### 📋 Orders
-| Method | Endpoint | Описание |
-|--------|----------|----------|
-| GET | `/orders` | История заказов |
-| GET | `/orders/:id` | Детали заказа |
-| POST | `/orders` | Создать заказ (Zod validation) |
-| PATCH | `/orders/:id/cancel` | Отменить заказ |
+### 🛒 Cart
 
-#### 👤 User
-| Method | Endpoint | Описание |
-|--------|----------|----------|
-| GET | `/user/profile` | Данные профиля |
-| PATCH | `/user/profile` | Обновить профиль |
-| GET | `/user/addresses` | Список адресов |
-| POST | `/user/addresses` | Добавить адрес |
-| PATCH | `/user/addresses/:id` | Редактировать адрес |
-| DELETE | `/user/addresses/:id` | Удалить адрес |
+| Method | Endpoint          | Описание                         |
+| ------ | ----------------- | -------------------------------- |
+| GET    | `/cart`           | Получить корзину                 |
+| POST   | `/cart/items`     | Добавить товар **(+ variantId)** |
+| PATCH  | `/cart/items/:id` | Изменить количество              |
+| DELETE | `/cart/items/:id` | Удалить товар                    |
+| DELETE | `/cart`           | Очистить корзину                 |
 
-#### 🔧 System
-| Method | Endpoint | Описание |
-|--------|----------|----------|
-| GET | `/health` | Health check |
+### 📋 Orders
+
+| Method | Endpoint             | Описание                                 |
+| ------ | -------------------- | ---------------------------------------- |
+| GET    | `/orders`            | История заказов                          |
+| GET    | `/orders/:id`        | Детали заказа **(+ variantSize)**        |
+| POST   | `/orders`            | Создать заказ **(+ wholesale discount)** |
+| PATCH  | `/orders/:id/cancel` | Отменить заказ                           |
+
+### 💰 Wholesale
+
+| Method | Endpoint                 | Описание                                      |
+| ------ | ------------------------ | --------------------------------------------- |
+| GET    | `/wholesale/product/:id` | Оптовые цены для товара **(через категорию)** |
+| GET    | `/wholesale/calculate`   | Рассчитать цену **(+ variantId)**             |
+
+### 👨‍💼 Admin
+
+| Method | Endpoint                             | Описание                           |
+| ------ | ------------------------------------ | ---------------------------------- |
+| GET    | `/admin/products`                    | Список товаров **(+ variants)**    |
+| POST   | `/admin/products`                    | Создать товар **(+ variants[])**   |
+| PUT    | `/admin/products/:id`                | Обновить товар **(+ variants[])**  |
+| GET    | `/admin/products/:id/variants`       | 🆕 Варианты товара                 |
+| POST   | `/admin/products/:id/variants`       | 🆕 Добавить вариант                |
+| PUT    | `/admin/products/:pid/variants/:vid` | 🆕 Обновить вариант                |
+| DELETE | `/admin/products/:pid/variants/:vid` | 🆕 Удалить вариант                 |
+| GET    | `/admin/categories`                  | Категории + wholesaleTemplate      |
+| GET    | `/admin/wholesale-templates`         | Шаблоны **(+ \_count.categories)** |
+| DELETE | `/admin/wholesale-templates/:id`     | Удалить **(отвязать категории)**   |
 
 ---
 
 ## ⚙️ Функциональность
 
-### 👤 Для покупателей (Frontend)
+### 👤 Для покупателей (Telegram Mini App)
 
-| Функция | Описание | Статус |
-|---------|----------|--------|
-| 🏠 Главная | Категории, популярные товары, новинки | ✅ |
-| 📂 Каталог | Просмотр по категориям с фильтрами | ✅ |
-| 🔍 Поиск | Поиск по названию и коду товара | ✅ |
-| 📦 Карточка товара | Галерея фото, описание, цвета, размеры | ✅ |
-| 🛒 Корзина | Добавление, изменение количества, удаление | ✅ |
-| 📋 Оформление заказа | Адрес, способ оплаты, комментарий | ✅ |
-| 📜 История заказов | Список заказов и их статусы | ✅ |
-| ❤️ Избранное | Сохранение понравившихся товаров (localStorage) | ✅ |
-| 🌐 Мультиязычность | UZ / RU переключение (Zustand + persist) | ✅ |
-| 👤 Профиль | Управление данными и адресами | ✅ |
-| 📱 Telegram Integration | WebApp SDK, auth, haptic feedback | ✅ |
+| Функция                                         | Статус |
+| ----------------------------------------------- | ------ |
+| 🏠 Главная — категории, популярные, новинки     | ✅     |
+| 📂 Каталог с фильтрами и сортировкой            | ✅     |
+| 🔍 Поиск по названию и коду                     | ✅     |
+| 📦 Карточка товара — галерея, описание, цвета   | ✅     |
+| 📏 **Выбор размера (S/M/L) с автосменой цены**  | ✅ 🆕  |
+| 💰 **Таблица оптовых цен из категории**         | ✅ 🆕  |
+| 📊 **Ценовой диапазон в каталоге (от X до Y)**  | ✅ 🆕  |
+| 🛒 Корзина **(с отображением размера)**         | ✅ 🆕  |
+| 📋 Оформление заказа **(с размером и скидкой)** | ✅ 🆕  |
+| 📜 История заказов                              | ✅     |
+| ❤️ Избранное                                    | ✅     |
+| 🌐 Мультиязычность UZ/RU                        | ✅     |
+| 👤 Профиль и адреса                             | ✅     |
+| 📱 Telegram SDK, auth, haptic                   | ✅     |
+
+### 👨‍💼 Для администратора (Админ-панель)
+
+| Функция                                           | Статус |
+| ------------------------------------------------- | ------ |
+| 📊 Дашборд — статистика                           | ✅     |
+| 📦 Управление товарами                            | ✅     |
+| 📏 **Создание/редактирование вариантов размеров** | ✅ 🆕  |
+| ⚡ **Быстрое добавление S/M/L**                   | ✅ 🆕  |
+| 📂 Управление категориями                         | ✅     |
+| 💰 **Привязка оптовых шаблонов к категориям**     | ✅ 🆕  |
+| 📋 Управление заказами **(с размерами)**          | ✅ 🆕  |
+| 👥 База клиентов + CRM                            | ✅     |
+| 📊 **Оптовые шаблоны (счётчик категорий)**        | ✅ 🆕  |
+| 📬 Уведомления в Telegram                         | ✅     |
 
 ### 👨‍💼 Для администратора (Telegram Bot)
 
-| Функция | Описание | Статус |
-|---------|----------|--------|
-| 📬 Новые заказы | Уведомление при создании заказа | ✅ |
-| ✅ Подтверждение | Inline кнопки подтверждения | ✅ |
-| ❌ Отмена | Inline кнопки отмены | ✅ |
-| 📋 Детали заказа | Просмотр товаров и данных клиента | ✅ |
-| 📦 Изменение статуса | SHIPPED, DELIVERED | ✅ |
-
-### 🔐 Безопасность
-
-| Функция | Статус |
-|---------|--------|
-| Telegram initData Validation | ✅ |
-| Helmet HTTP Security Headers | ✅ |
-| Rate Limiting (express-rate-limit) | ✅ |
-| CORS Configuration | ✅ |
-| Zod Input Validation | ✅ |
+| Функция                                   | Статус |
+| ----------------------------------------- | ------ |
+| 📬 Уведомление о новых заказах            | ✅     |
+| ✅ Подтверждение / ❌ Отмена заказа       | ✅     |
+| 📦 Изменение статуса (SHIPPED, DELIVERED) | ✅     |
 
 ---
 
-## 📊 Статус реализации
+## 🆕 Новое в ТЗ 3.0
 
-### Frontend (100%)
+### 1. Вариации товара по размеру
 
-| Компонент | Файлы | Состояние |
-|-----------|-------|-----------|
-| Layout (Header, BottomNav) | 4 | ✅ Готово |
-| UI Components | 9 | ✅ Готово |
-| Product Components | 4 | ✅ Готово |
-| Cart Components | 4 | ✅ Готово |
-| Category Components | 2 | ✅ Готово |
-| Order Components | 2 | ✅ Готово |
-| Common Components | 3 | ✅ Готово |
-| Pages | 12 | ✅ Готово |
-| Zustand Stores | 4 | ✅ Готово |
-| API Services | 6 | ✅ Готово |
-| TypeScript Types | 1 | ✅ Полные типы |
-| i18n (UZ/RU) | - | ✅ Встроено в languageStore |
+**Требование:** Один товар = несколько размеров = разные цены. Без дублирования карточек.
 
-### Backend (100%)
+**Реализация:**
 
-| Компонент | Файлы | Состояние |
-|-----------|-------|-----------|
-| Express Server | 2 | ✅ Готово |
-| Prisma Schema | 1 | ✅ 11 моделей + 4 enum |
-| Controllers | 5 | ✅ Готово |
-| Services | 6 | ✅ Готово |
-| Routes | 6 | ✅ Все endpoints |
-| Middleware | 4 | ✅ Готово |
-| Telegram Bot | 4 | ✅ Готово |
-| Bot Handlers | 1 | ✅ Admin callbacks |
-| Seed Script | 1 | ✅ 16KB |
-| Dockerfile | 1 | ✅ Production ready |
+```
+Товар: "Декоративное дерево X"
+  ├── Размер S — 1 000 000 сум
+  ├── Размер M — 1 300 000 сум
+  └── Размер L — 1 700 000 сум
 
-### Данные товаров (163KB)
+Всё в одной карточке с выбором размера.
+```
 
-| Файл | Размер | Описание |
-|------|--------|----------|
-| pots.json | 117 KB | Горшки и кашпо (~100+ товаров) |
-| artificial_plants.json | 17 KB | Искусственные растения (~20+ товаров) |
-| plant_stands.json | 29 KB | Подставки для растений (~50+ товаров) |
+**Компоненты:**
 
----
+- `ProductVariant` модель в БД
+- `SizeSelector` компонент (аналог ColorSelector)
+- Автоматическая смена цены при выборе размера
+- Ценовой диапазон "от X до Y" в каталоге
+- Бейдж количества размеров на карточке
+- Размер + цвет = уникальная позиция в корзине
+- Размер сохраняется в заказе (`variantSize`)
 
-## ⚠️ Известные проблемы / TODO
+**Формула цены:**
 
-### ✅ Завершено (Production Ready)
+```
+Финальная цена = Цена варианта + Модификатор цвета - Оптовая скидка
+```
 
-1. ✅ **База данных** - PostgreSQL на Supabase настроена и работает
-2. ✅ **Seed данных** - Товары загружены в БД (170+ SKU)
-3. ✅ **BOT_TOKEN** - Telegram бот настроен и запущен
-4. ✅ **Изображения товаров** - Загружены в Supabase Storage
-5. ✅ **Telegram Bot Webhook** - Настроен и работает
-6. ✅ **Admin Panel** - Админ-панель реализована и функционирует
+### 2. Оптовые цены по категориям
 
-### ✅ Завершено (TZ 2.0)
+**Требование:** Скидка задаётся на уровне категории, автоматически применяется ко всем товарам.
 
-1. ✅ **Оптовые цены** - Шаблоны скидок, автоматический расчет при увеличении количества
-2. ✅ **Рекомендации товаров** - Алгоритм подбора похожих товаров
-3. ✅ **Улучшенный заказ** - Геолокация и расширенная форма
-4. ✅ **База клиентов** - Расширенная CRM в админке
-5. ✅ **Шаблоны категорий** - Автозаполнение описаний товаров
+**Реализация:**
 
-### 🟢 Опциональные фичи (Low Priority)
+```
+Категория "Искусственные деревья"
+  └── Оптовый шаблон: "Стандартная скидка"
+       ├── от 5 шт  → -5%
+       ├── от 10 шт → -10%
+       ├── от 25 шт → -15%
+       └── от 50 шт → -20%
 
-1. **Redis кэширование** - Для улучшения производительности
-2. **Push уведомления** - Уведомления пользователям о статусе заказа
-3. **Payment Integration** - Интеграция Payme/Click/Uzum
-4. **Advanced Analytics** - Расширенная статистика и отчеты
+Все товары в категории автоматически получают скидку.
+```
+
+**Как работает:**
+
+1. Админ создаёт оптовый шаблон с порогами
+2. Админ привязывает шаблон к категории
+3. Все товары в категории автоматически получают скидку
+4. На странице товара — таблица оптовых цен
+5. При увеличении количества — активный порог подсвечивается
+6. При создании заказа — скидка рассчитывается и сохраняется
+
+**Приоритет:**
+
+```
+Размер товара → Цена варианта
+Цвет → + Модификатор цвета
+Количество → Оптовая скидка из категории
+= Финальная цена
+```
+
+### 3. Админ-панель
+
+**Новые возможности:**
+
+| Страница              | Что добавлено                             |
+| --------------------- | ----------------------------------------- |
+| Редактирование товара | Секция "Варианты размеров" с CRUD         |
+| Редактирование товара | Кнопка "Быстро добавить S/M/L"            |
+| Редактирование товара | Инфо об оптовой скидке категории          |
+| Список товаров        | Колонка "Размеры" (бейджи S/M/L)          |
+| Список товаров        | Ценовой диапазон для товаров с вариантами |
+| Заказы                | Бейдж размера в деталях заказа            |
+| Заказы                | Отображение оптовой скидки                |
+| Оптовые шаблоны       | Счётчик категорий (не товаров)            |
+| Оптовые шаблоны       | Список привязанных категорий              |
+| Оптовые шаблоны       | Превью расчёта цен                        |
+| Категории             | Привязка оптового шаблона                 |
 
 ---
 
@@ -485,100 +505,145 @@ Production:  https://dekorhouse-api.onrender.com/api
 ### Environment Variables
 
 #### Frontend (.env)
+
 ```env
 VITE_API_URL=https://dekorhouse-api.onrender.com/api
 VITE_BOT_USERNAME=DekorHouseBot
 ```
 
 #### Backend (.env)
-```env
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/dekorhouse
 
-# Telegram
+```env
+DATABASE_URL=postgresql://user:password@host:6543/postgres?pgbouncer=true
+DIRECT_URL=postgresql://user:password@host:5432/postgres
+
 BOT_TOKEN=123456789:ABC-DEF...
 ADMIN_CHAT_ID=123456789
 
-# Server
 PORT=3001
 FRONTEND_URL=https://dekorhouse-web.onrender.com
 NODE_ENV=production
 ```
 
-### Dockerfile (готов)
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npx prisma generate
-RUN npm run build
-EXPOSE 3001
-CMD ["npm", "start"]
+### Render Build Command
+
+```bash
+npm install && npx prisma generate && npx prisma db push --skip-generate --accept-data-loss && npm run build
 ```
 
-### Render.yaml (готов)
-Конфигурация для деплоя на Render:
-- **dekorhouse-api** - Backend Web Service (Frankfurt)
-- **dekorhouse-web** - Frontend Static Site
+### Render Start Command
 
-### Telegram Bot Setup
-```
-1. Создать бота через @BotFather
-2. Получить BOT_TOKEN
-3. Настроить Menu Button → Web App URL
-4. Настроить команды:
-   /start - Ishni boshlash
-   /catalog - Katalog
-   /cart - Savat
-   /orders - Buyurtmalarim
-   /help - Yordam
+```bash
+npm start
 ```
 
 ---
 
-## 📈 Метрики успеха
+## 🧪 Тестирование
 
-| Метрика | Цель |
-|---------|------|
-| Время загрузки | < 2 сек |
-| Lighthouse Score | > 90 |
-| Конверсия в заказ | > 3% |
+### Создание тестовых данных
+
+```bash
+cd backend
+
+# Установить переменные production БД
+$env:DATABASE_URL="postgresql://..."
+$env:DIRECT_URL="postgresql://..."
+
+# Запустить seed
+npx ts-node prisma/test-seed.ts
+```
+
+### Чек-лист тестирования
+
+#### Вариации по размеру
+
+```
+☐ Товар с 3 размерами — кнопки S/M/L видны
+☐ Выбор M → цена меняется
+☐ Выбор L → цена меняется
+☐ Размер + Цвет — цена складывается
+☐ XL нет в наличии — серый, disabled
+☐ Каталог — ценовой диапазон "от X до Y"
+☐ Каталог — бейдж с количеством размеров
+☐ Товар без вариантов — обычная карточка
+```
+
+#### Оптовые цены
+
+```
+☐ Таблица оптовых цен на странице товара
+☐ Количество 5 → строка -5% подсвечивается
+☐ Количество 10 → строка -10% подсвечивается
+☐ Кнопка показывает цену со скидкой
+☐ Скидка работает поверх размера
+☐ Товар без вариантов тоже получает скидку
+```
+
+#### Корзина
+
+```
+☐ Разные размеры = разные позиции
+☐ Бейдж размера виден в корзине
+☐ Цены разные для разных размеров
+```
+
+#### Заказ
+
+```
+☐ Размер виден в summary при оформлении
+☐ Заказ создаётся успешно
+☐ В админке — размер виден в деталях заказа
+```
+
+#### Админка
+
+```
+☐ Создание товара с вариантами S/M/L
+☐ Кнопка "Быстро добавить S/M/L" работает
+☐ Редактирование вариантов
+☐ Привязка оптового шаблона к категории
+☐ Счётчик категорий в шаблонах
+```
 
 ---
 
-## 🔄 Changelog
+## 📈 Changelog
 
-### February 2, 2026 (Latest)
-- 📋 **TZ 2.0 Planning Started**
-- ✅ Создан детальный план реализации новых требований
-- 📝 Планируется добавление:
-  - Оптовые цены с автоматическим расчетом скидок
-  - Рекомендации похожих товаров на странице товара  
-  - Виджет "Уникальное предложение" со скидками
-  - Улучшенный flow оформления заказа с геолокацией
-  - Админ-панель: шаблоны оптовых цен, база клиентов, шаблоны товаров по категориям
-- 🔗 План реализации в artifacts/implementation_plan.md
+### February 11, 2026 — ТЗ 3.0 ✅
+
+- 🆕 **Вариации товара по размеру** (ProductVariant)
+  - Модель ProductVariant в БД
+  - SizeSelector компонент
+  - Автосмена цены при выборе размера
+  - Ценовой диапазон в каталоге
+  - Размер в корзине, заказе, админке
+- 🆕 **Оптовые цены по категориям**
+  - Оптовая скидка задаётся на уровне категории (не товара)
+  - Автоприменение ко всем товарам категории
+  - Таблица оптовых цен на странице товара
+  - Расчёт скидки при заказе
+- 🆕 **Обновление админ-панели**
+  - CRUD вариантов размеров
+  - Быстрое добавление S/M/L
+  - Размер в заказах
+  - Счётчик категорий в шаблонах
+
+### February 3, 2026 — ТЗ 2.0 ✅
+
+- Оптовые цены с шаблонами скидок
+- Рекомендации товаров
+- Геолокация в заказах
+- База клиентов CRM
+- Шаблоны описаний по категориям
 
 ### January 21, 2026
-- ✅ Полная переработка документации проекта
-- ✅ Создан новый comprehensive README.md
-- ✅ Обновлён project_review.md с пометкой устаревшей версии
-- ✅ Добавлена детальная архитектура проекта
-- ✅ Обновлены версии всех зависимостей
-- ✅ Актуализирована структура файлов (29 frontend компонентов, 31 backend файл)
-- ✅ Добавлена информация об Admin Panel (6 страниц)
-- ✅ Расширена документация по API endpoints
-- ✅ Добавлены инструкции по деплою на Render
+
+- Comprehensive README.md
+- Admin Panel (6 страниц)
 
 ### December 14, 2025
-- ✅ Обновлён полный обзор проекта
-- ✅ Актуализирована структура файлов (28 компонентов, 12 страниц)
-- ✅ Обновлены версии зависимостей из package.json
-- ✅ Уточнено количество моделей Prisma (11 моделей + 4 enum)
-- ✅ Добавлены размеры файлов данных товаров
-- ✅ Создан README.md
 
-### Previous
-- ✅ Первоначальная документация проекта
+- Initial release
+- Full e-commerce functionality
+- Telegram Mini App integration

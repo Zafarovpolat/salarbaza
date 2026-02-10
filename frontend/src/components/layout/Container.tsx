@@ -1,14 +1,16 @@
-import { cn } from '@/utils/helpers'
-
 interface ContainerProps {
-    children: React.ReactNode
-    className?: string
+  children: React.ReactNode
+  className?: string
 }
 
-export function Container({ children, className }: ContainerProps) {
-    return (
-        <div className={cn('container px-4 mx-auto max-w-lg', className)}>
-            {children}
-        </div>
-    )
+export function Container({ children, className = '' }: ContainerProps) {
+  return (
+    <div className={`
+      max-w-[1280px] mx-auto
+      px-4 sm:px-6 lg:px-8
+      ${className}
+    `}>
+      {children}
+    </div>
+  )
 }
