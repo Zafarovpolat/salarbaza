@@ -1,9 +1,11 @@
+// backend/src/routes/wholesaleRoutes.ts
+
 import { Router } from 'express'
 import { prisma } from '../config/database'
 
 const router = Router()
 
-// Получить оптовые цены для товара
+// ✅ Получить оптовые цены для товара (через категорию)
 router.get('/product/:productId', async (req, res) => {
     try {
         const { productId } = req.params
@@ -11,12 +13,21 @@ router.get('/product/:productId', async (req, res) => {
         const product = await prisma.product.findUnique({
             where: { id: productId },
             include: {
-                wholesaleTemplate: {
+                // ✅ Оптовая цена теперь через категорию
+                category: {
                     include: {
-                        tiers: {
-                            orderBy: { minQuantity: 'asc' }
+                        wholesaleTemplate: {
+                            include: {
+                                tiers: {
+                                    orderBy: { minQuantity: 'asc' }
+                                }
+                            }
                         }
                     }
+                },
+                // ✅ Включаем варианты для расчёта цен
+                variants: {
+                    orderBy: { sortOrder: 'asc' }
                 }
             }
         })
@@ -25,9 +36,10 @@ router.get('/product/:productId', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Product not found' })
         }
 
-        // Если у товара нет шаблона, берём дефолтный
-        let tiers = product.wholesaleTemplate?.tiers || []
+        // ✅ Берём тиры из категории
+        let tiers = product.category?.wholesaleTemplate?.tiers || []
 
+        // Если у категории нет шаблона — ищем дефолтный
         if (tiers.length === 0) {
             const defaultTemplate = await prisma.wholesalePriceTemplate.findFirst({
                 where: { isDefault: true },
@@ -40,7 +52,36 @@ router.get('/product/:productId', async (req, res) => {
             tiers = defaultTemplate?.tiers || []
         }
 
-        // Рассчитываем цены для каждого порога
+        // ✅ Если есть варианты — рассчитываем для каждого варианта
+        if (product.variants.length > 0) {
+            const variantPrices = product.variants.map(variant => ({
+                variantId: variant.id,
+                size: variant.size,
+                basePrice: variant.price,
+                wholesalePrices: tiers.map(tier => ({
+                    minQuantity: tier.minQuantity,
+                    discountPercent: tier.discountPercent,
+                    pricePerUnit: Math.round(variant.price * (1 - tier.discountPercent / 100))
+                }))
+            }))
+
+            return res.json({
+                success: true,
+                data: {
+                    productId: product.id,
+                    hasVariants: true,
+                    basePrice: product.price,
+                    variantPrices,
+                    // Также общие тиры для справки
+                    tiers: tiers.map(tier => ({
+                        minQuantity: tier.minQuantity,
+                        discountPercent: tier.discountPercent,
+                    }))
+                }
+            })
+        }
+
+        // Без вариантов — обычный расчёт
         const wholesalePrices = tiers.map(tier => ({
             minQuantity: tier.minQuantity,
             discountPercent: tier.discountPercent,
@@ -51,6 +92,7 @@ router.get('/product/:productId', async (req, res) => {
             success: true,
             data: {
                 productId: product.id,
+                hasVariants: false,
                 basePrice: product.price,
                 wholesalePrices
             }
@@ -61,10 +103,10 @@ router.get('/product/:productId', async (req, res) => {
     }
 })
 
-// Рассчитать цену для конкретного количества
+// ✅ Рассчитать цену для конкретного количества
 router.get('/calculate', async (req, res) => {
     try {
-        const { productId, quantity } = req.query
+        const { productId, quantity, variantId } = req.query
 
         if (!productId || !quantity) {
             return res.status(400).json({ success: false, message: 'productId and quantity required' })
@@ -75,13 +117,19 @@ router.get('/calculate', async (req, res) => {
         const product = await prisma.product.findUnique({
             where: { id: productId as string },
             include: {
-                wholesaleTemplate: {
+                // ✅ Оптовая через категорию
+                category: {
                     include: {
-                        tiers: {
-                            orderBy: { minQuantity: 'desc' }
+                        wholesaleTemplate: {
+                            include: {
+                                tiers: {
+                                    orderBy: { minQuantity: 'desc' }
+                                }
+                            }
                         }
                     }
-                }
+                },
+                variants: true,
             }
         })
 
@@ -89,7 +137,19 @@ router.get('/calculate', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Product not found' })
         }
 
-        let tiers = product.wholesaleTemplate?.tiers || []
+        // ✅ Определяем базовую цену (из варианта или из товара)
+        let basePrice = product.price
+        let selectedVariant = null
+
+        if (variantId && typeof variantId === 'string') {
+            selectedVariant = product.variants.find(v => v.id === variantId)
+            if (selectedVariant) {
+                basePrice = selectedVariant.price
+            }
+        }
+
+        // ✅ Берём тиры из категории
+        let tiers = product.category?.wholesaleTemplate?.tiers || []
 
         if (tiers.length === 0) {
             const defaultTemplate = await prisma.wholesalePriceTemplate.findFirst({
@@ -106,16 +166,18 @@ router.get('/calculate', async (req, res) => {
         const applicableTier = tiers.find(tier => qty >= tier.minQuantity)
 
         const discountPercent = applicableTier?.discountPercent || 0
-        const pricePerUnit = Math.round(product.price * (1 - discountPercent / 100))
+        const pricePerUnit = Math.round(basePrice * (1 - discountPercent / 100))
         const totalPrice = pricePerUnit * qty
-        const savings = (product.price * qty) - totalPrice
+        const savings = (basePrice * qty) - totalPrice
 
         res.json({
             success: true,
             data: {
                 productId: product.id,
+                variantId: selectedVariant?.id || null,
+                variantSize: selectedVariant?.size || null,
                 quantity: qty,
-                basePrice: product.price,
+                basePrice,
                 discountPercent,
                 pricePerUnit,
                 totalPrice,
@@ -142,7 +204,7 @@ router.post('/seed-default', async (req, res) => {
         const template = await prisma.wholesalePriceTemplate.create({
             data: {
                 name: 'Стандартный',
-                description: 'Базовые оптовые скидки для всех товаров',
+                description: 'Базовые оптовые скидки для всех категорий',
                 isDefault: true,
                 tiers: {
                     create: [
