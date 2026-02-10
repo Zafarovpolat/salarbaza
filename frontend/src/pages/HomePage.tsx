@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronRight, Sparkles, TrendingUp, Percent, Timer } from 'lucide-react'
+import { ChevronRight, Sparkles, TrendingUp, Clock, Heart, ShoppingBag } from 'lucide-react'
 import { useLanguageStore } from '@/store/languageStore'
 import { useCategories } from '@/hooks/useCategories'
 import { productService } from '@/services/productService'
@@ -9,299 +9,419 @@ import { Product } from '@/types'
 import { CategoryList } from '@/components/category/CategoryList'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { Container } from '@/components/layout/Container'
-import { getProductName } from '@/utils/helpers'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { getProductName, cn } from '@/utils/helpers'
+import { formatPrice } from '@/utils/formatPrice'
+import { useFavoritesStore } from '@/store/favoritesStore'
+import { useCartStore } from '@/store/cartStore'
+import toast from 'react-hot-toast'
 
 export function HomePage() {
-    const navigate = useNavigate()
-    const { t, language } = useLanguageStore()
-    const { categories, isLoading: categoriesLoading } = useCategories()
+  const navigate = useNavigate()
+  const { t, language } = useLanguageStore()
+  const { categories, isLoading: categoriesLoading } = useCategories()
+  const { isFavorite, toggleFavorite } = useFavoritesStore()
+  const { addItem } = useCartStore()
 
-    const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
-    const [newProducts, setNewProducts] = useState<Product[]>([])
-    const [saleProducts, setSaleProducts] = useState<Product[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [newProducts, setNewProducts] = useState<Product[]>([])
+  const [saleProducts, setSaleProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-    useEffect(() => {
-        async function fetchProducts() {
-            try {
-                setIsLoading(true)
-                const [featured, newOnes, sale] = await Promise.all([
-                    productService.getFeaturedProducts(6),
-                    productService.getNewProducts(6),
-                    productService.getSaleProducts(8),
-                ])
-                setFeaturedProducts(featured)
-                setNewProducts(newOnes)
-                setSaleProducts(sale)
-            } catch (error) {
-                console.error('Failed to fetch products:', error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchProducts()
-    }, [])
-
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('ru-RU').format(price)
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setIsLoading(true)
+        const [featured, newOnes, sale] = await Promise.all([
+          productService.getFeaturedProducts(6),
+          productService.getNewProducts(6),
+          productService.getSaleProducts(8),
+        ])
+        setFeaturedProducts(featured)
+        setNewProducts(newOnes)
+        setSaleProducts(sale)
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
+    fetchProducts()
+  }, [])
 
-    return (
-        <div className="pb-14">
-            {/* Hero Banner */}
-            <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative bg-gradient-to-br from-primary-500 to-primary-700 text-white"
+  const currency = language === 'uz' ? "so'm" : 'сум'
+
+  return (
+    <div className="pb-4">
+
+      {/* ===== HERO ===== */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="
+          relative overflow-hidden
+          mx-4 mt-3 rounded-3xl
+          min-h-[420px] md:min-h-[520px]
+          flex items-end
+        "
+      >
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-forest via-emerald to-sage z-0" />
+
+        {/* Pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.08] z-[1]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+
+        {/* Decorative circles */}
+        <div className="absolute -right-[60px] -top-10 w-[350px] h-[350px] rounded-full bg-white/5 z-[1]" />
+        <div className="absolute right-10 top-[60px] w-[180px] h-[180px] rounded-full bg-white/[0.04] z-[1]" />
+
+        {/* Leaf */}
+        <div className="absolute right-5 top-5 text-[100px] md:text-[160px] opacity-[0.12] z-[1] -rotate-[15deg]">🌿</div>
+
+        {/* Content */}
+        <div className="relative z-[2] p-7 md:p-10 text-white w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Badge variant="outline" className="mb-4">
+              <span className="w-1.5 h-1.5 bg-mint rounded-full animate-pulse-dot" />
+              {language === 'uz' ? "O'zbekistonda №1" : '№1 в Узбекистане'}
+            </Badge>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="font-display text-3xl md:text-[44px] font-medium leading-[1.15] mb-3 tracking-[-0.02em]"
+          >
+            {language === 'uz'
+              ? "Bezak va ko'kalamzorlashtirish san'ati"
+              : 'Искусство декора и озеленения'}
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="text-[15px] leading-[1.7] opacity-85 mb-6 max-w-[420px]"
+          >
+            {language === 'uz'
+              ? "Premium sun'iy daraxtlar, o'simliklar va gullar. Restoranlar, mehmonxonalar va xususiy uylar uchun."
+              : 'Премиальные искусственные деревья, растения и цветы. Проекты под ключ для ресторанов и домов.'}
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex gap-3 flex-wrap"
+          >
+            <button
+              onClick={() => navigate('/catalog')}
+              className="
+                inline-flex items-center gap-2
+                px-7 py-3.5
+                bg-white text-forest
+                rounded-full font-sans text-sm font-semibold
+                uppercase tracking-[0.04em]
+                transition-all duration-400 ease-smooth
+                hover:-translate-y-0.5 hover:shadow-button
+                active:translate-y-0
+              "
             >
-                <Container className="py-8">
-                    <div className="flex items-center justify-between">
-                        <div className="space-y-2">
-                            <h1 className="text-2xl font-bold font-display">
-                                {language === 'uz'
-                                    ? "Uyingiz uchun dekor"
-                                    : "Декор для вашего дома"}
-                            </h1>
-                            <p className="text-primary-100 text-sm">
-                                {language === 'uz'
-                                    ? "Eng yaxshi narxlarda sifatli mahsulotlar"
-                                    : "Качественные товары по лучшим ценам"}
-                            </p>
-                        </div>
-                        <div className="text-6xl">🪴</div>
-                    </div>
-                </Container>
-
-                {/* Wave decoration */}
-                <div className="absolute bottom-0 left-0 right-0">
-                    <svg viewBox="0 0 1440 40" fill="none" className="w-full">
-                        <path
-                            d="M0 40h1440V20c-120 10-240 15-360 15s-240-5-360-15-240-15-360-15-240 5-360 15v20z"
-                            fill="#f9fafb"
-                        />
-                    </svg>
-                </div>
-            </motion.section>
-
-            {/* Categories */}
-            <section className="py-6">
-                <Container>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-gray-900">
-                            {t('home.categories')}
-                        </h2>
-                        <button
-                            onClick={() => navigate('/catalog')}
-                            className="text-sm text-primary-600 font-medium flex items-center gap-1"
-                        >
-                            {t('home.viewAll')}
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <CategoryList
-                        categories={categories}
-                        isLoading={categoriesLoading}
-                        variant="scroll"
-                    />
-                </Container>
-            </section>
-
-            {/* 🔥 Sale Products - Спецпредложения */}
-            {saleProducts.length > 0 && (
-                <section className="py-6">
-                    <Container>
-                        {/* Header */}
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center">
-                                    <Percent className="w-4 h-4 text-red-500" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-semibold text-gray-900">
-                                        {language === 'uz' ? 'Maxsus takliflar' : 'Спецпредложения'}
-                                    </h2>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Sale Banner */}
-                        <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 mb-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                        <Timer className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <p className="text-white font-bold text-lg">
-                                            {language === 'uz' ? 'Chegirmalar!' : 'Скидки!'}
-                                        </p>
-                                        <p className="text-white/80 text-sm">
-                                            {language === 'uz'
-                                                ? `${saleProducts.length} ta mahsulot`
-                                                : `${saleProducts.length} товаров`}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-3xl">🎁</div>
-                            </div>
-                        </div>
-
-                        {/* Products Carousel */}
-                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                            {saleProducts.map((product, index) => {
-                                const name = getProductName(product, language)
-                                const image = product.images?.[0]?.url
-                                const discount = product.oldPrice
-                                    ? Math.round((1 - product.price / product.oldPrice) * 100)
-                                    : 0
-
-                                return (
-                                    <motion.div
-                                        key={product.id}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                    >
-                                        <Link
-                                            to={`/product/${product.slug}`}
-                                            className="flex-shrink-0 w-40 block group"
-                                        >
-                                            <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-                                                {/* Image */}
-                                                <div className="aspect-square bg-gray-50 relative overflow-hidden">
-                                                    {image ? (
-                                                        <img
-                                                            src={image}
-                                                            alt={name}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                            loading="lazy"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-3xl text-gray-200">
-                                                            🌿
-                                                        </div>
-                                                    )}
-
-                                                    {/* Discount Badge */}
-                                                    <div className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">
-                                                        -{discount}%
-                                                    </div>
-                                                </div>
-
-                                                {/* Info */}
-                                                <div className="p-3">
-                                                    <h4 className="text-sm text-gray-900 line-clamp-2 leading-tight min-h-[2.25rem]">
-                                                        {name}
-                                                    </h4>
-                                                    <div className="mt-2">
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-base font-bold text-green-600">
-                                                                {formatPrice(product.price)}
-                                                            </span>
-                                                            <span className="text-xs text-gray-500">
-                                                                {language === 'uz' ? 'soʻm' : 'сўм'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-xs text-gray-400 line-through">
-                                                            {formatPrice(product.oldPrice!)} {language === 'uz' ? 'soʻm' : 'сўм'}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                )
-                            })}
-                        </div>
-                    </Container>
-                </section>
-            )}
-
-            {/* Featured Products */}
-            <section className="py-6">
-                <Container>
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-primary-500" />
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                {t('home.featured')}
-                            </h2>
-                        </div>
-                        <button
-                            onClick={() => navigate('/catalog?featured=true')}
-                            className="text-sm text-primary-600 font-medium flex items-center gap-1"
-                        >
-                            {t('home.viewAll')}
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <ProductGrid
-                        products={featuredProducts}
-                        isLoading={isLoading}
-                    />
-                </Container>
-            </section>
-
-            {/* New Products */}
-            <section className="py-6">
-                <Container>
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-yellow-500" />
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                {t('home.new')}
-                            </h2>
-                        </div>
-                        <button
-                            onClick={() => navigate('/catalog?new=true')}
-                            className="text-sm text-primary-600 font-medium flex items-center gap-1"
-                        >
-                            {t('home.viewAll')}
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    <ProductGrid
-                        products={newProducts}
-                        isLoading={isLoading}
-                    />
-                </Container>
-            </section>
-
-            {/* Promo Banner */}
-            <section className="py-6">
-                <Container>
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate('/catalog')}
-                        className="bg-gradient-to-r from-secondary-100 to-secondary-200 
-                     rounded-2xl p-6 cursor-pointer"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="font-bold text-gray-900 text-lg mb-1">
-                                    {language === 'uz'
-                                        ? "Barcha mahsulotlar"
-                                        : "Все товары"}
-                                </h3>
-                                <p className="text-gray-600 text-sm">
-                                    {language === 'uz'
-                                        ? "170+ turdagi dekoratsiyalar"
-                                        : "170+ видов декора"}
-                                </p>
-                            </div>
-                            <div className="bg-white rounded-full p-3 shadow-md">
-                                <ChevronRight className="w-6 h-6 text-primary-600" />
-                            </div>
-                        </div>
-                    </motion.div>
-                </Container>
-            </section>
+              {language === 'uz' ? "Katalogni ko'rish" : 'Смотреть каталог'}
+            </button>
+          </motion.div>
         </div>
-    )
+      </motion.section>
+
+      {/* ===== STATS ===== */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="flex justify-center gap-2 py-6 px-4 flex-wrap"
+      >
+        {[
+          { number: '500+', labelRu: 'Товаров', labelUz: 'Mahsulotlar' },
+          { number: '150+', labelRu: 'Проектов', labelUz: 'Loyihalar' },
+          { number: '2', labelRu: 'Филиала', labelUz: 'Filial' },
+        ].map((stat) => (
+          <div
+            key={stat.number}
+            className="
+              flex flex-col items-center
+              py-3.5 px-5
+              bg-ivory rounded-2xl
+              flex-1 min-w-[100px] max-w-[160px]
+              border border-stone/20
+            "
+          >
+            <div className="font-display text-2xl font-semibold text-forest leading-[1.2]">
+              {stat.number}
+            </div>
+            <div className="text-[11px] text-medium-gray font-medium text-center mt-0.5">
+              {language === 'ru' ? stat.labelRu : stat.labelUz}
+            </div>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* ===== CATEGORIES ===== */}
+      <section className="py-6">
+        <Container>
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <h2 className="font-display text-2xl font-medium text-charcoal">
+                {t('home.categories')}
+              </h2>
+              <p className="text-sm text-medium-gray mt-1">
+                {language === 'uz' ? "Kerakli bo'limni tanlang" : 'Выберите интересующий раздел'}
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/catalog')}
+              className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300"
+            >
+              {t('home.viewAll')}
+              <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
+            </button>
+          </div>
+
+          <CategoryList
+            categories={categories}
+            isLoading={categoriesLoading}
+            variant="scroll"
+          />
+        </Container>
+      </section>
+
+      {/* ===== SALE PRODUCTS ===== */}
+      {saleProducts.length > 0 && (
+        <section className="
+          bg-gradient-to-br from-forest to-emerald
+          py-10 relative overflow-hidden
+        ">
+          {/* Decorative */}
+          <div className="absolute -top-[100px] -right-[100px] w-[400px] h-[400px] rounded-full bg-white/[0.04]" />
+          <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] rounded-full bg-white/[0.03]" />
+
+          <Container>
+            {/* Header */}
+            <div className="flex items-end justify-between mb-5 relative z-[2]">
+              <div>
+                <h2 className="font-display text-2xl font-medium text-white">
+                  {language === 'uz' ? 'Maxsus takliflar' : 'Специальные предложения'}
+                </h2>
+                <p className="text-sm text-white/70 mt-1">
+                  {language === 'uz' ? 'Tanlangan mahsulotlarga chegirma' : 'Скидки на избранные товары'}
+                </p>
+                <div className="inline-flex items-center gap-2 bg-white/[0.12] rounded-full px-4 py-2 mt-2 text-[13px] text-white/90 font-medium">
+                  <Clock className="w-4 h-4 text-warning" strokeWidth={2} />
+                  {language === 'uz' ? '3 kun qoldi' : 'Осталось 3 дня'}
+                </div>
+              </div>
+            </div>
+
+            {/* Cards carousel */}
+            <div className="relative z-[2] flex gap-3.5 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
+              {saleProducts.map((product, index) => {
+                const name = getProductName(product, language)
+                const image = product.images?.[0]?.url
+                const isLiked = isFavorite(product.id)
+                const discount = product.oldPrice
+                  ? Math.round((1 - product.price / product.oldPrice) * 100)
+                  : 0
+
+                return (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex-none w-[260px] snap-start"
+                  >
+                    <div
+                      onClick={() => navigate(`/product/${product.slug}`)}
+                      className="
+                        bg-white rounded-2xl overflow-hidden
+                        cursor-pointer group
+                        transition-all duration-400
+                        hover:-translate-y-1 hover:shadow-card-strong
+                      "
+                    >
+                      {/* Image */}
+                      <div className="relative aspect-square bg-ivory m-2.5 rounded-xl overflow-hidden">
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={name}
+                            className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-4xl">🌿</div>
+                        )}
+
+                        {discount > 0 && (
+                          <Badge variant="sale" className="absolute top-3 left-3">
+                            -{discount}%
+                          </Badge>
+                        )}
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleFavorite(product)
+                          }}
+                          className={cn(
+                            'absolute top-3 right-3 w-9 h-9',
+                            'bg-white/90 backdrop-blur-sm rounded-full',
+                            'flex items-center justify-center',
+                            'transition-all duration-300 hover:scale-110'
+                          )}
+                        >
+                          <Heart
+                            className={cn('w-[18px] h-[18px]', isLiked ? 'fill-terracotta stroke-terracotta' : 'fill-none stroke-terracotta')}
+                            strokeWidth={2}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Content */}
+                      <div className="px-4 pb-4 pt-1">
+                        <div className="font-display text-base font-medium text-charcoal mb-2.5 leading-[1.3] line-clamp-2 min-h-[2.6em]">
+                          {name}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-forest">
+                            {formatPrice(product.price)} {currency}
+                          </span>
+                          {product.oldPrice && (
+                            <span className="text-sm text-light-gray line-through">
+                              {formatPrice(product.oldPrice)}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            addItem(product as any, 1)
+                            toast.success(language === 'uz' ? "Savatga qo'shildi" : 'Добавлено в корзину', { duration: 1500 })
+                          }}
+                          className="
+                            w-full mt-3 py-3
+                            bg-forest text-white
+                            rounded-xl font-sans text-[13px] font-semibold
+                            flex items-center justify-center gap-1.5
+                            transition-all duration-300
+                            hover:bg-emerald hover:-translate-y-[1px]
+                            active:translate-y-0
+                          "
+                        >
+                          <ShoppingBag className="w-4 h-4" strokeWidth={2} />
+                          {language === 'uz' ? 'Savatga' : 'В корзину'}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </Container>
+        </section>
+      )}
+
+      {/* ===== FEATURED ===== */}
+      <section className="py-8">
+        <Container>
+          <div className="flex items-end justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-forest to-sage rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-white" strokeWidth={1.5} />
+              </div>
+              <h2 className="font-display text-2xl font-medium text-charcoal">
+                {t('home.featured')}
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate('/catalog?featured=true')}
+              className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300"
+            >
+              {t('home.viewAll')}
+              <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
+            </button>
+          </div>
+
+          <ProductGrid products={featuredProducts} isLoading={isLoading} />
+        </Container>
+      </section>
+
+      {/* ===== NEW ===== */}
+      <section className="py-8 bg-ivory">
+        <Container>
+          <div className="flex items-end justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-warning to-terracotta rounded-xl flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" strokeWidth={1.5} />
+              </div>
+              <h2 className="font-display text-2xl font-medium text-charcoal">
+                {t('home.new')}
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate('/catalog?new=true')}
+              className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300"
+            >
+              {t('home.viewAll')}
+              <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
+            </button>
+          </div>
+
+          <ProductGrid products={newProducts} isLoading={isLoading} />
+        </Container>
+      </section>
+
+      {/* ===== CTA BANNER ===== */}
+      <section className="py-8 px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          onClick={() => navigate('/catalog')}
+          className="
+            bg-gradient-to-br from-forest via-emerald to-sage
+            rounded-3xl p-8 md:p-10
+            text-center text-white
+            cursor-pointer relative overflow-hidden
+            transition-all duration-400
+            hover:shadow-card-hover
+          "
+        >
+          <div className="absolute -top-2.5 -right-2.5 text-[100px] opacity-[0.08] rotate-[15deg]">🌿</div>
+          <div className="absolute -bottom-2.5 left-5 text-[60px] opacity-[0.08] -rotate-[20deg]">🍃</div>
+
+          <h3 className="font-display text-2xl md:text-3xl font-medium mb-2 relative z-[2]">
+            {language === 'uz' ? 'Barcha mahsulotlar' : 'Все товары'}
+          </h3>
+          <p className="text-white/80 text-sm mb-5 relative z-[2]">
+            {language === 'uz' ? "500+ turdagi dekoratsiyalar" : '500+ видов декора'}
+          </p>
+          <div className="relative z-[2] inline-flex items-center gap-2 bg-white text-forest px-6 py-3 rounded-full font-semibold text-sm uppercase tracking-[0.04em]">
+            {language === 'uz' ? "Katalogni ko'rish" : 'Смотреть каталог'}
+            <ChevronRight className="w-5 h-5" />
+          </div>
+        </motion.div>
+      </section>
+    </div>
+  )
 }
