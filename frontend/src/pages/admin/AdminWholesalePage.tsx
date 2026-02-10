@@ -1,5 +1,7 @@
+// frontend/src/pages/admin/AdminWholesalePage.tsx
+
 import { useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, Save, X, Package, Star } from 'lucide-react'
+import { Plus, Edit, Trash2, Save, X, Package, Star, FolderTree } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { adminService } from '@/services/adminService'
 import toast from 'react-hot-toast'
@@ -16,7 +18,9 @@ interface Template {
     description?: string
     isDefault: boolean
     tiers: Tier[]
-    _count?: { products: number }
+    // ✅ НОВОЕ: счётчик категорий вместо товаров
+    _count?: { categories: number }
+    categories?: { id: string; nameRu: string; nameUz: string; slug: string }[]
 }
 
 interface TemplateForm {
@@ -113,9 +117,10 @@ export function AdminWholesalePage() {
         }
     }
 
-    const handleDelete = async (id: string, name: string, productsCount: number) => {
-        const message = productsCount > 0
-            ? `Удалить шаблон "${name}"?\n\n⚠️ ${productsCount} товаров будут использовать дефолтный шаблон.`
+    const handleDelete = async (id: string, name: string, categoriesCount: number) => {
+        // ✅ Обновлённое сообщение
+        const message = categoriesCount > 0
+            ? `Удалить шаблон "${name}"?\n\n⚠️ ${categoriesCount} категорий потеряют оптовые скидки.`
             : `Удалить шаблон "${name}"?`
 
         if (!confirm(message)) return
@@ -165,7 +170,10 @@ export function AdminWholesalePage() {
             <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Оптовые цены</h1>
-                    <p className="text-sm text-gray-500 mt-1">Шаблоны скидок для товаров</p>
+                    {/* ✅ Обновлённое описание */}
+                    <p className="text-sm text-gray-500 mt-1">
+                        Шаблоны скидок для категорий товаров
+                    </p>
                 </div>
                 <button
                     onClick={handleNew}
@@ -174,6 +182,15 @@ export function AdminWholesalePage() {
                     <Plus className="w-5 h-5" />
                     <span className="hidden sm:inline">Создать</span>
                 </button>
+            </div>
+
+            {/* ✅ Инфо-блок */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                    <strong>Как работает:</strong> Привяжите шаблон к категории →
+                    все товары в этой категории автоматически получат оптовые скидки.
+                    Управлять привязкой можно на странице <strong>Категории</strong>.
+                </p>
             </div>
 
             {/* Form Modal */}
@@ -199,7 +216,7 @@ export function AdminWholesalePage() {
                                     value={form.name}
                                     onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
                                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none"
-                                    placeholder="Например: Для горшков"
+                                    placeholder="Например: Скидки для деревьев"
                                     required
                                 />
                             </div>
@@ -279,6 +296,27 @@ export function AdminWholesalePage() {
                                 </div>
                             </div>
 
+                            {/* Превью расчёта */}
+                            {form.tiers.length > 0 && (
+                                <div className="bg-green-50 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-green-800 mb-2">
+                                        Пример для товара 1 000 000 сум:
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {form.tiers
+                                            .sort((a, b) => a.minQuantity - b.minQuantity)
+                                            .map((tier, i) => {
+                                                const price = Math.round(1000000 * (1 - tier.discountPercent / 100))
+                                                return (
+                                                    <span key={i} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                                                        {tier.minQuantity}+ шт → {new Intl.NumberFormat('uz-UZ').format(price)} сум
+                                                    </span>
+                                                )
+                                            })}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
@@ -323,7 +361,7 @@ export function AdminWholesalePage() {
                         <div key={template.id} className="bg-white rounded-xl p-4 shadow-sm">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="font-medium text-gray-900">{template.name}</h3>
                                         {template.isDefault && (
                                             <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
@@ -348,9 +386,27 @@ export function AdminWholesalePage() {
                                         ))}
                                     </div>
 
-                                    <p className="text-xs text-gray-400 mt-2">
-                                        Используется: {template._count?.products || 0} товаров
-                                    </p>
+                                    {/* ✅ НОВОЕ: показываем категории вместо товаров */}
+                                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                        <span className="flex items-center gap-1 text-xs text-gray-500">
+                                            <FolderTree className="w-3.5 h-3.5" />
+                                            {template._count?.categories || 0} категорий
+                                        </span>
+
+                                        {/* Показываем названия категорий если есть */}
+                                        {template.categories && template.categories.length > 0 && (
+                                            <div className="flex flex-wrap gap-1">
+                                                {template.categories.map(cat => (
+                                                    <span
+                                                        key={cat.id}
+                                                        className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-xs"
+                                                    >
+                                                        {cat.nameRu}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center gap-1 ml-2">
@@ -361,7 +417,11 @@ export function AdminWholesalePage() {
                                         <Edit className="w-4 h-4" />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(template.id, template.name, template._count?.products || 0)}
+                                        onClick={() => handleDelete(
+                                            template.id,
+                                            template.name,
+                                            template._count?.categories || 0
+                                        )}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                                         disabled={template.isDefault}
                                         title={template.isDefault ? 'Нельзя удалить дефолтный шаблон' : 'Удалить'}
