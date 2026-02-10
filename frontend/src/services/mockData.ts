@@ -1,5 +1,4 @@
 import { Product, Category } from '@/types'
-
 export const mockCategories: Category[] = [
   {
     id: '1',
@@ -60,6 +59,7 @@ export const mockProducts: Product[] = [
       { id: '1', nameRu: 'Чёрный', nameUz: 'Qora', hexCode: '#000000', inStock: true, priceModifier: 0 },
       { id: '2', nameRu: 'Белый', nameUz: 'Oq', hexCode: '#FFFFFF', inStock: true, priceModifier: 0 },
     ],
+    variants: [],
     isActive: true,
     isFeatured: true,
     isNew: false,
@@ -95,6 +95,7 @@ export const mockProducts: Product[] = [
       { id: '4', nameRu: 'Чёрный', nameUz: 'Qora', hexCode: '#000000', inStock: true, priceModifier: 0 },
       { id: '5', nameRu: 'Серый', nameUz: 'Kulrang', hexCode: '#6B7280', inStock: true, priceModifier: 0 },
     ],
+    variants: [],
     isActive: true,
     isFeatured: true,
     isNew: true,
@@ -129,6 +130,7 @@ export const mockProducts: Product[] = [
       { id: '7', nameRu: 'Белый', nameUz: 'Oq', hexCode: '#FFFFFF', inStock: true, priceModifier: 0 },
       { id: '8', nameRu: 'Бежевый', nameUz: 'Bej', hexCode: '#D4A574', inStock: true, priceModifier: 0 },
     ],
+    variants: [],
     isActive: true,
     isFeatured: false,
     isNew: true,
@@ -162,6 +164,7 @@ export const mockProducts: Product[] = [
       { id: '9', nameRu: 'Чёрный', nameUz: 'Qora', hexCode: '#000000', inStock: true, priceModifier: 0 },
       { id: '10', nameRu: 'Белый', nameUz: 'Oq', hexCode: '#FFFFFF', inStock: true, priceModifier: 0 },
     ],
+    variants: [],
     isActive: true,
     isFeatured: true,
     isNew: false,
@@ -194,6 +197,7 @@ export const mockProducts: Product[] = [
       { id: '12', nameRu: 'Белый', nameUz: 'Oq', hexCode: '#FFFFFF', inStock: true, priceModifier: 0 },
       { id: '13', nameRu: 'Синий', nameUz: "Ko'k", hexCode: '#3B82F6', inStock: true, priceModifier: 0 },
     ],
+    variants: [],
     isActive: true,
     isFeatured: true,
     isNew: false,
@@ -224,6 +228,7 @@ export const mockProducts: Product[] = [
       { id: '6', url: 'https://placehold.co/400x400/4ade80/white?text=P-6', isMain: true, sortOrder: 0 },
     ],
     colors: [],
+    variants: [],
     isActive: true,
     isFeatured: false,
     isNew: true,

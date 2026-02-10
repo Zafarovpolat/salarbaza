@@ -1,3 +1,5 @@
+// backend/src/routes/adminRoutes.ts
+
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { config } from '../config'
@@ -50,7 +52,6 @@ router.get('/products', async (req, res) => {
     try {
         const { categoryId, search } = req.query
 
-        // Формируем условия фильтрации
         const where: any = {}
 
         if (categoryId && typeof categoryId === 'string') {
@@ -68,9 +69,16 @@ router.get('/products', async (req, res) => {
         const products = await prisma.product.findMany({
             where,
             include: {
-                category: true,
+                category: {
+                    include: {
+                        wholesaleTemplate: {
+                            select: { id: true, name: true }
+                        }
+                    }
+                },
                 images: true,
-                colors: true
+                colors: true,
+                variants: { orderBy: { sortOrder: 'asc' } },  // ✅ Включаем варианты
             },
             orderBy: { createdAt: 'desc' }
         })
@@ -86,9 +94,18 @@ router.get('/products/:id', async (req, res) => {
         const product = await prisma.product.findUnique({
             where: { id: req.params.id },
             include: {
-                category: true,
+                category: {
+                    include: {
+                        wholesaleTemplate: {
+                            include: {
+                                tiers: { orderBy: { minQuantity: 'asc' } }
+                            }
+                        }
+                    }
+                },
                 images: true,
-                colors: true
+                colors: true,
+                variants: { orderBy: { sortOrder: 'asc' } },  // ✅ Включаем варианты
             }
         })
 
@@ -109,7 +126,7 @@ router.post('/products', async (req, res) => {
             categoryId, price, oldPrice, material, dimensions,
             inStock, stockQuantity, isActive, isNew, isFeatured,
             images,
-            wholesaleTemplateId  // ✅ Добавь
+            variants,  // ✅ Принимаем варианты вместо wholesaleTemplateId
         } = req.body
 
         const product = await prisma.product.create({
@@ -130,7 +147,7 @@ router.post('/products', async (req, res) => {
                 isActive: isActive ?? true,
                 isNew: isNew ?? false,
                 isFeatured: isFeatured ?? false,
-                wholesaleTemplateId: wholesaleTemplateId || null,  // ✅ Добавь
+                // ✅ Убрали wholesaleTemplateId — оптовая цена через категорию
                 images: images ? {
                     create: images.map((img: any, index: number) => ({
                         url: img.url,
@@ -138,11 +155,27 @@ router.post('/products', async (req, res) => {
                         sortOrder: index,
                         isMain: index === 0
                     }))
-                } : undefined
+                } : undefined,
+                // ✅ Создаём варианты размеров
+                variants: variants && variants.length > 0 ? {
+                    create: variants.map((v: any, index: number) => ({
+                        size: v.size,
+                        labelRu: v.labelRu,
+                        labelUz: v.labelUz,
+                        price: parseInt(v.price),
+                        oldPrice: v.oldPrice ? parseInt(v.oldPrice) : null,
+                        sku: v.sku || null,
+                        inStock: v.inStock ?? true,
+                        stockQuantity: parseInt(v.stockQuantity) || 0,
+                        dimensions: v.dimensions || null,
+                        sortOrder: index,
+                    }))
+                } : undefined,
             },
             include: {
                 category: true,
-                images: true
+                images: true,
+                variants: { orderBy: { sortOrder: 'asc' } },
             }
         })
 
@@ -158,8 +191,16 @@ router.put('/products/:id', async (req, res) => {
             code, slug, nameRu, nameUz, descriptionRu, descriptionUz,
             categoryId, price, oldPrice, material, dimensions,
             inStock, stockQuantity, isActive, isNew, isFeatured,
-            wholesaleTemplateId  // ✅ Добавь
+            variants,  // ✅ Принимаем варианты
         } = req.body
+
+        // ✅ Если передали варианты — пересоздаём их
+        if (variants && Array.isArray(variants)) {
+            // Удаляем старые варианты
+            await prisma.productVariant.deleteMany({
+                where: { productId: req.params.id }
+            })
+        }
 
         const product = await prisma.product.update({
             where: { id: req.params.id },
@@ -180,11 +221,27 @@ router.put('/products/:id', async (req, res) => {
                 isActive,
                 isNew,
                 isFeatured,
-                wholesaleTemplateId: wholesaleTemplateId || null  // ✅ Добавь
+                // ✅ Убрали wholesaleTemplateId
+                // ✅ Пересоздаём варианты если переданы
+                variants: variants && Array.isArray(variants) && variants.length > 0 ? {
+                    create: variants.map((v: any, index: number) => ({
+                        size: v.size,
+                        labelRu: v.labelRu,
+                        labelUz: v.labelUz,
+                        price: parseInt(v.price),
+                        oldPrice: v.oldPrice ? parseInt(v.oldPrice) : null,
+                        sku: v.sku || null,
+                        inStock: v.inStock ?? true,
+                        stockQuantity: parseInt(v.stockQuantity) || 0,
+                        dimensions: v.dimensions || null,
+                        sortOrder: index,
+                    }))
+                } : undefined,
             },
             include: {
                 category: true,
-                images: true
+                images: true,
+                variants: { orderBy: { sortOrder: 'asc' } },
             }
         })
 
@@ -239,6 +296,87 @@ router.delete('/products/:productId/images/:imageId', async (req, res) => {
             where: { id: req.params.imageId }
         })
         res.json({ success: true, message: 'Image deleted' })
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' })
+    }
+})
+
+// ==================== PRODUCT VARIANTS ====================
+
+// ✅ Получить варианты товара
+router.get('/products/:id/variants', async (req, res) => {
+    try {
+        const variants = await prisma.productVariant.findMany({
+            where: { productId: req.params.id },
+            orderBy: { sortOrder: 'asc' }
+        })
+        res.json({ success: true, data: variants })
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' })
+    }
+})
+
+// ✅ Добавить вариант к товару
+router.post('/products/:id/variants', async (req, res) => {
+    try {
+        const { size, labelRu, labelUz, price, oldPrice, sku, inStock, stockQuantity, dimensions } = req.body
+
+        const variant = await prisma.productVariant.create({
+            data: {
+                productId: req.params.id,
+                size,
+                labelRu,
+                labelUz,
+                price: parseInt(price),
+                oldPrice: oldPrice ? parseInt(oldPrice) : null,
+                sku: sku || null,
+                inStock: inStock ?? true,
+                stockQuantity: parseInt(stockQuantity) || 0,
+                dimensions: dimensions || null,
+                sortOrder: 0,
+            }
+        })
+
+        res.status(201).json({ success: true, data: variant })
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message })
+    }
+})
+
+// ✅ Обновить вариант
+router.put('/products/:productId/variants/:variantId', async (req, res) => {
+    try {
+        const { size, labelRu, labelUz, price, oldPrice, sku, inStock, stockQuantity, dimensions, sortOrder } = req.body
+
+        const variant = await prisma.productVariant.update({
+            where: { id: req.params.variantId },
+            data: {
+                size,
+                labelRu,
+                labelUz,
+                price: price !== undefined ? parseInt(price) : undefined,
+                oldPrice: oldPrice !== undefined ? (oldPrice ? parseInt(oldPrice) : null) : undefined,
+                sku,
+                inStock,
+                stockQuantity: stockQuantity !== undefined ? parseInt(stockQuantity) : undefined,
+                dimensions,
+                sortOrder,
+            }
+        })
+
+        res.json({ success: true, data: variant })
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message })
+    }
+})
+
+// ✅ Удалить вариант
+router.delete('/products/:productId/variants/:variantId', async (req, res) => {
+    try {
+        await prisma.productVariant.delete({
+            where: { id: req.params.variantId }
+        })
+        res.json({ success: true, message: 'Variant deleted' })
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error' })
     }
@@ -321,7 +459,6 @@ router.get('/orders', async (req, res) => {
             orderBy: { createdAt: 'desc' }
         })
 
-        // ✅ Конвертируем BigInt в строку для JSON сериализации
         const serializedOrders = orders.map(order => ({
             ...order,
             user: order.user ? {
@@ -362,13 +499,11 @@ router.put('/orders/:id/status', async (req, res) => {
 
 router.delete('/categories/:id', async (req, res) => {
     try {
-        // Сначала убираем categoryId у всех товаров этой категории
         await prisma.product.updateMany({
             where: { categoryId: req.params.id },
             data: { categoryId: null }
         })
 
-        // Теперь удаляем категорию
         await prisma.category.delete({
             where: { id: req.params.id }
         })
@@ -382,7 +517,6 @@ router.delete('/categories/:id', async (req, res) => {
 
 // ==================== WHOLESALE TEMPLATES ====================
 
-// Получить все шаблоны
 router.get('/wholesale-templates', async (req, res) => {
     try {
         const templates = await prisma.wholesalePriceTemplate.findMany({
@@ -391,7 +525,7 @@ router.get('/wholesale-templates', async (req, res) => {
                     orderBy: { minQuantity: 'asc' }
                 },
                 _count: {
-                    select: { products: true }
+                    select: { categories: true }  // ✅ Было products, теперь categories
                 }
             },
             orderBy: { createdAt: 'desc' }
@@ -403,7 +537,6 @@ router.get('/wholesale-templates', async (req, res) => {
     }
 })
 
-// Получить один шаблон
 router.get('/wholesale-templates/:id', async (req, res) => {
     try {
         const template = await prisma.wholesalePriceTemplate.findUnique({
@@ -411,6 +544,10 @@ router.get('/wholesale-templates/:id', async (req, res) => {
             include: {
                 tiers: {
                     orderBy: { minQuantity: 'asc' }
+                },
+                // ✅ Показываем какие категории используют этот шаблон
+                categories: {
+                    select: { id: true, nameRu: true, nameUz: true, slug: true }
                 }
             }
         })
@@ -425,12 +562,10 @@ router.get('/wholesale-templates/:id', async (req, res) => {
     }
 })
 
-// Создать шаблон
 router.post('/wholesale-templates', async (req, res) => {
     try {
         const { name, description, isDefault, tiers } = req.body
 
-        // Если новый шаблон дефолтный, убираем флаг у других
         if (isDefault) {
             await prisma.wholesalePriceTemplate.updateMany({
                 where: { isDefault: true },
@@ -464,12 +599,10 @@ router.post('/wholesale-templates', async (req, res) => {
     }
 })
 
-// Обновить шаблон
 router.put('/wholesale-templates/:id', async (req, res) => {
     try {
         const { name, description, isDefault, tiers } = req.body
 
-        // Если делаем дефолтным, убираем флаг у других
         if (isDefault) {
             await prisma.wholesalePriceTemplate.updateMany({
                 where: {
@@ -480,12 +613,10 @@ router.put('/wholesale-templates/:id', async (req, res) => {
             })
         }
 
-        // Удаляем старые пороги
         await prisma.wholesalePriceTier.deleteMany({
             where: { templateId: req.params.id }
         })
 
-        // Обновляем шаблон с новыми порогами
         const template = await prisma.wholesalePriceTemplate.update({
             where: { id: req.params.id },
             data: {
@@ -513,11 +644,10 @@ router.put('/wholesale-templates/:id', async (req, res) => {
     }
 })
 
-// Удалить шаблон
 router.delete('/wholesale-templates/:id', async (req, res) => {
     try {
-        // Сначала убираем ссылки на шаблон у товаров
-        await prisma.product.updateMany({
+        // ✅ Убираем ссылки на шаблон у КАТЕГОРИЙ (не у товаров)
+        await prisma.category.updateMany({
             where: { wholesaleTemplateId: req.params.id },
             data: { wholesaleTemplateId: null }
         })
@@ -535,7 +665,6 @@ router.delete('/wholesale-templates/:id', async (req, res) => {
 
 // ==================== CUSTOMERS ====================
 
-// Получить список клиентов с пагинацией и фильтрами
 router.get('/customers', async (req, res) => {
     try {
         const {
@@ -551,10 +680,8 @@ router.get('/customers', async (req, res) => {
         const limitNum = parseInt(limit as string)
         const skip = (pageNum - 1) * limitNum
 
-        // Формируем условия фильтрации
         const where: any = {}
 
-        // Поиск по имени, username или телефону
         if (search && typeof search === 'string') {
             where.OR = [
                 { firstName: { contains: search, mode: 'insensitive' } },
@@ -564,14 +691,12 @@ router.get('/customers', async (req, res) => {
             ]
         }
 
-        // Фильтр по наличию заказов
         if (hasOrders === 'yes') {
             where.orders = { some: {} }
         } else if (hasOrders === 'no') {
             where.orders = { none: {} }
         }
 
-        // Получаем клиентов
         const customers = await prisma.user.findMany({
             where,
             skip,
@@ -600,7 +725,6 @@ router.get('/customers', async (req, res) => {
             orderBy: { [sortBy as string]: sortOrder },
         })
 
-        // Обогащаем данные статистикой
         const customersWithStats = customers.map(customer => {
             const totalSpent = customer.orders.reduce((sum, order) => sum + order.total, 0)
             const completedOrders = customer.orders.filter(o => o.status === 'DELIVERED').length
@@ -630,7 +754,6 @@ router.get('/customers', async (req, res) => {
             }
         })
 
-        // Сортировка для вычисляемых полей
         if (sortBy === 'totalOrders') {
             customersWithStats.sort((a, b) =>
                 sortOrder === 'desc'
@@ -645,7 +768,6 @@ router.get('/customers', async (req, res) => {
             )
         }
 
-        // Общее количество
         const total = await prisma.user.count({ where })
 
         res.json({
@@ -666,7 +788,6 @@ router.get('/customers', async (req, res) => {
     }
 })
 
-// Статистика по клиентам
 router.get('/customers/stats', async (req, res) => {
     try {
         const now = new Date()
@@ -695,7 +816,6 @@ router.get('/customers/stats', async (req, res) => {
             }),
         ])
 
-        // Топ клиентов
         const topCustomersRaw = await prisma.user.findMany({
             take: 10,
             include: {
@@ -743,7 +863,6 @@ router.get('/customers/stats', async (req, res) => {
     }
 })
 
-// Детали клиента
 router.get('/customers/:id', async (req, res) => {
     try {
         const customer = await prisma.user.findUnique({
@@ -783,6 +902,7 @@ router.get('/customers/:id', async (req, res) => {
                                         images: { take: 1 },
                                     },
                                 },
+                                variant: true,  // ✅ Включаем вариант
                             },
                         },
                     },
@@ -794,12 +914,10 @@ router.get('/customers/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Customer not found' })
         }
 
-        // Вычисляем статистику
         const totalSpent = customer.orders.reduce((sum, order) => sum + order.total, 0)
         const completedOrders = customer.orders.filter(o => o.status === 'DELIVERED')
         const cancelledOrders = customer.orders.filter(o => o.status === 'CANCELLED')
 
-        // Группировка по месяцам
         const ordersByMonth: Record<string, { count: number; amount: number }> = {}
         customer.orders.forEach(order => {
             const month = order.createdAt.toISOString().slice(0, 7)
@@ -825,13 +943,14 @@ router.get('/customers/:id', async (req, res) => {
                     updatedAt: customer.updatedAt,
                 },
                 addresses: customer.addresses,
-                                orders: customer.orders.map(order => ({
+                orders: customer.orders.map(order => ({
                     ...order,
-                    customerPhone: order.customerPhone,  // ✅ Добавляем телефон
+                    customerPhone: order.customerPhone,
                     items: order.items.map(item => ({
                         productName: item.productName,
-                        productCode: item.productCode,  // ✅ Код товара
-                        productImage: item.productImage,  // ✅ Фото товара
+                        productCode: item.productCode,
+                        productImage: item.productImage,
+                        variantSize: item.variantSize,  // ✅ Размер варианта
                         quantity: item.quantity,
                         price: item.price,
                     }))
@@ -856,6 +975,12 @@ router.get('/customers/:id', async (req, res) => {
                             price: item.product.price,
                             image: item.product.images[0]?.url || null,
                         },
+                        variant: item.variant ? {  // ✅ Вариант в корзине
+                            id: item.variant.id,
+                            size: item.variant.size,
+                            labelRu: item.variant.labelRu,
+                            price: item.variant.price,
+                        } : null,
                     })),
                 } : null,
                 stats: {
@@ -885,7 +1010,6 @@ router.get('/customers/:id', async (req, res) => {
     }
 })
 
-// Экспорт клиентов в CSV
 router.get('/customers-export', async (req, res) => {
     try {
         const customers = await prisma.user.findMany({
