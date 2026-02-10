@@ -1,4 +1,5 @@
 // frontend/src/services/cartService.ts
+
 import { Cart, CartItem } from '@/types'
 import { get, post, patch, del } from './api'
 
@@ -8,11 +9,18 @@ export const cartService = {
         return response.data
     },
 
-    async addItem(productId: string, quantity: number = 1, colorId?: string): Promise<CartItem> {
+    // ✅ ОБНОВЛЕНО: добавлен variantId
+    async addItem(
+        productId: string,
+        quantity: number = 1,
+        colorId?: string,
+        variantId?: string
+    ): Promise<CartItem> {
         const response = await post<{ success: boolean; data: CartItem }>('/cart/items', {
             productId,
             quantity,
             colorId,
+            variantId,  // ✅ НОВОЕ
         })
         return response.data
     },

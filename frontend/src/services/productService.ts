@@ -1,4 +1,5 @@
 // frontend/src/services/productService.ts
+
 import { Product, PaginatedResponse } from '@/types'
 import api, { get } from './api'
 
@@ -28,6 +29,7 @@ export const productService = {
         return get<PaginatedResponse<Product>>(`/products${query ? `?${query}` : ''}`)
     },
 
+    // ✅ Теперь возвращает variants и category.wholesaleTemplate
     async getProductBySlug(slug: string): Promise<Product> {
         const response = await get<{ success: boolean; data: Product }>(`/products/${slug}`)
         return response.data

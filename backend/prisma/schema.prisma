@@ -1,3 +1,5 @@
+// backend/prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -56,53 +58,89 @@ model Category {
   icon                String?
   sortOrder           Int                     @default(0)
   isActive            Boolean                 @default(true)
+  // ✅ Оптовая цена задаётся на уровне категории
   wholesaleTemplateId String?
+  wholesaleTemplate   WholesalePriceTemplate? @relation("CategoryWholesaleTemplate", fields: [wholesaleTemplateId], references: [id])
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
   products            Product[]
-  wholesaleTemplate   WholesalePriceTemplate? @relation("CategoryWholesaleTemplate", fields: [wholesaleTemplateId], references: [id])
 
   @@map("categories")
 }
 
 model Product {
-  id                  String                  @id @default(cuid())
-  code                String                  @unique
-  slug                String                  @unique
-  nameRu              String
-  nameUz              String
-  descriptionRu       String?
-  descriptionUz       String?
-  categoryId          String?
-  price               Int
-  oldPrice            Int?
-  material            String?
-  dimensions          Json?
-  inStock             Boolean                 @default(true)
-  stockQuantity       Int                     @default(0)
-  setQuantity         Int                     @default(1)
-  packaging           Json?
-  isActive            Boolean                 @default(true)
-  isFeatured          Boolean                 @default(false)
-  isNew               Boolean                 @default(false)
-  viewCount           Int                     @default(0)
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
-  wholesaleTemplateId String?
-  cartItems           CartItem[]
-  favorites           Favorite[]
-  orderItems          OrderItem[]
-  colors              ProductColor[]
-  images              ProductImage[]
-  category            Category?               @relation(fields: [categoryId], references: [id])
-  wholesaleTemplate   WholesalePriceTemplate? @relation("ProductWholesaleTemplate", fields: [wholesaleTemplateId], references: [id])
+  id            String   @id @default(cuid())
+  code          String   @unique
+  slug          String   @unique
+  nameRu        String
+  nameUz        String
+  descriptionRu String?
+  descriptionUz String?
+  categoryId    String?
+  // ✅ price теперь = базовая цена (минимальная / цена по умолчанию)
+  // Если есть варианты — реальная цена берётся из ProductVariant
+  price         Int
+  oldPrice      Int?
+  material      String?
+  dimensions    Json?
+  inStock       Boolean  @default(true)
+  stockQuantity Int      @default(0)
+  setQuantity   Int      @default(1)
+  packaging     Json?
+  isActive      Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  isNew         Boolean  @default(false)
+  viewCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // ✅ УБРАЛИ wholesaleTemplateId — оптовая цена только через категорию
+  category  Category? @relation(fields: [categoryId], references: [id])
+  images    ProductImage[]
+  colors    ProductColor[]
+  // ✅ НОВОЕ: варианты по размеру
+  variants  ProductVariant[]
+  cartItems CartItem[]
+  orderItems OrderItem[]
+  favorites Favorite[]
 
   @@index([categoryId])
   @@index([price])
   @@index([isActive, isFeatured])
   @@index([slug])
-  @@index([wholesaleTemplateId])
   @@map("products")
+}
+
+// ✅ НОВАЯ МОДЕЛЬ: Варианты товара по размеру
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  // Размер: "S", "M", "L", "XL", "30x25", "50cm" и т.д.
+  size      String
+  // Название размера для отображения
+  labelRu   String   // "Маленький", "Средний", "Большой"
+  labelUz   String   // "Kichik", "O'rta", "Katta"
+  // ✅ Своя цена для каждого размера
+  price     Int
+  oldPrice  Int?
+  // SKU/артикул варианта (опционально)
+  sku       String?
+  // Наличие конкретного размера
+  inStock   Boolean  @default(true)
+  stockQuantity Int  @default(0)
+  // Размеры (опционально, для справки)
+  dimensions Json?   // { height_cm: 50, diameter_cm: 30 }
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  orderItems OrderItem[]
+
+  @@unique([productId, size])
+  @@index([productId])
+  @@map("product_variants")
 }
 
 model ProductImage {
@@ -148,13 +186,18 @@ model CartItem {
   cartId    String
   productId String
   colorId   String?
+  // ✅ НОВОЕ: привязка к варианту размера
+  variantId String?
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id])
 
-  @@unique([cartId, productId, colorId])
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  // ✅ Уникальность: товар + цвет + размер
+  @@unique([cartId, productId, colorId, variantId])
   @@map("cart_items")
 }
 
@@ -172,23 +215,24 @@ model Order {
   deliveryAddress   Json?
   customerName      String
   customerPhone     String
+  customerFirstName String?
+  customerLastName  String?
   paymentMethod     PaymentMethod
   paymentStatus     PaymentStatus @default(PENDING)
   customerNote      String?
   adminNote         String?
+  latitude          Float?
+  longitude         Float?
   confirmedAt       DateTime?
   shippedAt         DateTime?
   deliveredAt       DateTime?
   cancelledAt       DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
-  customerFirstName String?
-  customerLastName  String?
-  latitude          Float?
-  longitude         Float?
-  items             OrderItem[]
-  address           Address?      @relation(fields: [addressId], references: [id])
-  user              User          @relation(fields: [userId], references: [id])
+
+  items   OrderItem[]
+  address Address?   @relation(fields: [addressId], references: [id])
+  user    User       @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -201,6 +245,9 @@ model OrderItem {
   id           String   @id @default(cuid())
   orderId      String
   productId    String
+  // ✅ НОВОЕ: сохраняем информацию о варианте
+  variantId    String?
+  variantSize  String?  // Снапшот размера на момент заказа
   productName  String
   productCode  String
   productImage String?
@@ -209,8 +256,10 @@ model OrderItem {
   quantity     Int
   total        Int
   createdAt    DateTime @default(now())
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product      Product  @relation(fields: [productId], references: [id])
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
 
   @@map("order_items")
 }
@@ -227,6 +276,7 @@ model Favorite {
   @@map("favorites")
 }
 
+// ✅ Оптовые шаблоны — теперь ТОЛЬКО для категорий
 model WholesalePriceTemplate {
   id          String               @id @default(cuid())
   name        String
@@ -234,9 +284,8 @@ model WholesalePriceTemplate {
   isDefault   Boolean              @default(false)
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
-  products    Product[]            @relation("ProductWholesaleTemplate")
-  categories  Category[]           @relation("CategoryWholesaleTemplate")
   tiers       WholesalePriceTier[]
+  categories  Category[]           @relation("CategoryWholesaleTemplate")
 
   @@map("wholesale_price_templates")
 }

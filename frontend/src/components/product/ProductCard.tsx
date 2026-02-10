@@ -1,8 +1,9 @@
 // frontend/src/components/product/ProductCard.tsx
+
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ShoppingBag, Heart, Check } from 'lucide-react'
+import { ShoppingBag, Heart, Check, Ruler } from 'lucide-react'
 import { Product } from '@/types'
 import { useLanguageStore } from '@/store/languageStore'
 import { useCartStore } from '@/store/cartStore'
@@ -28,13 +29,44 @@ export const ProductCard = memo(function ProductCard({
     const { toggleFavorite, isFavorite } = useFavoritesStore()
     const { haptic } = useTelegram()
 
+    // ✅ Определяем наличие вариантов
+    const hasVariants = product.variants && product.variants.length > 0
+
+    // Для товаров с вариантами нельзя добавить в корзину из карточки
+    // (нужно выбрать размер на странице товара)
     const inCart = isInCart(product.id)
     const isProductFavorite = isFavorite(product.id)
     const name = getProductName(product, language)
     const mainImage = product.images?.find(img => img.isMain)?.url || product.images?.[0]?.url
 
+    // ✅ Ценовой диапазон
+    const priceInfo = (() => {
+        if (hasVariants) {
+            const prices = product.variants.map(v => v.price)
+            const minPrice = Math.min(...prices)
+            const maxPrice = Math.max(...prices)
+            return {
+                minPrice,
+                maxPrice,
+                isRange: minPrice !== maxPrice,
+            }
+        }
+        return {
+            minPrice: product.price,
+            maxPrice: product.price,
+            isRange: false,
+        }
+    })()
+
     const handleAddToCart = (e: React.MouseEvent) => {
         e.stopPropagation()
+
+        // ✅ Если есть варианты — перенаправляем на страницу товара
+        if (hasVariants) {
+            navigate(`/product/${product.slug}`)
+            return
+        }
+
         if (!inCart) {
             addItem(product, 1)
             haptic.impact('light')
@@ -59,6 +91,8 @@ export const ProductCard = memo(function ProductCard({
             )
         }
     }
+
+    const currency = language === 'uz' ? "so'm" : 'сум'
 
     return (
         <motion.div
@@ -89,9 +123,16 @@ export const ProductCard = memo(function ProductCard({
                     {product.isNew && (
                         <Badge variant="primary" size="sm">NEW</Badge>
                     )}
-                    {product.oldPrice && (
+                    {product.oldPrice && !hasVariants && (
                         <Badge variant="danger" size="sm">
                             -{Math.round((1 - product.price / product.oldPrice) * 100)}%
+                        </Badge>
+                    )}
+                    {/* ✅ Бейдж размеров */}
+                    {hasVariants && (
+                        <Badge variant="default" size="sm">
+                            <Ruler className="w-3 h-3 mr-0.5 inline" />
+                            {product.variants.length}
                         </Badge>
                     )}
                 </div>
@@ -148,19 +189,36 @@ export const ProductCard = memo(function ProductCard({
                     </div>
                 )}
 
-                {/* Price & Add to Cart */}
+                {/* ✅ Price — с диапазоном для вариантов */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <div className="font-bold text-gray-900">
-                            {formatPrice(product.price)}
-                            <span className="text-xs font-normal text-gray-500 ml-1">
-                                {language === 'uz' ? "so'm" : 'сум'}
-                            </span>
-                        </div>
-                        {product.oldPrice && (
-                            <div className="text-xs text-gray-400 line-through">
-                                {formatPrice(product.oldPrice)}
-                            </div>
+                        {priceInfo.isRange ? (
+                            <>
+                                {/* Диапазон цен */}
+                                <div className="font-bold text-gray-900 text-sm">
+                                    {language === 'uz' ? 'dan' : 'от'}{' '}
+                                    {formatPrice(priceInfo.minPrice)}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    {language === 'uz' ? 'gacha' : 'до'}{' '}
+                                    {formatPrice(priceInfo.maxPrice)} {currency}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Одна цена */}
+                                <div className="font-bold text-gray-900">
+                                    {formatPrice(priceInfo.minPrice)}
+                                    <span className="text-xs font-normal text-gray-500 ml-1">
+                                        {currency}
+                                    </span>
+                                </div>
+                                {product.oldPrice && (
+                                    <div className="text-xs text-gray-400 line-through">
+                                        {formatPrice(product.oldPrice)}
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -170,13 +228,18 @@ export const ProductCard = memo(function ProductCard({
                         disabled={!product.inStock}
                         className={cn(
                             'w-10 h-10 rounded-full flex items-center justify-center transition-colors',
-                            inCart
-                                ? 'bg-primary-500 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                            hasVariants
+                                ? 'bg-primary-100 text-primary-600 hover:bg-primary-200'
+                                : inCart
+                                    ? 'bg-primary-500 text-white'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
                             !product.inStock && 'opacity-50 cursor-not-allowed'
                         )}
                     >
-                        {inCart ? (
+                        {hasVariants ? (
+                            // Для товаров с вариантами — иконка линейки (перейти и выбрать)
+                            <Ruler className="w-5 h-5" />
+                        ) : inCart ? (
                             <Check className="w-5 h-5" />
                         ) : (
                             <ShoppingBag className="w-5 h-5" />

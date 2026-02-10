@@ -1,7 +1,9 @@
+// frontend/src/components/cart/CartItem.tsx
+
 import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Ruler } from 'lucide-react'
 import { CartItem as CartItemType } from '@/types'
 import { useLanguageStore } from '@/store/languageStore'
 import { useCartStore } from '@/store/cartStore'
@@ -19,14 +21,23 @@ export const CartItem = memo(function CartItem({ item, index = 0 }: CartItemProp
     const { language } = useLanguageStore()
     const { updateQuantity, removeItem } = useCartStore()
 
-    const { product, color, quantity } = item
+    const { product, color, variant, quantity } = item
     const name = getProductName(product, language)
     const colorName = color ? getColorName(color, language) : null
     const mainImage = product.images?.find(img => img.isMain)?.url || product.images?.[0]?.url
 
+    // ✅ Цена из варианта или базовая
     const priceModifier = color?.priceModifier || 0
-    const unitPrice = product.price + priceModifier
+    const basePrice = variant?.price || product.price
+    const unitPrice = basePrice + priceModifier
     const totalPrice = unitPrice * quantity
+
+    // ✅ Название размера
+    const sizeName = variant
+        ? (language === 'uz' ? variant.labelUz : variant.labelRu)
+        : null
+
+    const currency = language === 'uz' ? "so'm" : 'сум'
 
     return (
         <motion.div
@@ -78,18 +89,36 @@ export const CartItem = memo(function CartItem({ item, index = 0 }: CartItemProp
                         </motion.button>
                     </div>
 
-                    {/* Color */}
-                    {colorName && (
-                        <div className="flex items-center gap-1.5 mt-1">
-                            {color?.hexCode && (
-                                <div
-                                    className="w-3 h-3 rounded-full border border-gray-200"
-                                    style={{ backgroundColor: color.hexCode }}
-                                />
-                            )}
-                            <span className="text-xs text-gray-500">{colorName}</span>
-                        </div>
-                    )}
+                    {/* ✅ Size & Color info */}
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                        {/* Size badge */}
+                        {variant && (
+                            <div className="flex items-center gap-1 bg-gray-100 rounded-md px-2 py-0.5">
+                                <Ruler className="w-3 h-3 text-gray-500" />
+                                <span className="text-xs text-gray-700 font-medium">
+                                    {variant.size}
+                                </span>
+                                {sizeName && (
+                                    <span className="text-xs text-gray-500">
+                                        ({sizeName})
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Color */}
+                        {colorName && (
+                            <div className="flex items-center gap-1">
+                                {color?.hexCode && (
+                                    <div
+                                        className="w-3 h-3 rounded-full border border-gray-200"
+                                        style={{ backgroundColor: color.hexCode }}
+                                    />
+                                )}
+                                <span className="text-xs text-gray-500">{colorName}</span>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Price & Quantity */}
                     <div className="flex items-center justify-between mt-2">
@@ -97,7 +126,7 @@ export const CartItem = memo(function CartItem({ item, index = 0 }: CartItemProp
                             <div className="font-bold text-gray-900">
                                 {formatPrice(totalPrice)}
                                 <span className="text-xs font-normal text-gray-500 ml-1">
-                                    {language === 'uz' ? "so'm" : 'сум'}
+                                    {currency}
                                 </span>
                             </div>
                             {quantity > 1 && (

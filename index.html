@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decorhouse — №1 по декору и озеленению в Узбекистане</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --forest: #1B4332;
+            --emerald: #2D6A4F;
+            --sage: #40916C;
+            --mint: #52B788;
+            --cream: #FFFCF5;
+            --ivory: #FAF8F3;
+            --sand: #F0EBE3;
+            --stone: #E5DFD5;
+            --taupe: #C4BAA8;
+            --charcoal: #2C2C2C;
+            --dark-gray: #4A4A4A;
+            --medium-gray: #7A7A7A;
+            --light-gray: #A0A0A0;
+            --terracotta: #C67C4E;
+            --terracotta-dark: #B86B4C;
+            --blush: #E8D5CC;
+            --olive: #7C8B6F;
+            --success: #40916C;
+            --warning: #D4A853;
+            --error: #C45B5B;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--cream);
+            color: var(--dark-gray);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(255, 252, 245, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(229, 223, 213, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            transition: all 0.3s ease;
+        }
+
+        .header.scrolled {
+            box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+        }
+
+        .header-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--forest);
+            text-decoration: none;
+            letter-spacing: -0.01em;
+        }
+
+        .header-logo span {
+            color: var(--sage);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-toggle {
+            display: flex;
+            background: var(--sand);
+            border-radius: 9999px;
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .lang-btn {
+            padding: 6px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 9999px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--medium-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .lang-btn.active {
+            background: var(--forest);
+            color: #fff;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            color: var(--dark-gray);
+        }
+
+        .icon-btn:hover {
+            background: var(--sand);
+        }
+
+        .icon-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .badge-count {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            background: var(--terracotta);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        /* ===== MAIN ===== */
+        .main {
+            padding-top: 64px;
+            padding-bottom: 90px;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        @media (min-width: 640px) {
+            .container { padding: 0 24px; }
+        }
+        @media (min-width: 1024px) {
+            .container { padding: 0 32px; }
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            margin: 12px 16px;
+            border-radius: 24px;
+            min-height: 520px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        @media (min-width: 768px) {
+            .hero {
+                min-height: 600px;
+                margin: 16px 24px;
+                border-radius: 32px;
+            }
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: 
+                linear-gradient(135deg, #1B4332 0%, #2D6A4F 40%, #40916C 100%);
+            z-index: 0;
+        }
+
+        .hero-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.08;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: 1;
+        }
+
+        .hero-img-decoration {
+            position: absolute;
+            right: -60px;
+            top: -40px;
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            z-index: 1;
+        }
+
+        .hero-img-decoration-2 {
+            position: absolute;
+            right: 40px;
+            top: 60px;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            z-index: 1;
+        }
+
+        .hero-leaf {
+            position: absolute;
+            z-index: 1;
+            opacity: 0.12;
+            font-size: 120px;
+            right: 20px;
+            top: 20px;
+            transform: rotate(-15deg);
+        }
+
+        @media (min-width: 768px) {
+            .hero-leaf {
+                font-size: 200px;
+                right: 60px;
+                top: 40px;
+            }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 32px 28px;
+            color: #fff;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .hero-content {
+                padding: 48px 48px;
+                max-width: 65%;
+            }
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 9999px;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero-badge-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--mint);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.3); }
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 500;
+            line-height: 1.15;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        @media (min-width: 768px) {
+            .hero-title { font-size: 52px; }
+        }
+
+        .hero-desc {
+            font-size: 15px;
+            line-height: 1.7;
+            opacity: 0.85;
+            margin-bottom: 28px;
+            max-width: 480px;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        @media (min-width: 768px) {
+            .hero-desc { font-size: 17px; }
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.8s both;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 32px;
+            background: #fff;
+            color: var(--forest);
+            border: none;
+            border-radius: 9999px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 32px;
+            background: transparent;
+            color: #fff;
+            border: 1.5px solid rgba(255,255,255,0.4);
+            border-radius: 9999px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.6);
+        }
+
+        .btn-green {
+            background: var(--forest);
+            color: #fff;
+        }
+
+        .btn-green:hover {
+            background: var(--emerald);
+            box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== STATS ===== */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 24px 16px;
+            flex-wrap: wrap;
+        }
+
+        @media (min-width: 768px) {
+            .stats-bar { gap: 16px; padding: 40px 24px; }
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--ivory);
+            border-radius: 20px;
+            flex: 1;
+            min-width: 140px;
+            max-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--forest);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--medium-gray);
+            font-weight: 500;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        /* ===== SEARCH ===== */
+        .search-section {
+            padding: 0 16px 8px;
+        }
+
+        .search-bar {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 18px 14px 48px;
+            background: var(--sand);
+            border: 2px solid transparent;
+            border-radius: 9999px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--charcoal);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--taupe);
+        }
+
+        .search-input:focus {
+            background: #fff;
+            border-color: var(--forest);
+            box-shadow: 0 0 0 4px rgba(27, 67, 50, 0.08);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            stroke: var(--taupe);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            padding: 48px 0;
+        }
+
+        @media (min-width: 768px) {
+            .section { padding: 64px 0; }
+        }
+        @media (min-width: 1024px) {
+            .section { padding: 80px 0; }
+        }
+
+        .section-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding: 0 16px;
+        }
+
+        @media (min-width: 640px) {
+            .section-header { padding: 0 24px; }
+        }
+        @media (min-width: 1024px) {
+            .section-header { padding: 0 32px; }
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 500;
+            color: var(--charcoal);
+            line-height: 1.2;
+        }
+
+        @media (min-width: 768px) {
+            .section-title { font-size: 34px; }
+        }
+
+        .section-subtitle {
+            font-size: 14px;
+            color: var(--medium-gray);
+            margin-top: 6px;
+            font-weight: 400;
+        }
+
+        .section-link {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--forest);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .section-link:hover {
+            gap: 8px;
+            color: var(--emerald);
+        }
+
+        .section-link svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* ===== CATEGORIES ===== */
+        .categories-scroll {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding: 0 16px 16px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-snap-type: x mandatory;
+        }
+
+        .categories-scroll::-webkit-scrollbar { display: none; }
+
+        @media (min-width: 640px) {
+            .categories-scroll { padding: 0 24px 16px; }
+        }
+
+        .category-card {
+            flex: 0 0 160px;
+            aspect-ratio: 3/4;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            scroll-snap-align: start;
+            transition: all 0.4s ease;
+        }
+
+        @media (min-width: 768px) {
+            .category-card { flex: 0 0 200px; }
+        }
+
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .category-card-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .category-card:hover .category-card-img {
+            transform: scale(1.08);
+        }
+
+        .category-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+        }
+
+        .category-card-content {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 2;
+        }
+
+        .category-card-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            font-weight: 500;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .category-card-count {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* ===== SPECIAL OFFERS ===== */
+        .offers-section {
+            background: linear-gradient(135deg, var(--forest) 0%, var(--emerald) 100%);
+            padding: 48px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .offers-section::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .offers-section::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: -80px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .offers-section .section-header {
+            position: relative;
+            z-index: 2;
+        }
+
+        .offers-section .section-title {
+            color: #fff;
+        }
+
+        .offers-section .section-subtitle {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .offers-section .section-link {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .offers-section .section-link:hover {
+            color: #fff;
+        }
+
+        .offers-timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 9999px;
+            padding: 8px 16px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+            font-weight: 500;
+        }
+
+        .offers-timer svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--warning);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .offers-grid {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding: 0 16px 16px;
+            scrollbar-width: none;
+            scroll-snap-type: x mandatory;
+        }
+
+        .offers-grid::-webkit-scrollbar { display: none; }
+
+        @media (min-width: 640px) {
+            .offers-grid { padding: 0 24px 16px; }
+        }
+
+        .offer-card {
+            flex: 0 0 260px;
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            scroll-snap-align: start;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .offer-card { flex: 0 0 280px; }
+        }
+
+        .offer-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .offer-card-image {
+            position: relative;
+            aspect-ratio: 1;
+            background: var(--ivory);
+            margin: 10px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .offer-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .offer-card:hover .offer-card-image img {
+            transform: scale(1.05);
+        }
+
+        .offer-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--terracotta);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .offer-heart {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(8px);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .offer-heart:hover {
+            background: #fff;
+            transform: scale(1.1);
+        }
+
+        .offer-heart svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--terracotta);
+            stroke-width: 2;
+            fill: none;
+            transition: all 0.3s ease;
+        }
+
+        .offer-heart.liked svg {
+            fill: var(--terracotta);
+        }
+
+        .offer-card-content {
+            padding: 4px 16px 16px;
+        }
+
+        .offer-card-category {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--medium-gray);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .offer-card-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--charcoal);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .offer-card-prices {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .offer-price-new {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--forest);
+        }
+
+        .offer-price-old {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--light-gray);
+            text-decoration: line-through;
+        }
+
+        .offer-card-action {
+            margin-top: 12px;
+        }
+
+        .btn-add-cart {
+            width: 100%;
+            padding: 12px;
+            background: var(--forest);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-add-cart:hover {
+            background: var(--emerald);
+            transform: translateY(-1px);
+        }
+
+        .btn-add-cart svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* ===== PRODUCTS GRID ===== */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 16px;
+        }
+
+        @media (min-width: 640px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                padding: 0 24px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .products-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 24px;
+                padding: 0 32px;
+            }
+        }
+
+        .product-card {
+            background: var(--ivory);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+
+        .product-card-image {
+            aspect-ratio: 1;
+            background: var(--sand);
+            margin: 10px;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .product-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .product-card:hover .product-card-image img {
+            transform: scale(1.05);
+        }
+
+        .product-new-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--forest);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .product-card-heart {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.85);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .product-card:hover .product-card-heart {
+            opacity: 1;
+        }
+
+        .product-card-heart svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--dark-gray);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .product-card-heart.liked svg {
+            fill: var(--terracotta);
+            stroke: var(--terracotta);
+        }
+
+        .product-card-content {
+            padding: 4px 14px 16px;
+            text-align: center;
+        }
+
+        .product-card-cat {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--taupe);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .product-card-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--charcoal);
+            line-height: 1.3;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-card-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--forest);
+        }
+
+        .product-card-price .old-price {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--light-gray);
+            text-decoration: line-through;
+            margin-left: 6px;
+        }
+
+        /* ===== PROJECTS SHOWCASE ===== */
+        .projects-section {
+            background: var(--ivory);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            padding: 0 16px;
+        }
+
+        @media (min-width: 640px) {
+            .projects-grid {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 0 24px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .projects-grid {
+                grid-template-columns: repeat(3, 1fr);
+                padding: 0 32px;
+            }
+        }
+
+        .project-card {
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 4/3;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+
+        .project-card-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .project-card:hover .project-card-img {
+            transform: scale(1.05);
+        }
+
+        .project-card-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+        }
+
+        .project-card-info {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+            z-index: 2;
+        }
+
+        .project-card-type {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--mint);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .project-card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        /* ===== SERVICES / FEATURES ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 16px;
+        }
+
+        @media (min-width: 768px) {
+            .features-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+                padding: 0 24px;
+            }
+        }
+
+        .feature-card {
+            background: var(--ivory);
+            border-radius: 20px;
+            padding: 24px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--forest), var(--sage));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .feature-icon svg {
+            width: 26px;
+            height: 26px;
+            stroke: #fff;
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .feature-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--charcoal);
+            margin-bottom: 6px;
+        }
+
+        .feature-desc {
+            font-size: 13px;
+            color: var(--medium-gray);
+            line-height: 1.5;
+        }
+
+        /* ===== CTA BANNER ===== */
+        .cta-section {
+            padding: 48px 16px;
+        }
+
+        @media (min-width: 768px) {
+            .cta-section { padding: 80px 24px; }
+        }
+
+        .cta-banner {
+            max-width: 900px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, var(--forest) 0%, var(--emerald) 50%, var(--sage) 100%);
+            border-radius: 32px;
+            padding: 48px 32px;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-banner::before {
+            content: '🌿';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 120px;
+            opacity: 0.08;
+            transform: rotate(15deg);
+        }
+
+        .cta-banner::after {
+            content: '🍃';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            font-size: 80px;
+            opacity: 0.08;
+            transform: rotate(-20deg);
+        }
+
+        .cta-overline {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--mint);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .cta-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        @media (min-width: 768px) {
+            .cta-title { font-size: 42px; }
+        }
+
+        .cta-desc {
+            font-size: 15px;
+            opacity: 0.8;
+            margin-bottom: 28px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.7;
+        }
+
+        .cta-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-actions .btn-primary {
+            background: #fff;
+            color: var(--forest);
+        }
+
+        /* ===== TESTIMONIALS ===== */
+        .testimonials-scroll {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 0 16px 16px;
+            scrollbar-width: none;
+        }
+
+        .testimonials-scroll::-webkit-scrollbar { display: none; }
+
+        .testimonial-card {
+            flex: 0 0 300px;
+            background: var(--ivory);
+            border-radius: 24px;
+            padding: 28px;
+            position: relative;
+        }
+
+        .testimonial-quote {
+            font-size: 32px;
+            color: var(--sage);
+            line-height: 1;
+            margin-bottom: 12px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .testimonial-text {
+            font-size: 14px;
+            color: var(--dark-gray);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--sand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .testimonial-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--charcoal);
+        }
+
+        .testimonial-role {
+            font-size: 12px;
+            color: var(--medium-gray);
+        }
+
+        .testimonial-stars {
+            color: var(--warning);
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--charcoal);
+            color: #fff;
+            padding: 48px 16px 24px;
+        }
+
+        @media (min-width: 768px) {
+            .footer { padding: 64px 24px 32px; }
+        }
+
+        .footer-top {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 768px) {
+            .footer-top {
+                grid-template-columns: 2fr 1fr 1fr 1fr;
+                gap: 40px;
+            }
+        }
+
+        .footer-brand-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .footer-brand-name span {
+            color: var(--mint);
+        }
+
+        .footer-brand-desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.7;
+            max-width: 300px;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        .footer-social a:hover {
+            background: var(--forest);
+            transform: translateY(-2px);
+        }
+
+        .footer-col-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .footer-bottom {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        .footer-bottom-text {
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            height: 70px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+            border-radius: 24px 24px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            z-index: 1000;
+            padding: 0 8px;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 32px;
+            height: 3px;
+            background: var(--forest);
+            border-radius: 9999px;
+        }
+
+        .nav-item svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--medium-gray);
+            stroke-width: 1.5;
+            fill: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active svg {
+            stroke: var(--forest);
+        }
+
+        .nav-item-label {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--medium-gray);
+            transition: color 0.3s ease;
+        }
+
+        .nav-item.active .nav-item-label {
+            color: var(--forest);
+            font-weight: 600;
+        }
+
+        .nav-item .badge-count {
+            position: absolute;
+            top: 2px;
+            right: 6px;
+        }
+
+        /* ===== ANIMATIONS ON SCROLL ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--charcoal);
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 9999;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--mint);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* ===== PHONE MOCKUP (desktop only) ===== */
+        @media (min-width: 1024px) {
+            .phone-frame {
+                max-width: 430px;
+                margin: 0 auto;
+                background: #000;
+                border-radius: 48px;
+                padding: 12px;
+                box-shadow: 0 30px 80px rgba(0,0,0,0.2);
+                position: relative;
+            }
+
+            .phone-frame .phone-inner {
+                border-radius: 40px;
+                overflow: hidden;
+                overflow-y: auto;
+                max-height: 85vh;
+            }
+
+            .phone-frame .phone-inner::-webkit-scrollbar {
+                display: none;
+            }
+
+            .phone-frame .bottom-nav {
+                position: sticky;
+                bottom: 0;
+            }
+        }
+
+        /* ===== MISC ===== */
+        .divider {
+            width: 60px;
+            height: 3px;
+            background: var(--sage);
+            border-radius: 9999px;
+            margin: 0 auto 16px;
+        }
+
+        .text-center { text-align: center; }
+
+        .scroll-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 16px;
+        }
+
+        .scroll-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--stone);
+            transition: all 0.3s ease;
+        }
+
+        .scroll-dot.active {
+            background: var(--forest);
+            width: 24px;
+            border-radius: 9999px;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--sand) 25%, var(--ivory) 50%, var(--sand) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Floating decorative elements */
+        .floating-leaf-1,
+        .floating-leaf-2 {
+            position: absolute;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header" id="header">
+        <a href="#" class="header-logo">Decor<span>house</span></a>
+        <div class="header-actions">
+            <div class="lang-toggle">
+                <button class="lang-btn active" data-lang="ru" onclick="switchLang('ru')">Рус</button>
+                <button class="lang-btn" data-lang="uz" onclick="switchLang('uz')">O'zb</button>
+            </div>
+            <button class="icon-btn" onclick="showToast('Поиск скоро будет доступен')">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+            <button class="icon-btn" onclick="showToast('Корзина пуста')">
+                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span class="badge-count" id="cartBadge" style="display:none;">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- HERO -->
+        <section class="hero">
+            <div class="hero-bg"></div>
+            <div class="hero-pattern"></div>
+            <div class="hero-img-decoration"></div>
+            <div class="hero-img-decoration-2"></div>
+            <div class="hero-leaf">🌿</div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="hero-badge-dot"></span>
+                    <span data-ru="№1 в Узбекистане" data-uz="O'zbekistonda №1">№1 в Узбекистане</span>
+                </div>
+                <h1 class="hero-title" data-ru="Искусство декора и озеленения" data-uz="Bezak va ko'kalamzorlashtirish san'ati">Искусство декора и озеленения</h1>
+                <p class="hero-desc" data-ru="Премиальные искусственные деревья, растения и цветы. Проекты под ключ для ресторанов, отелей и частных домов." data-uz="Premium sun'iy daraxtlar, o'simliklar va gullar. Restoranlar, mehmonxonalar va xususiy uylar uchun tayyor loyihalar.">Премиальные искусственные деревья, растения и цветы. Проекты под ключ для ресторанов, отелей и частных домов.</p>
+                <div class="hero-actions">
+                    <a href="#catalog" class="btn-primary" data-ru="Смотреть каталог" data-uz="Katalogni ko'rish">Смотреть каталог</a>
+                    <a href="#projects" class="btn-secondary" data-ru="Наши проекты" data-uz="Bizning loyihalar">Наши проекты</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS -->
+        <div class="stats-bar reveal">
+            <div class="stat-item">
+                <div class="stat-number">500+</div>
+                <div class="stat-label" data-ru="Товаров в каталоге" data-uz="Katalogdagi mahsulotlar">Товаров в каталоге</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">150+</div>
+                <div class="stat-label" data-ru="Завершённых проектов" data-uz="Tugallangan loyihalar">Завершённых проектов</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">2</div>
+                <div class="stat-label" data-ru="Филиала в Ташкенте" data-uz="Toshkentdagi filiallar">Филиала в Ташкенте</div>
+            </div>
+        </div>
+
+        <!-- SEARCH -->
+        <section class="search-section reveal">
+            <div class="search-bar">
+                <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" class="search-input" data-ru-placeholder="Найти растения, деревья, декор..." data-uz-placeholder="O'simliklar, daraxtlar, bezak toping..." placeholder="Найти растения, деревья, декор...">
+            </div>
+        </section>
+
+        <!-- CATEGORIES -->
+        <section class="section reveal" id="categories">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" data-ru="Категории" data-uz="Kategoriyalar">Категории</h2>
+                    <p class="section-subtitle" data-ru="Выберите интересующий раздел" data-uz="Kerakli bo'limni tanlang">Выберите интересующий раздел</p>
+                </div>
+                <a href="#" class="section-link">
+                    <span data-ru="Все" data-uz="Barchasi">Все</span>
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+            </div>
+            <div class="categories-scroll">
+                <div class="category-card">
+                    <img src="https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=400&h=500&fit=crop" alt="Trees" class="category-card-img">
+                    <div class="category-card-overlay"></div>
+                    <div class="category-card-content">
+                        <div class="category-card-name" data-ru="Деревья" data-uz="Daraxtlar">Деревья</div>
+                        <div class="category-card-count" data-ru="48 товаров" data-uz="48 ta mahsulot">48 товаров</div>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=500&fit=crop" alt="Plants" class="category-card-img">
+                    <div class="category-card-overlay"></div>
+                    <div class="category-card-content">
+                        <div class="category-card-name" data-ru="Растения" data-uz="O'simliklar">Растения</div>
+                        <div class="category-card-count" data-ru="126 товаров" data-uz="126 ta mahsulot">126 товаров</div>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <img src="https://images.unsplash.com/photo-1490750967868-88aa4f44baee?w=400&h=500&fit=crop" alt="Flowers" class="category-card-img">
+                    <div class="category-card-overlay"></div>
+                    <div class="category-card-content">
+                        <div class="category-card-name" data-ru="Цветы" data-uz="Gullar">Цветы</div>
+                        <div class="category-card-count" data-ru="89 товаров" data-uz="89 ta mahsulot">89 товаров</div>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=500&fit=crop" alt="Decor" class="category-card-img">
+                    <div class="category-card-overlay"></div>
+                    <div class="category-card-content">
+                        <div class="category-card-name" data-ru="Декор" data-uz="Bezak">Декор</div>
+                        <div class="category-card-count" data-ru="67 товаров" data-uz="67 ta mahsulot">67 товаров</div>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <img src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400&h=500&fit=crop" alt="Compositions" class="category-card-img">
+                    <div class="category-card-overlay"></div>
+                    <div class="category-card-content">
+                        <div class="category-card-name" data-ru="Композиции" data-uz="Kompozitsiyalar">Композиции</div>
+                        <div class="category-card-count" data-ru="34 товара" data-uz="34 ta mahsulot">34 товара</div>
+                    </div>
+                </div>
+                <div class="category-card">
+                    <img src="https://images.unsplash.com/photo-1501004318855-b174af8812c0?w=400&h=500&fit=crop" alt="Green walls" class="category-card-img">
+                    <div class="category-card-overlay"></div>
+                    <div class="category-card-content">
+                        <div class="category-card-name" data-ru="Зелёные стены" data-uz="Yashil devorlar">Зелёные стены</div>
+                        <div class="category-card-count" data-ru="22 товара" data-uz="22 ta mahsulot">22 товара</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SPECIAL OFFERS -->
+        <section class="offers-section reveal" id="offers">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" data-ru="Специальные предложения" data-uz="Maxsus takliflar">Специальные предложения</h2>
+                    <p class="section-subtitle" data-ru="Скидки до 40% на избранные товары" data-uz="Tanlangan mahsulotlarga 40% gacha chegirma">Скидки до 40% на избранные товары</p>
+                    <div class="offers-timer">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span data-ru="Осталось 3 дня" data-uz="3 kun qoldi">Осталось 3 дня</span>
+                    </div>
+                </div>
+                <a href="#" class="section-link">
+                    <span data-ru="Все акции" data-uz="Barcha aksiyalar">Все акции</span>
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+            </div>
+            <div class="offers-grid">
+                <!-- Offer 1 -->
+                <div class="offer-card">
+                    <div class="offer-card-image">
+                        <img src="https://images.unsplash.com/photo-1637967886160-fd78dc3ce3f5?w=400&h=400&fit=crop" alt="Olive Tree">
+                        <span class="offer-badge">-30%</span>
+                        <button class="offer-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="offer-card-content">
+                        <div class="offer-card-category" data-ru="Деревья" data-uz="Daraxtlar">Деревья</div>
+                        <div class="offer-card-name" data-ru="Оливковое дерево 180 см" data-uz="Zaytun daraxti 180 sm">Оливковое дерево 180 см</div>
+                        <div class="offer-card-prices">
+                            <span class="offer-price-new">1 890 000 сум</span>
+                            <span class="offer-price-old">2 700 000</span>
+                        </div>
+                        <div class="offer-card-action">
+                            <button class="btn-add-cart" onclick="addToCart()">
+                                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                <span data-ru="В корзину" data-uz="Savatga">В корзину</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Offer 2 -->
+                <div class="offer-card">
+                    <div class="offer-card-image">
+                        <img src="https://images.unsplash.com/photo-1463320898484-cdee8141c787?w=400&h=400&fit=crop" alt="Monstera">
+                        <span class="offer-badge">-25%</span>
+                        <button class="offer-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="offer-card-content">
+                        <div class="offer-card-category" data-ru="Растения" data-uz="O'simliklar">Растения</div>
+                        <div class="offer-card-name" data-ru="Монстера Делициоза XL" data-uz="Monstera Delitsioza XL">Монстера Делициоза XL</div>
+                        <div class="offer-card-prices">
+                            <span class="offer-price-new">750 000 сум</span>
+                            <span class="offer-price-old">1 000 000</span>
+                        </div>
+                        <div class="offer-card-action">
+                            <button class="btn-add-cart" onclick="addToCart()">
+                                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                <span data-ru="В корзину" data-uz="Savatga">В корзину</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Offer 3 -->
+                <div class="offer-card">
+                    <div class="offer-card-image">
+                        <img src="https://images.unsplash.com/photo-1524598171353-ce84a157eea5?w=400&h=400&fit=crop" alt="Flowers">
+                        <span class="offer-badge">-40%</span>
+                        <button class="offer-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="offer-card-content">
+                        <div class="offer-card-category" data-ru="Цветы" data-uz="Gullar">Цветы</div>
+                        <div class="offer-card-name" data-ru="Букет белых пионов" data-uz="Oq pion gullar to'plami">Букет белых пионов</div>
+                        <div class="offer-card-prices">
+                            <span class="offer-price-new">420 000 сум</span>
+                            <span class="offer-price-old">700 000</span>
+                        </div>
+                        <div class="offer-card-action">
+                            <button class="btn-add-cart" onclick="addToCart()">
+                                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                <span data-ru="В корзину" data-uz="Savatga">В корзину</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Offer 4 -->
+                <div class="offer-card">
+                    <div class="offer-card-image">
+                        <img src="https://images.unsplash.com/photo-1600411833196-7c1f6b1a8b90?w=400&h=400&fit=crop" alt="Fern">
+                        <span class="offer-badge">-20%</span>
+                        <button class="offer-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="offer-card-content">
+                        <div class="offer-card-category" data-ru="Композиции" data-uz="Kompozitsiyalar">Композиции</div>
+                        <div class="offer-card-name" data-ru="Настольная композиция «Оазис»" data-uz="«Vohа» stol kompozitsiyasi">Настольная композиция «Оазис»</div>
+                        <div class="offer-card-prices">
+                            <span class="offer-price-new">560 000 сум</span>
+                            <span class="offer-price-old">700 000</span>
+                        </div>
+                        <div class="offer-card-action">
+                            <button class="btn-add-cart" onclick="addToCart()">
+                                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                <span data-ru="В корзину" data-uz="Savatga">В корзину</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATALOG / PRODUCTS -->
+        <section class="section reveal" id="catalog">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" data-ru="Популярные товары" data-uz="Mashhur mahsulotlar">Популярные товары</h2>
+                    <p class="section-subtitle" data-ru="Бестселлеры нашего каталога" data-uz="Katalogimiz bestsellerlari">Бестселлеры нашего каталога</p>
+                </div>
+                <a href="#" class="section-link">
+                    <span data-ru="Весь каталог" data-uz="Butun katalog">Весь каталог</span>
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+            </div>
+            <div class="products-grid">
+                <!-- Product 1 -->
+                <div class="product-card">
+                    <div class="product-card-image">
+                        <img src="https://images.unsplash.com/photo-1509423350716-97f9360b4e09?w=400&h=400&fit=crop" alt="Palm">
+                        <span class="product-new-badge">New</span>
+                        <button class="product-card-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-card-content">
+                        <div class="product-card-cat" data-ru="Деревья" data-uz="Daraxtlar">Деревья</div>
+                        <div class="product-card-name" data-ru="Пальма Арека 200 см" data-uz="Areka palmasi 200 sm">Пальма Арека 200 см</div>
+                        <div class="product-card-price">2 450 000 <span style="font-size:12px;font-weight:500;">сум</span></div>
+                    </div>
+                </div>
+                <!-- Product 2 -->
+                <div class="product-card">
+                    <div class="product-card-image">
+                        <img src="https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&h=400&fit=crop" alt="Eucalyptus">
+                        <button class="product-card-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-card-content">
+                        <div class="product-card-cat" data-ru="Растения" data-uz="O'simliklar">Растения</div>
+                        <div class="product-card-name" data-ru="Эвкалипт ветка премиум" data-uz="Evkalipt shoxchasi premium">Эвкалипт ветка премиум</div>
+                        <div class="product-card-price">180 000 <span style="font-size:12px;font-weight:500;">сум</span></div>
+                    </div>
+                </div>
+                <!-- Product 3 -->
+                <div class="product-card">
+                    <div class="product-card-image">
+                        <img src="https://images.unsplash.com/photo-1597848212624-a19eb35e2651?w=400&h=400&fit=crop" alt="Rose">
+                        <span class="product-new-badge">New</span>
+                        <button class="product-card-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-card-content">
+                        <div class="product-card-cat" data-ru="Цветы" data-uz="Gullar">Цветы</div>
+                        <div class="product-card-name" data-ru="Роза Дэвид Остин" data-uz="Devid Ostin atirguli">Роза Дэвид Остин</div>
+                        <div class="product-card-price">95 000 <span style="font-size:12px;font-weight:500;">сум</span></div>
+                    </div>
+                </div>
+                <!-- Product 4 -->
+                <div class="product-card">
+                    <div class="product-card-image">
+                        <img src="https://images.unsplash.com/photo-1592150621744-aca64f48394a?w=400&h=400&fit=crop" alt="Ficus">
+                        <button class="product-card-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-card-content">
+                        <div class="product-card-cat" data-ru="Деревья" data-uz="Daraxtlar">Деревья</div>
+                        <div class="product-card-name" data-ru="Фикус Лирата 150 см" data-uz="Fikus Lirata 150 sm">Фикус Лирата 150 см</div>
+                        <div class="product-card-price">1 680 000 <span style="font-size:12px;font-weight:500;">сум</span></div>
+                    </div>
+                </div>
+                <!-- Product 5 -->
+                <div class="product-card">
+                    <div class="product-card-image">
+                        <img src="https://images.unsplash.com/photo-1604762524889-3e2fcc145683?w=400&h=400&fit=crop" alt="Lavender">
+                        <button class="product-card-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-card-content">
+                        <div class="product-card-cat" data-ru="Цветы" data-uz="Gullar">Цветы</div>
+                        <div class="product-card-name" data-ru="Лаванда в горшке" data-uz="Guldon ichida lavanda">Лаванда в горшке</div>
+                        <div class="product-card-price">320 000 <span style="font-size:12px;font-weight:500;">сум</span></div>
+                    </div>
+                </div>
+                <!-- Product 6 -->
+                <div class="product-card">
+                    <div class="product-card-image">
+                        <img src="https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=400&h=400&fit=crop" alt="Bamboo">
+                        <button class="product-card-heart" onclick="toggleHeart(this)">
+                            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </button>
+                    </div>
+                    <div class="product-card-content">
+                        <div class="product-card-cat" data-ru="Деревья" data-uz="Daraxtlar">Деревья</div>
+                        <div class="product-card-name" data-ru="Бамбук декоративный 220 см" data-uz="Dekorativ bambuk 220 sm">Бамбук декоративный 220 см</div>
+                        <div class="product-card-price">1 950 000 <span style="font-size:12px;font-weight:500;">сум</span></div>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:32px;padding:0 16px;">
+                <a href="#" class="btn-primary btn-green" data-ru="Показать ещё" data-uz="Ko'proq ko'rsatish" style="display:inline-flex;">Показать ещё</a>
+            </div>
+        </section>
+
+        <!-- FEATURES / WHY US -->
+        <section class="section reveal">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" data-ru="Почему Decorhouse?" data-uz="Nima uchun Decorhouse?">Почему Decorhouse?</h2>
+                    <p class="section-subtitle" data-ru="Преимущества, которые нас выделяют" data-uz="Bizni ajratib turadigan afzalliklar">Преимущества, которые нас выделяют</p>
+                </div>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="feature-title" data-ru="Премиум качество" data-uz="Premium sifat">Премиум качество</div>
+                    <div class="feature-desc" data-ru="Максимально реалистичные материалы" data-uz="Eng real ko'rinishdagi materiallar">Максимально реалистичные материалы</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div class="feature-title" data-ru="Проекты под ключ" data-uz="Tayyor loyihalar">Проекты под ключ</div>
+                    <div class="feature-desc" data-ru="Полный цикл: от идеи до реализации" data-uz="To'liq tsikl: g'oyadan amalga oshirishgacha">Полный цикл: от идеи до реализации</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    </div>
+                    <div class="feature-title" data-ru="Доставка по УЗ" data-uz="O'zbekiston bo'ylab yetkazib berish">Доставка по УЗ</div>
+                    <div class="feature-desc" data-ru="По всему Узбекистану" data-uz="Butun O'zbekiston bo'ylab">По всему Узбекистану</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <div class="feature-title" data-ru="Индивидуальный подход" data-uz="Individual yondashuv">Индивидуальный подход</div>
+                    <div class="feature-desc" data-ru="Создаём деревья от 4 до 10+ метров" data-uz="4 dan 10+ metrgacha daraxtlar yaratamiz">Создаём деревья от 4 до 10+ метров</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROJECTS -->
+        <section class="section projects-section reveal" id="projects">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" data-ru="Наши проекты" data-uz="Bizning loyihalar">Наши проекты</h2>
+                    <p class="section-subtitle" data-ru="Реализованные декор-проекты под ключ" data-uz="Amalga oshirilgan tayyor bezak loyihalari">Реализованные декор-проекты под ключ</p>
+                </div>
+                <a href="#" class="section-link">
+                    <span data-ru="Все проекты" data-uz="Barcha loyihalar">Все проекты</span>
+                    <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </a>
+            </div>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=450&fit=crop" alt="Restaurant" class="project-card-img">
+                    <div class="project-card-overlay"></div>
+                    <div class="project-card-info">
+                        <div class="project-card-type" data-ru="Ресторан" data-uz="Restoran">Ресторан</div>
+                        <div class="project-card-title" data-ru="The Garden Restaurant" data-uz="The Garden Restaurant">The Garden Restaurant</div>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&h=450&fit=crop" alt="Hotel" class="project-card-img">
+                    <div class="project-card-overlay"></div>
+                    <div class="project-card-info">
+                        <div class="project-card-type" data-ru="Отель" data-uz="Mehmonxona">Отель</div>
+                        <div class="project-card-title" data-ru="Hilton Tashkent Lobby" data-uz="Hilton Toshkent Lobbi">Hilton Tashkent Lobby</div>
+                    </div>
+                </div>
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=450&fit=crop" alt="Private" class="project-card-img">
+                    <div class="project-card-overlay"></div>
+                    <div class="project-card-info">
+                        <div class="project-card-type" data-ru="Частный дом" data-uz="Xususiy uy">Частный дом</div>
+                        <div class="project-card-title" data-ru="Вилла «Зелёный сад»" data-uz="«Yashil bog'» villasi">Вилла «Зелёный сад»</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TESTIMONIALS -->
+        <section class="section reveal">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" data-ru="Отзывы клиентов" data-uz="Mijozlar fikrlari">Отзывы клиентов</h2>
+                    <p class="section-subtitle" data-ru="Что говорят наши клиенты" data-uz="Mijozlarimiz nima deydi">Что говорят наши клиенты</p>
+                </div>
+            </div>
+            <div class="testimonials-scroll">
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-text" data-ru="Заказали декор для ресторана — результат превзошёл ожидания. Деревья выглядят абсолютно реалистично, гости не верят, что они искусственные!" data-uz="Restoran uchun bezak buyurtma berdik — natija kutganimizdan ham yaxshi bo'ldi. Daraxtlar mutlaqo haqiqiyga o'xshaydi!">Заказали декор для ресторана — результат превзошёл ожидания. Деревья выглядят абсолютно реалистично, гости не верят, что они искусственные!</div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">👩‍💼</div>
+                        <div>
+                            <div class="testimonial-name">Диана Каримова</div>
+                            <div class="testimonial-role" data-ru="Владелец ресторана" data-uz="Restoran egasi">Владелец ресторана</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-text" data-ru="Decorhouse сделали озеленение нашего офиса под ключ. Быстро, качественно и очень красиво. Рекомендую всем!" data-uz="Decorhouse ofisimizni to'liq ko'kalamzorlashtirdi. Tez, sifatli va juda chiroyli. Hammaga tavsiya qilaman!">Decorhouse сделали озеленение нашего офиса под ключ. Быстро, качественно и очень красиво. Рекомендую всем!</div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">👨‍💼</div>
+                        <div>
+                            <div class="testimonial-name">Тимур Раджабов</div>
+                            <div class="testimonial-role" data-ru="CEO, IT компания" data-uz="CEO, IT kompaniya">CEO, IT компания</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"</div>
+                    <div class="testimonial-text" data-ru="Купила несколько растений для дома — качество потрясающее! Удобный каталог и отличное обслуживание. Буду заказывать ещё." data-uz="Uy uchun bir nechta o'simlik sotib oldim — sifati ajoyib! Qulay katalog va a'lo xizmat ko'rsatish.">Купила несколько растений для дома — качество потрясающее! Удобный каталог и отличное обслуживание. Буду заказывать ещё.</div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">👩</div>
+                        <div>
+                            <div class="testimonial-name">Малика Нурматова</div>
+                            <div class="testimonial-role" data-ru="Дизайнер интерьера" data-uz="Interyer dizayner">Дизайнер интерьера</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section reveal">
+            <div class="cta-banner">
+                <div class="cta-overline" data-ru="Проектная студия декора" data-uz="Bezak loyiha studiyasi">Проектная студия декора</div>
+                <h2 class="cta-title" data-ru="Готовы преобразить ваше пространство?" data-uz="Makoningizni o'zgartirishga tayyormisiz?">Готовы преобразить ваше пространство?</h2>
+                <p class="cta-desc" data-ru="Закажите бесплатную консультацию — мы создадим проект озеленения специально для вас" data-uz="Bepul maslahat buyurtma bering — biz siz uchun maxsus ko'kalamzorlashtirish loyihasini yaratamiz">Закажите бесплатную консультацию — мы создадим проект озеленения специально для вас</p>
+                <div class="cta-actions">
+                    <a href="#" class="btn-primary" data-ru="Получить консультацию" data-uz="Maslahat olish">Получить консультацию</a>
+                    <a href="tel:+998901234567" class="btn-secondary" data-ru="Позвонить" data-uz="Qo'ng'iroq qilish">📞 Позвонить</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-top">
+            <div>
+                <div class="footer-brand-name">Decor<span>house</span></div>
+                <p class="footer-brand-desc" data-ru="Лидер рынка декора и искусственного озеленения в Узбекистане. Создаём красоту, которая не увядает." data-uz="O'zbekistondagi bezak va sun'iy ko'kalamzorlashtirish bozorining yetakchisi. So'lmaydigan go'zallik yaratamiz.">Лидер рынка декора и искусственного озеленения в Узбекистане. Создаём красоту, которая не увядает.</p>
+                <div class="footer-social">
+                    <a href="#">📱</a>
+                    <a href="#">📷</a>
+                    <a href="#">💬</a>
+                    <a href="#">▶️</a>
+                </div>
+            </div>
+            <div>
+                <div class="footer-col-title" data-ru="Каталог" data-uz="Katalog">Каталог</div>
+                <ul class="footer-links">
+                    <li><a href="#" data-ru="Деревья" data-uz="Daraxtlar">Деревья</a></li>
+                    <li><a href="#" data-ru="Растения" data-uz="O'simliklar">Растения</a></li>
+                    <li><a href="#" data-ru="Цветы" data-uz="Gullar">Цветы</a></li>
+                    <li><a href="#" data-ru="Декор" data-uz="Bezak">Декор</a></li>
+                    <li><a href="#" data-ru="Композиции" data-uz="Kompozitsiyalar">Композиции</a></li>
+                </ul>
+            </div>
+            <div>
+                <div class="footer-col-title" data-ru="Компания" data-uz="Kompaniya">Компания</div>
+                <ul class="footer-links">
+                    <li><a href="#" data-ru="О нас" data-uz="Biz haqimizda">О нас</a></li>
+                    <li><a href="#" data-ru="Проекты" data-uz="Loyihalar">Проекты</a></li>
+                    <li><a href="#" data-ru="Контакты" data-uz="Kontaktlar">Контакты</a></li>
+                    <li><a href="#" data-ru="Доставка" data-uz="Yetkazib berish">Доставка</a></li>
+                </ul>
+            </div>
+            <div>
+                <div class="footer-col-title" data-ru="Контакты" data-uz="Kontaktlar">Контакты</div>
+                <ul class="footer-links">
+                    <li><a href="tel:+998901234567">+998 90 123 45 67</a></li>
+                    <li><a href="mailto:info@decorhouse.uz">info@decorhouse.uz</a></li>
+                    <li><a href="#" data-ru="г. Ташкент, ул. Навои 25" data-uz="Toshkent sh., Navoiy ko'ch. 25">г. Ташкент, ул. Навои 25</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span class="footer-bottom-text">© 2025 Decorhouse. All rights reserved.</span>
+            <span class="footer-bottom-text" data-ru="Сделано с 🌿 в Ташкенте" data-uz="Toshkentda 🌿 bilan yaratilgan">Сделано с 🌿 в Ташкенте</span>
+        </div>
+    </footer>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="setActiveNav(this)">
+            <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span class="nav-item-label" data-ru="Главная" data-uz="Bosh sahifa">Главная</span>
+        </button>
+        <button class="nav-item" onclick="setActiveNav(this)">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span class="nav-item-label" data-ru="Каталог" data-uz="Katalog">Каталог</span>
+        </button>
+        <button class="nav-item" onclick="setActiveNav(this)">
+            <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span class="nav-item-label" data-ru="Корзина" data-uz="Savat">Корзина</span>
+            <span class="badge-count" id="navCartBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-item" onclick="setActiveNav(this)">
+            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="nav-item-label" data-ru="Избранное" data-uz="Sevimlilar">Избранное</span>
+        </button>
+        <button class="nav-item" onclick="setActiveNav(this)">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span class="nav-item-label" data-ru="Профиль" data-uz="Profil">Профиль</span>
+        </button>
+    </nav>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span id="toastText"></span>
+    </div>
+
+    <script>
+        // ===== SCROLL REVEAL =====
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // ===== HEADER SCROLL =====
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 20) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // ===== LANGUAGE SWITCHER =====
+        let currentLang = 'ru';
+
+        function switchLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            document.querySelectorAll('[data-ru]').forEach(el => {
+                if (el.dataset[lang]) {
+                    el.textContent = el.dataset[lang];
+                }
+            });
+
+            document.querySelectorAll('[data-ru-placeholder]').forEach(el => {
+                const key = lang + '-placeholder';
+                const attrKey = 'data-' + key.replace('-', '');
+                const val = lang === 'ru' ? el.getAttribute('data-ru-placeholder') : el.getAttribute('data-uz-placeholder');
+                if (val) el.placeholder = val;
+            });
+        }
+
+        // ===== CART =====
+        let cartCount = 0;
+
+        function addToCart() {
+            cartCount++;
+            updateCartBadges();
+            showToast(currentLang === 'ru' ? 'Товар добавлен в корзину' : 'Mahsulot savatga qo\'shildi');
+        }
+
+        function updateCartBadges() {
+            const b1 = document.getElementById('cartBadge');
+            const b2 = document.getElementById('navCartBadge');
+            if (cartCount > 0) {
+                b1.style.display = 'flex';
+                b2.style.display = 'flex';
+                b1.textContent = cartCount;
+                b2.textContent = cartCount;
+            }
+        }
+
+        // ===== HEART TOGGLE =====
+        function toggleHeart(btn) {
+            btn.classList.toggle('liked');
+            const isLiked = btn.classList.contains('liked');
+            showToast(
+                isLiked
+                    ? (currentLang === 'ru' ? 'Добавлено в избранное' : 'Sevimlilarga qo\'shildi')
+                    : (currentLang === 'ru' ? 'Удалено из избранного' : 'Sevimlilardan olib tashlandi')
+            );
+        }
+
+        // ===== TOAST =====
+        let toastTimeout;
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toastText');
+            toastText.textContent = text;
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // ===== BOTTOM NAV =====
+        function setActiveNav(item) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+        }
+
+        // ===== SMOOTH SCROLL FOR ANCHOR LINKS =====
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const id = this.getAttribute('href');
+                if (id && id !== '#') {
+                    e.preventDefault();
+                    const target = document.querySelector(id);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            });
+        });
+
+        // ===== SEARCH PLACEHOLDER LANGUAGE =====
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            searchInput.setAttribute('data-ruplaceholder', 'Найти растения, деревья, декор...');
+            searchInput.setAttribute('data-uzplaceholder', "O'simliklar, daraxtlar, bezak toping...");
+        }
+    </script>
+
+</body>
+</html>
