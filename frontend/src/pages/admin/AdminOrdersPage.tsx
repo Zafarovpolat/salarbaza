@@ -1,8 +1,21 @@
+// frontend/src/pages/admin/AdminOrdersPage.tsx
+
 import { useEffect, useState } from "react";
-import { Eye, ChevronDown, X } from "lucide-react";
+import { Eye, ChevronDown, X, Ruler } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { adminService } from "@/services/adminService";
 import toast from "react-hot-toast";
+
+interface OrderItem {
+  productName: string;
+  productCode: string;
+  productImage?: string;
+  colorName?: string;
+  variantSize?: string;  // ✅ НОВОЕ
+  quantity: number;
+  price: number;
+  total?: number;
+}
 
 interface Order {
   id: string;
@@ -11,16 +24,13 @@ interface Order {
   customerName: string;
   customerPhone: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  deliveryFee?: number;
   deliveryType: string;
   paymentMethod: string;
   createdAt: string;
-  items: Array<{
-    productName: string;
-    productCode: string; // ✅ Добавить
-    productImage?: string; // ✅ Добавить
-    quantity: number;
-    price: number;
-  }>;
+  items: OrderItem[];
 }
 
 const statusLabels: Record<string, string> = {
@@ -155,7 +165,7 @@ export function AdminOrdersPage() {
                       key={i}
                       className="flex gap-3 bg-gray-50 p-3 rounded-lg"
                     >
-                      {/* ✅ Добавляем фото товара */}
+                      {/* Фото товара */}
                       <div className="w-12 h-12 rounded-lg bg-gray-200 overflow-hidden shrink-0">
                         {item.productImage ? (
                           <img
@@ -173,10 +183,32 @@ export function AdminOrdersPage() {
                         <p className="font-medium text-sm">
                           {item.productName || "Товар"}
                         </p>
-                        {/* ✅ Добавляем код товара */}
-                        <p className="text-xs text-gray-500">
-                          Код: {item.productCode || "—"} • × {item.quantity}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                          {/* Код товара */}
+                          <span className="text-xs text-gray-500">
+                            {item.productCode || "—"}
+                          </span>
+
+                          {/* ✅ НОВОЕ: Размер */}
+                          {item.variantSize && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                              <Ruler className="w-3 h-3" />
+                              {item.variantSize}
+                            </span>
+                          )}
+
+                          {/* Цвет */}
+                          {item.colorName && (
+                            <span className="text-xs text-gray-500">
+                              🎨 {item.colorName}
+                            </span>
+                          )}
+
+                          {/* Количество */}
+                          <span className="text-xs text-gray-500">
+                            × {item.quantity}
+                          </span>
+                        </div>
                       </div>
                       <p className="font-medium text-sm shrink-0">
                         {formatPrice(item.price * item.quantity)}
@@ -186,11 +218,32 @@ export function AdminOrdersPage() {
                 </div>
               </div>
 
-              <div className="flex justify-between pt-3 border-t">
-                <span className="font-semibold">Итого:</span>
-                <span className="font-bold text-lg text-green-600">
-                  {formatPrice(selectedOrder.total)} сум
-                </span>
+              {/* ✅ Итоги с учётом скидки */}
+              <div className="pt-3 border-t space-y-1">
+                {selectedOrder.subtotal && selectedOrder.discount && selectedOrder.discount > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Подытог:</span>
+                      <span>{formatPrice(selectedOrder.subtotal)} сум</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Оптовая скидка:</span>
+                      <span>-{formatPrice(selectedOrder.discount)} сум</span>
+                    </div>
+                  </>
+                )}
+                {selectedOrder.deliveryFee !== undefined && selectedOrder.deliveryFee > 0 && (
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Доставка:</span>
+                    <span>{formatPrice(selectedOrder.deliveryFee)} сум</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1">
+                  <span className="font-semibold">Итого:</span>
+                  <span className="font-bold text-lg text-green-600">
+                    {formatPrice(selectedOrder.total)} сум
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -224,8 +277,32 @@ export function AdminOrdersPage() {
                     {order.customerName}
                   </p>
                   <p className="text-sm text-gray-500">{order.customerPhone}</p>
+
+                  {/* ✅ Краткий список товаров с размерами */}
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {order.items.slice(0, 3).map((item, i) => (
+                      <span key={i} className="text-xs bg-gray-100 rounded px-2 py-0.5 text-gray-600">
+                        {item.productCode || item.productName?.slice(0, 15)}
+                        {item.variantSize && (
+                          <span className="ml-1 font-medium text-blue-600">{item.variantSize}</span>
+                        )}
+                        <span className="text-gray-400 ml-1">×{item.quantity}</span>
+                      </span>
+                    ))}
+                    {order.items.length > 3 && (
+                      <span className="text-xs text-gray-400">
+                        +{order.items.length - 3} ещё
+                      </span>
+                    )}
+                  </div>
+
                   <p className="font-semibold text-gray-900 mt-2">
                     {formatPrice(order.total)} сум
+                    {order.discount && order.discount > 0 && (
+                      <span className="text-xs text-green-600 ml-2 font-normal">
+                        (скидка -{formatPrice(order.discount)})
+                      </span>
+                    )}
                   </p>
                 </div>
 
