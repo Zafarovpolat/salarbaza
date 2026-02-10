@@ -1,6 +1,8 @@
+// frontend/src/store/cartStore.ts
+
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { CartItem, Product, ProductColor } from '@/types'
+import type { CartItem, Product, ProductColor, ProductVariant } from '@/types'
 
 interface CartState {
     items: CartItem[]
@@ -10,14 +12,27 @@ interface CartState {
     subtotal: number
 
     // Actions
-    addItem: (product: Product, quantity?: number, color?: ProductColor) => void
+    addItem: (
+        product: Product,
+        quantity?: number,
+        color?: ProductColor,
+        variant?: ProductVariant  // ✅ НОВОЕ
+    ) => void
     removeItem: (itemId: string) => void
     updateQuantity: (itemId: string, quantity: number) => void
     clearCart: () => void
 
     // Helpers
-    getItemByProduct: (productId: string, colorId?: string) => CartItem | undefined
-    isInCart: (productId: string, colorId?: string) => boolean
+    getItemByProduct: (
+        productId: string,
+        colorId?: string,
+        variantId?: string  // ✅ НОВОЕ
+    ) => CartItem | undefined
+    isInCart: (
+        productId: string,
+        colorId?: string,
+        variantId?: string  // ✅ НОВОЕ
+    ) => boolean
 }
 
 export const useCartStore = create<CartState>()(
@@ -32,14 +47,23 @@ export const useCartStore = create<CartState>()(
             get subtotal() {
                 return get().items.reduce((sum, item) => {
                     const colorModifier = item.color?.priceModifier || 0
-                    const price = item.product.price + colorModifier
+                    // ✅ Цена из варианта или базовая
+                    const basePrice = item.variant?.price || item.product.price
+                    const price = basePrice + colorModifier
                     return sum + price * item.quantity
                 }, 0)
             },
 
-            addItem: (product, quantity = 1, color) => {
+            addItem: (product, quantity = 1, color, variant) => {
                 const { items, getItemByProduct } = get()
-                const existingItem = getItemByProduct(product.id, color?.id)
+
+                // ✅ Если у товара есть варианты, но вариант не выбран — не добавляем
+                if (product.variants && product.variants.length > 0 && !variant) {
+                    console.warn('Product has variants but none selected')
+                    return
+                }
+
+                const existingItem = getItemByProduct(product.id, color?.id, variant?.id)
 
                 if (existingItem) {
                     set({
@@ -50,12 +74,15 @@ export const useCartStore = create<CartState>()(
                         ),
                     })
                 } else {
+                    // ✅ ID теперь включает variantId
                     const newItem: CartItem = {
-                        id: `${product.id}-${color?.id || 'default'}-${Date.now()}`,
+                        id: `${product.id}-${color?.id || 'default'}-${variant?.id || 'default'}-${Date.now()}`,
                         productId: product.id,
                         product,
                         colorId: color?.id,
                         color,
+                        variantId: variant?.id,     // ✅ НОВОЕ
+                        variant,                     // ✅ НОВОЕ
                         quantity,
                     }
                     set({ items: [...items, newItem] })
@@ -83,14 +110,19 @@ export const useCartStore = create<CartState>()(
                 set({ items: [] })
             },
 
-            getItemByProduct: (productId, colorId) => {
+            // ✅ Теперь учитывает variantId
+            getItemByProduct: (productId, colorId, variantId) => {
                 return get().items.find(
-                    item => item.productId === productId && item.colorId === (colorId || undefined)
+                    item =>
+                        item.productId === productId &&
+                        item.colorId === (colorId || undefined) &&
+                        item.variantId === (variantId || undefined)
                 )
             },
 
-            isInCart: (productId, colorId) => {
-                return !!get().getItemByProduct(productId, colorId)
+            // ✅ Теперь учитывает variantId
+            isInCart: (productId, colorId, variantId) => {
+                return !!get().getItemByProduct(productId, colorId, variantId)
             },
         }),
         {

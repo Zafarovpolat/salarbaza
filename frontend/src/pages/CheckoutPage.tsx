@@ -1,11 +1,15 @@
+// frontend/src/pages/CheckoutPage.tsx
+
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { Ruler } from 'lucide-react'
 import { useLanguageStore } from '@/store/languageStore'
 import { useCartStore } from '@/store/cartStore'
 import { useTelegram } from '@/hooks/useTelegram'
 import { orderService } from '@/services/orderService'
 import { formatPrice } from '@/utils/formatPrice'
+import { getProductName } from '@/utils/helpers'
 import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '@/utils/constants'
 import { Container } from '@/components/layout/Container'
 import { OrderForm } from '@/components/order/OrderForm'
@@ -22,7 +26,9 @@ export function CheckoutPage() {
     const { subtotal, deliveryFee, total } = useMemo(() => {
         const subtotal = items.reduce((sum, item) => {
             const priceModifier = item.color?.priceModifier || 0
-            const price = item.product.price + priceModifier
+            // ✅ Цена из варианта или базовая
+            const basePrice = item.variant?.price || item.product.price
+            const price = basePrice + priceModifier
             return sum + price * item.quantity
         }, 0)
 
@@ -45,10 +51,12 @@ export function CheckoutPage() {
             setIsLoading(true)
             haptic.impact('medium')
 
+            // ✅ Включаем variantId в данные заказа
             const orderItems = items.map(item => ({
                 productId: item.product.id,
                 quantity: item.quantity,
                 colorId: item.color?.id,
+                variantId: item.variant?.id,  // ✅ НОВОЕ
             }))
 
             const orderData = {
@@ -75,7 +83,6 @@ export function CheckoutPage() {
         } catch (error: any) {
             console.error('❌ Order failed:', error)
 
-            // ✅ Показываем ошибку пользователю
             const errorMsg = error.message || 'Unknown error'
             alert(`Error: ${errorMsg}`)
 
@@ -102,32 +109,62 @@ export function CheckoutPage() {
             {/* Order Items Summary */}
             <section className="py-4 bg-gray-50">
                 <Container>
-                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
-                        {items.slice(0, 4).map((item) => (
-                            <div
-                                key={item.id}
-                                className="w-16 h-16 bg-white rounded-xl overflow-hidden flex-shrink-0 border border-gray-100"
-                            >
-                                {item.product.images?.[0]?.url ? (
-                                    <img
-                                        src={item.product.images[0].url}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-2xl">
-                                        🪴
+                    <div className="space-y-2 mb-2">
+                        {items.map((item) => {
+                            const name = getProductName(item.product, language)
+                            const basePrice = item.variant?.price || item.product.price
+                            const priceModifier = item.color?.priceModifier || 0
+                            const unitPrice = basePrice + priceModifier
+
+                            return (
+                                <div key={item.id} className="flex items-center gap-3">
+                                    {/* Thumbnail */}
+                                    <div className="w-12 h-12 bg-white rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                                        {item.product.images?.[0]?.url ? (
+                                            <img
+                                                src={item.product.images[0].url}
+                                                alt=""
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-lg">
+                                                🪴
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        ))}
-                        {items.length > 4 && (
-                            <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <span className="text-gray-500 font-medium">
-                                    +{items.length - 4}
-                                </span>
-                            </div>
-                        )}
+
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-gray-900 truncate">{name}</p>
+                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                            {/* ✅ Размер */}
+                                            {item.variant && (
+                                                <span className="flex items-center gap-0.5">
+                                                    <Ruler className="w-3 h-3" />
+                                                    {item.variant.size}
+                                                </span>
+                                            )}
+                                            {/* Цвет */}
+                                            {item.color && (
+                                                <span className="flex items-center gap-0.5">
+                                                    <span
+                                                        className="w-2.5 h-2.5 rounded-full border"
+                                                        style={{ backgroundColor: item.color.hexCode || '#ccc' }}
+                                                    />
+                                                    {language === 'uz' ? item.color.nameUz : item.color.nameRu}
+                                                </span>
+                                            )}
+                                            <span>×{item.quantity}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Price */}
+                                    <div className="text-sm font-semibold text-gray-900">
+                                        {formatPrice(unitPrice * item.quantity)}
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </Container>
             </section>
