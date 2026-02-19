@@ -58,7 +58,6 @@ model Category {
   icon                String?
   sortOrder           Int                     @default(0)
   isActive            Boolean                 @default(true)
-  // ✅ Оптовая цена задаётся на уровне категории
   wholesaleTemplateId String?
   wholesaleTemplate   WholesalePriceTemplate? @relation("CategoryWholesaleTemplate", fields: [wholesaleTemplateId], references: [id])
   createdAt           DateTime                @default(now())
@@ -77,8 +76,6 @@ model Product {
   descriptionRu String?
   descriptionUz String?
   categoryId    String?
-  // ✅ price теперь = базовая цена (минимальная / цена по умолчанию)
-  // Если есть варианты — реальная цена берётся из ProductVariant
   price         Int
   oldPrice      Int?
   material      String?
@@ -94,15 +91,14 @@ model Product {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  // ✅ УБРАЛИ wholesaleTemplateId — оптовая цена только через категорию
-  category  Category? @relation(fields: [categoryId], references: [id])
-  images    ProductImage[]
-  colors    ProductColor[]
-  // ✅ НОВОЕ: варианты по размеру
-  variants  ProductVariant[]
-  cartItems CartItem[]
+  category   Category?          @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  colors     ProductColor[]
+  variants   ProductVariant[]
+  cartItems  CartItem[]
   orderItems OrderItem[]
-  favorites Favorite[]
+  favorites  Favorite[]
+  promotions PromotionProduct[]
 
   @@index([categoryId])
   @@index([price])
@@ -111,31 +107,24 @@ model Product {
   @@map("products")
 }
 
-// ✅ НОВАЯ МОДЕЛЬ: Варианты товара по размеру
 model ProductVariant {
-  id        String   @id @default(cuid())
-  productId String
-  // Размер: "S", "M", "L", "XL", "30x25", "50cm" и т.д.
-  size      String
-  // Название размера для отображения
-  labelRu   String   // "Маленький", "Средний", "Большой"
-  labelUz   String   // "Kichik", "O'rta", "Katta"
-  // ✅ Своя цена для каждого размера
-  price     Int
-  oldPrice  Int?
-  // SKU/артикул варианта (опционально)
-  sku       String?
-  // Наличие конкретного размера
-  inStock   Boolean  @default(true)
-  stockQuantity Int  @default(0)
-  // Размеры (опционально, для справки)
-  dimensions Json?   // { height_cm: 50, diameter_cm: 30 }
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  productId     String
+  size          String
+  labelRu       String
+  labelUz       String
+  price         Int
+  oldPrice      Int?
+  sku           String?
+  inStock       Boolean  @default(true)
+  stockQuantity Int      @default(0)
+  dimensions    Json?
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  cartItems CartItem[]
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
   orderItems OrderItem[]
 
   @@unique([productId, size])
@@ -186,7 +175,6 @@ model CartItem {
   cartId    String
   productId String
   colorId   String?
-  // ✅ НОВОЕ: привязка к варианту размера
   variantId String?
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
@@ -196,7 +184,6 @@ model CartItem {
   product Product         @relation(fields: [productId], references: [id])
   variant ProductVariant? @relation(fields: [variantId], references: [id])
 
-  // ✅ Уникальность: товар + цвет + размер
   @@unique([cartId, productId, colorId, variantId])
   @@map("cart_items")
 }
@@ -245,9 +232,8 @@ model OrderItem {
   id           String   @id @default(cuid())
   orderId      String
   productId    String
-  // ✅ НОВОЕ: сохраняем информацию о варианте
   variantId    String?
-  variantSize  String?  // Снапшот размера на момент заказа
+  variantSize  String?
   productName  String
   productCode  String
   productImage String?
@@ -276,7 +262,6 @@ model Favorite {
   @@map("favorites")
 }
 
-// ✅ Оптовые шаблоны — теперь ТОЛЬКО для категорий
 model WholesalePriceTemplate {
   id          String               @id @default(cuid())
   name        String
@@ -299,6 +284,75 @@ model WholesalePriceTier {
 
   @@unique([templateId, minQuantity])
   @@map("wholesale_price_tiers")
+}
+
+// =============================================
+// 🆕 МАРКЕТИНГОВЫЕ ПРЕДЛОЖЕНИЯ (АКЦИИ)
+// =============================================
+
+model Promotion {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  // Название
+  nameRu      String
+  nameUz      String
+  // Краткое описание (для виджета на главной)
+  descriptionRu String?
+  descriptionUz String?
+  // Полные правила акции (для отдельной страницы)
+  rulesRu     String?         @db.Text
+  rulesUz     String?         @db.Text
+  // Изображение баннера (опционально)
+  image       String?
+  // Тип предложения
+  type        PromotionType   @default(SALE)
+  // Статус
+  status      PromotionStatus @default(DRAFT)
+  // Срок действия
+  startDate   DateTime
+  endDate     DateTime
+  // Сортировка на главной
+  sortOrder   Int             @default(0)
+  // Метаданные
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Товары в акции (many-to-many)
+  products    PromotionProduct[]
+
+  @@index([status, startDate, endDate])
+  @@index([slug])
+  @@map("promotions")
+}
+
+model PromotionProduct {
+  id          String   @id @default(cuid())
+  promotionId String
+  productId   String
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, productId])
+  @@index([promotionId])
+  @@index([productId])
+  @@map("promotion_products")
+}
+
+enum PromotionStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  INACTIVE
+}
+
+enum PromotionType {
+  SALE
+  COLLECTION
+  LIMITED
+  NEW_ARRIVALS
 }
 
 enum OrderStatus {
