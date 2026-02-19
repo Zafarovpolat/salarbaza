@@ -2,23 +2,25 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Package, FolderTree,
-  ShoppingCart, LogOut, Home, Menu, X, Percent,
+  ShoppingCart, LogOut, Home, Menu, X, Percent, Tag,
 } from 'lucide-react'
 
 interface AdminLayoutProps {
   children: ReactNode
+  title?: string  // 🆕 Опциональный заголовок
 }
 
 const menuItems = [
   { path: '/admin/dashboard', label: 'Дашборд', icon: LayoutDashboard },
   { path: '/admin/products', label: 'Товары', icon: Package },
   { path: '/admin/categories', label: 'Категории', icon: FolderTree },
+  { path: '/admin/promotions', label: 'Акции', icon: Tag },          // 🆕
   { path: '/admin/wholesale', label: 'Оптовые цены', icon: Percent },
   { path: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
   { path: '/admin/customers', label: 'Клиенты', icon: Users },
 ]
 
-export function AdminLayout({ children }: AdminLayoutProps) {
+export function AdminLayout({ children, title }: AdminLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -90,7 +92,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Navigation */}
         <nav className="p-3 space-y-1">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path
+            const isActive = location.pathname === item.path ||
+              (item.path !== '/admin/dashboard' && location.pathname.startsWith(item.path))
             const Icon = item.icon
 
             return (
@@ -135,6 +138,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
         <div className="p-4 lg:p-8">
+          {title && (
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
+              {title}
+            </h1>
+          )}
           {children}
         </div>
       </main>
