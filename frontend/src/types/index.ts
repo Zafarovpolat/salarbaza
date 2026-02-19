@@ -11,7 +11,6 @@ export interface Product {
   descriptionUz?: string
   categoryId: string
   category?: Category
-  // Базовая цена (или минимальная из вариантов)
   price: number
   oldPrice?: number
   material?: string
@@ -22,7 +21,6 @@ export interface Product {
   packaging?: ProductPackaging
   images: ProductImage[]
   colors: ProductColor[]
-  // ✅ НОВОЕ: варианты по размеру
   variants: ProductVariant[]
   isActive: boolean
   isFeatured: boolean
@@ -32,14 +30,13 @@ export interface Product {
   updatedAt: string
 }
 
-// ✅ НОВОЕ: вариант товара по размеру
 export interface ProductVariant {
   id: string
   productId: string
-  size: string        // "S", "M", "L"
-  labelRu: string     // "Маленький"
-  labelUz: string     // "Kichik"
-  price: number       // Своя цена
+  size: string
+  labelRu: string
+  labelUz: string
+  price: number
   oldPrice?: number
   sku?: string
   inStock: boolean
@@ -106,12 +103,10 @@ export interface Category {
   sortOrder: number
   isActive: boolean
   productCount?: number
-  // ✅ НОВОЕ: оптовая информация категории
   wholesaleTemplateId?: string
   wholesaleTemplate?: WholesalePriceTemplate
 }
 
-// ✅ НОВОЕ: оптовый шаблон
 export interface WholesalePriceTemplate {
   id: string
   name: string
@@ -119,7 +114,6 @@ export interface WholesalePriceTemplate {
   tiers: WholesalePriceTier[]
 }
 
-// ✅ НОВОЕ: уровень оптовой скидки
 export interface WholesalePriceTier {
   id: string
   minQuantity: number
@@ -133,14 +127,11 @@ export interface CartItem {
   product: Product
   colorId?: string
   color?: ProductColor
-  // ✅ НОВОЕ: выбранный вариант размера
   variantId?: string
   variant?: ProductVariant
   quantity: number
-  // Рассчитанные цены
   unitPrice?: number
   totalPrice?: number
-  // ✅ НОВОЕ: оптовая скидка (если применяется)
   wholesaleDiscount?: number
   wholesalePrice?: number
 }
@@ -150,7 +141,6 @@ export interface Cart {
   items: CartItem[]
   itemCount: number
   subtotal: number
-  // ✅ НОВОЕ: сумма оптовой скидки
   wholesaleDiscount?: number
   totalWithWholesale?: number
 }
@@ -185,7 +175,6 @@ export interface OrderItem {
   productCode: string
   productImage?: string
   colorName?: string
-  // ✅ НОВОЕ: размер в заказе
   variantSize?: string
   price: number
   quantity: number
@@ -232,17 +221,55 @@ export interface Address {
 }
 
 // ===== Utility Types =====
-
-// Вспомогательная функция: получить актуальную цену товара
-// с учётом выбранного варианта, цвета и оптовой скидки
 export interface PriceCalculation {
-  basePrice: number           // Цена варианта (или базовая)
-  colorModifier: number       // Модификатор цвета
-  unitPrice: number           // basePrice + colorModifier
-  wholesaleDiscountPercent: number  // % скидки
-  wholesalePrice: number      // Цена после оптовой скидки
+  basePrice: number
+  colorModifier: number
+  unitPrice: number
+  wholesaleDiscountPercent: number
+  wholesalePrice: number
   quantity: number
-  totalPrice: number          // Итого
+  totalPrice: number
+}
+
+// =============================================
+// 🆕 PROMOTION TYPES (Акции / Спецпредложения)
+// =============================================
+
+export type PromotionStatus = 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'INACTIVE'
+
+export type PromotionType = 'SALE' | 'COLLECTION' | 'LIMITED' | 'NEW_ARRIVALS'
+
+export interface Promotion {
+  id: string
+  slug: string
+  nameRu: string
+  nameUz: string
+  descriptionRu?: string
+  descriptionUz?: string
+  rulesRu?: string
+  rulesUz?: string
+  image?: string
+  type: PromotionType
+  status: PromotionStatus
+  startDate: string
+  endDate: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  // Товары (при получении полной акции)
+  products?: Product[]
+  // Счётчик товаров (при получении списка)
+  _count?: {
+    products: number
+  }
+}
+
+export interface PromotionProduct {
+  id: string
+  promotionId: string
+  productId: string
+  sortOrder: number
+  product: Product
 }
 
 // ===== API Types =====
