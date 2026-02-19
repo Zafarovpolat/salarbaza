@@ -8,7 +8,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useFavoritesStore } from '@/store/favoritesStore'
 import { useTelegram } from '@/hooks/useTelegram'
 import { formatPrice } from '@/utils/formatPrice'
-import { getProductName, cn } from '@/utils/helpers'
+import { getProductName, cn, safeProductUrl } from '@/utils/helpers'
 import { Badge } from '../ui/Badge'
 import toast from 'react-hot-toast'
 
@@ -44,10 +44,17 @@ export const ProductCard = memo(function ProductCard({
     return { minPrice: product.price, maxPrice: product.price, isRange: false }
   })()
 
+  // ✅ Безопасный URL — кодируем slug
+  const productUrl = safeProductUrl(product.slug)
+
+  const handleClick = () => {
+    navigate(productUrl)
+  }
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (hasVariants) {
-      navigate(`/product/${product.slug}`)
+      navigate(productUrl)
       return
     }
     if (!inCart) {
@@ -81,7 +88,7 @@ export const ProductCard = memo(function ProductCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      onClick={() => navigate(`/product/${product.slug}`)}
+      onClick={handleClick}
       className="
         bg-ivory rounded-2xl overflow-hidden
         transition-all duration-400 ease-smooth
@@ -122,7 +129,7 @@ export const ProductCard = memo(function ProductCard({
           )}
         </div>
 
-        {/* Heart — top right (показывается при hover на десктопе, всегда на мобиле) */}
+        {/* Heart — top right */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={handleFavorite}

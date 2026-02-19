@@ -8,7 +8,7 @@ import { useTelegram } from '@/hooks/useTelegram'
 import { useCartStore } from '@/store/cartStore'
 import { useFavoritesStore } from '@/store/favoritesStore'
 import { ProductColor, ProductVariant, WholesalePriceTier } from '@/types'
-import { getProductName, getProductDescription, cn } from '@/utils/helpers'
+import { getProductName, getProductDescription, cn, decodeSlug } from '@/utils/helpers'
 import { formatPrice } from '@/utils/formatPrice'
 import { Container } from '@/components/layout/Container'
 import { Button } from '@/components/ui/Button'
@@ -22,14 +22,17 @@ import { ProductRecommendations } from '@/components/product/ProductRecommendati
 import toast from 'react-hot-toast'
 
 export function ProductPage() {
-  const { slug } = useParams<{ slug: string }>()
+  const { slug: rawSlug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { language, t } = useLanguageStore()
   const { haptic } = useTelegram()
   const { addItem, isInCart } = useCartStore()
   const { toggleFavorite, isFavorite } = useFavoritesStore()
 
-  const { product, isLoading, error } = useProduct(slug || '')
+  // ✅ Декодируем slug из URL
+  const slug = rawSlug ? decodeSlug(rawSlug) : ''
+
+  const { product, isLoading, error } = useProduct(slug)
 
   const [selectedColor, setSelectedColor] = useState<ProductColor | undefined>()
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>()
