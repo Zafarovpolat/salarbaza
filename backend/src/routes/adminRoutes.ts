@@ -33,7 +33,6 @@ router.get('/stats', async (req, res) => {
         _sum: { total: true },
         where: { status: 'DELIVERED' },
       }),
-     Количество активных акций
       prisma.promotion.count({
         where: {
           status: 'ACTIVE',
