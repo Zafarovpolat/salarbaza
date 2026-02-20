@@ -237,6 +237,17 @@ export function HomePage() {
                 )
               })}
             </div>
+
+            {/* 🆕 Кнопка «Смотреть все» */}
+            <div className="relative z-[2] text-center mt-6">
+              <button
+                onClick={() => navigate('/special-offers')}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/15 hover:bg-white/25 text-white rounded-full text-sm font-semibold transition-all duration-300"
+              >
+                {language === 'uz' ? "Barcha takliflarni ko'rish" : 'Смотреть все предложения'}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </Container>
         </section>
       )}
@@ -269,8 +280,7 @@ export function HomePage() {
               </div>
               <h2 className="font-display text-2xl font-medium text-charcoal">{t('home.new')}</h2>
             </div>
-            <button onClick={() => navigate('/catalog?new=true')} className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300">
-              {t('home.viewAll')}<ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
+            <button onClick={() => navigate('/new-arrivals')} className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300">
             </button>
           </div>
           <ProductGrid products={newProducts} isLoading={isLoading} />

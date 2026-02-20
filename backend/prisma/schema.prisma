@@ -71,6 +71,7 @@ model Product {
   id            String   @id @default(cuid())
   code          String   @unique
   slug          String   @unique
+  isSpecialOffer Boolean  @default(false)
   nameRu        String
   nameUz        String
   descriptionRu String?

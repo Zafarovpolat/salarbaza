@@ -33,7 +33,7 @@ router.get('/stats', async (req, res) => {
         _sum: { total: true },
         where: { status: 'DELIVERED' },
       }),
-      // 🆕 Количество активных акций
+     Количество активных акций
       prisma.promotion.count({
         where: {
           status: 'ACTIVE',
@@ -50,7 +50,7 @@ router.get('/stats', async (req, res) => {
         categoriesCount,
         ordersCount,
         totalRevenue: totalRevenue._sum.total || 0,
-        activePromotions,  // 🆕
+        activePromotions,
       },
     })
   } catch (error) {
@@ -136,13 +136,14 @@ router.post('/products', async (req, res) => {
       code, slug, nameRu, nameUz, descriptionRu, descriptionUz,
       categoryId, price, oldPrice, material, dimensions,
       inStock, stockQuantity, isActive, isNew, isFeatured,
+      isSpecialOffer,
       images, variants,
     } = req.body
 
     const product = await prisma.product.create({
       data: {
         code,
-        slug: slug || code.toLowerCase().replace(/\s+/g, '-'),
+        slug: slug || code.toLowerCase().replace(/[\/\\]/g, '-').replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''),
         nameRu,
         nameUz,
         descriptionRu,
@@ -157,6 +158,7 @@ router.post('/products', async (req, res) => {
         isActive: isActive ?? true,
         isNew: isNew ?? false,
         isFeatured: isFeatured ?? false,
+        isSpecialOffer: isSpecialOffer ?? false,
         images: images
           ? {
               create: images.map((img: any, index: number) => ({
@@ -204,6 +206,7 @@ router.put('/products/:id', async (req, res) => {
       code, slug, nameRu, nameUz, descriptionRu, descriptionUz,
       categoryId, price, oldPrice, material, dimensions,
       inStock, stockQuantity, isActive, isNew, isFeatured,
+      isSpecialOffer,
       variants,
     } = req.body
 
@@ -217,7 +220,7 @@ router.put('/products/:id', async (req, res) => {
       where: { id: req.params.id },
       data: {
         code,
-        slug: slug || (code ? code.toLowerCase().replace(/\s+/g, '-') : undefined),
+        slug: slug || (code ? code.toLowerCase().replace(/[\/\\]/g, '-').replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : undefined),
         nameRu,
         nameUz,
         descriptionRu,
@@ -232,6 +235,7 @@ router.put('/products/:id', async (req, res) => {
         isActive,
         isNew,
         isFeatured,
+        isSpecialOffer: isSpecialOffer ?? undefined,
         variants:
           variants && Array.isArray(variants) && variants.length > 0
             ? {
