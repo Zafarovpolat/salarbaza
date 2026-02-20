@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -9,9 +9,12 @@ import {
   ChevronRight,
   Package,
   Percent,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { adminService } from "@/services/adminService";
+import { uploadImage } from "@/lib/supabase";
 import toast from "react-hot-toast";
 
 interface Category {
@@ -21,6 +24,7 @@ interface Category {
   nameUz: string;
   descriptionRu?: string;
   descriptionUz?: string;
+  image?: string;
   wholesaleTemplateId?: string;
   sortOrder: number;
   isActive: boolean;
@@ -61,6 +65,7 @@ const initialForm: CategoryForm = {
 
 export function AdminCategoriesPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [wholesaleTemplates, setWholesaleTemplates] = useState<
     WholesaleTemplate[]
@@ -70,6 +75,7 @@ export function AdminCategoriesPage() {
   const [form, setForm] = useState<CategoryForm>(initialForm);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -105,7 +111,7 @@ export function AdminCategoriesPage() {
       nameUz: category.nameUz || "",
       descriptionRu: category.descriptionRu || "",
       descriptionUz: category.descriptionUz || "",
-      image: "",
+      image: category.image || "",
       sortOrder: category.sortOrder,
       isActive: category.isActive,
       wholesaleTemplateId: category.wholesaleTemplateId || "",
@@ -136,6 +142,26 @@ export function AdminCategoriesPage() {
       [name]:
         type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadImage(file, "categories");
+      if (url) {
+        setForm((prev) => ({ ...prev, image: url }));
+        toast.success("Фото загружено");
+      } else {
+        toast.error("Ошибка загрузки");
+      }
+    } catch {
+      toast.error("Ошибка загрузки");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -298,6 +324,59 @@ export function AdminCategoriesPage() {
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none resize-none"
                   placeholder="Tovarlar uchun shablon tavsifi"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Фото категории
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {form.image ? (
+                  <div className="relative">
+                    <img
+                      src={form.image}
+                      alt="preview"
+                      className="w-full h-36 object-cover rounded-lg border border-gray-200"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, image: "" }))}
+                      className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4 text-red-500" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 bg-white/90 text-gray-700 rounded-lg text-xs font-medium shadow hover:bg-white disabled:opacity-50"
+                    >
+                      {uploadingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                      Заменить
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="w-full h-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-1.5 text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors disabled:opacity-50"
+                  >
+                    {uploadingImage ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Upload className="w-6 h-6" />
+                    )}
+                    <span className="text-sm">{uploadingImage ? "Загрузка..." : "Загрузить фото"}</span>
+                  </button>
+                )}
               </div>
 
               {/* ✅ Шаблон оптовых скидок */}

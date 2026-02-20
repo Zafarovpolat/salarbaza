@@ -281,6 +281,8 @@ export function HomePage() {
               <h2 className="font-display text-2xl font-medium text-charcoal">{t('home.new')}</h2>
             </div>
             <button onClick={() => navigate('/new-arrivals')} className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300">
+              {t('home.viewAll')}
+              <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
             </button>
           </div>
           <ProductGrid products={newProducts} isLoading={isLoading} />
