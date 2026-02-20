@@ -152,7 +152,29 @@ export function ProductPage() {
     <div className="pb-36">
       {/* ===== Gallery ===== */}
       <section className="relative bg-sand">
-        <div className="aspect-square relative overflow-hidden">
+        <div
+  className="aspect-square relative overflow-hidden"
+  onTouchStart={(e) => {
+    const touch = e.touches[0]
+    ;(e.currentTarget as any)._touchStartX = touch.clientX
+    ;(e.currentTarget as any)._touchStartY = touch.clientY
+  }}
+  onTouchEnd={(e) => {
+    const startX = (e.currentTarget as any)._touchStartX
+    const startY = (e.currentTarget as any)._touchStartY
+    if (startX === undefined) return
+    const touch = e.changedTouches[0]
+    const diffX = touch.clientX - startX
+    const diffY = touch.clientY - startY
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      if (diffX < 0 && currentImageIndex < images.length - 1) {
+        setCurrentImageIndex(i => i + 1)
+      } else if (diffX > 0 && currentImageIndex > 0) {
+        setCurrentImageIndex(i => i - 1)
+      }
+    }
+  }}
+>
           <AnimatePresence mode="wait">
             <motion.img
               key={currentImageIndex}

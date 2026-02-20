@@ -1,7 +1,5 @@
-// frontend/src/pages/admin/AdminOrdersPage.tsx
-
-import { useEffect, useState } from "react";
-import { Eye, ChevronDown, X, Ruler } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Eye, ChevronDown, X, Ruler, Search, Filter } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { adminService } from "@/services/adminService";
 import toast from "react-hot-toast";
@@ -11,7 +9,7 @@ interface OrderItem {
   productCode: string;
   productImage?: string;
   colorName?: string;
-  variantSize?: string;  // ✅ НОВОЕ
+  variantSize?: string;
   quantity: number;
   price: number;
   total?: number;
@@ -66,6 +64,10 @@ export function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusDropdown, setStatusDropdown] = useState<string | null>(null);
 
+  // 🆕 Фильтры
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     loadOrders();
   }, []);
@@ -106,11 +108,127 @@ export function AdminOrdersPage() {
     });
   };
 
+  // 🆕 Фильтрация заказов
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      // Фильтр по статусу
+      if (filterStatus !== "all" && order.status !== filterStatus) return false;
+
+      // Фильтр по поиску
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchOrder = order.orderNumber.toLowerCase().includes(q);
+        const matchName = order.customerName.toLowerCase().includes(q);
+        const matchPhone = order.customerPhone.includes(q);
+        const matchProduct = order.items.some(
+          item =>
+            item.productName?.toLowerCase().includes(q) ||
+            item.productCode?.toLowerCase().includes(q)
+        );
+        if (!matchOrder && !matchName && !matchPhone && !matchProduct) return false;
+      }
+
+      return true;
+    });
+  }, [orders, filterStatus, searchQuery]);
+
+  // 🆕 Счётчики по статусам
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: orders.length };
+    allStatuses.forEach(s => {
+      counts[s] = orders.filter(o => o.status === s).length;
+    });
+    return counts;
+  }, [orders]);
+
   return (
     <AdminLayout>
       <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
         Заказы
       </h1>
+
+      {/* 🆕 Статистика по статусам */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
+        {[
+          { key: "PENDING", label: "Ожидают", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+          { key: "CONFIRMED", label: "Подтв.", color: "bg-blue-50 text-blue-700 border-blue-200" },
+          { key: "PROCESSING", label: "Готовятся", color: "bg-purple-50 text-purple-700 border-purple-200" },
+          { key: "SHIPPED", label: "Отправл.", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+          { key: "DELIVERED", label: "Доставл.", color: "bg-green-50 text-green-700 border-green-200" },
+          { key: "CANCELLED", label: "Отменён.", color: "bg-red-50 text-red-700 border-red-200" },
+        ].map(item => (
+          <button
+            key={item.key}
+            onClick={() => setFilterStatus(filterStatus === item.key ? "all" : item.key)}
+            className={`rounded-xl p-2.5 text-center border transition-all ${
+              filterStatus === item.key
+                ? item.color + " border-current font-bold shadow-sm"
+                : "bg-white border-gray-100 text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            <div className="text-lg font-bold">{statusCounts[item.key] || 0}</div>
+            <div className="text-[10px] leading-tight mt-0.5">{item.label}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* 🆕 Фильтры */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Поиск по номеру, клиенту, товару..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+          />
+        </div>
+
+        <select
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-green-500 min-w-[160px]"
+        >
+          <option value="all">Все статусы ({statusCounts.all})</option>
+          {allStatuses.map(s => (
+            <option key={s} value={s}>
+              {statusLabels[s]} ({statusCounts[s] || 0})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Активный фильтр */}
+      {(filterStatus !== "all" || searchQuery) && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <span className="text-sm text-gray-500">
+            Найдено: {filteredOrders.length} из {orders.length}
+          </span>
+          {filterStatus !== "all" && (
+            <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${statusColors[filterStatus]}`}>
+              {statusLabels[filterStatus]}
+              <button onClick={() => setFilterStatus("all")} className="ml-1 hover:opacity-70">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          {searchQuery && (
+            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 flex items-center gap-1">
+              «{searchQuery}»
+              <button onClick={() => setSearchQuery("")} className="ml-1 hover:opacity-70">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          <button
+            onClick={() => { setFilterStatus("all"); setSearchQuery(""); }}
+            className="text-xs text-red-500 hover:underline ml-auto"
+          >
+            Сбросить всё
+          </button>
+        </div>
+      )}
 
       {/* Order Detail Modal */}
       {selectedOrder && (
@@ -165,7 +283,6 @@ export function AdminOrdersPage() {
                       key={i}
                       className="flex gap-3 bg-gray-50 p-3 rounded-lg"
                     >
-                      {/* Фото товара */}
                       <div className="w-12 h-12 rounded-lg bg-gray-200 overflow-hidden shrink-0">
                         {item.productImage ? (
                           <img
@@ -184,27 +301,20 @@ export function AdminOrdersPage() {
                           {item.productName || "Товар"}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                          {/* Код товара */}
                           <span className="text-xs text-gray-500">
                             {item.productCode || "—"}
                           </span>
-
-                          {/* ✅ НОВОЕ: Размер */}
                           {item.variantSize && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
                               <Ruler className="w-3 h-3" />
                               {item.variantSize}
                             </span>
                           )}
-
-                          {/* Цвет */}
                           {item.colorName && (
                             <span className="text-xs text-gray-500">
                               🎨 {item.colorName}
                             </span>
                           )}
-
-                          {/* Количество */}
                           <span className="text-xs text-gray-500">
                             × {item.quantity}
                           </span>
@@ -218,7 +328,6 @@ export function AdminOrdersPage() {
                 </div>
               </div>
 
-              {/* ✅ Итоги с учётом скидки */}
               <div className="pt-3 border-t space-y-1">
                 {selectedOrder.subtotal && selectedOrder.discount && selectedOrder.discount > 0 && (
                   <>
@@ -256,12 +365,12 @@ export function AdminOrdersPage() {
           <div className="bg-white rounded-xl p-8 text-center text-gray-500">
             Загрузка...
           </div>
-        ) : orders.length === 0 ? (
+        ) : filteredOrders.length === 0 ? (
           <div className="bg-white rounded-xl p-8 text-center text-gray-500">
-            Заказов нет
+            {orders.length === 0 ? "Заказов нет" : "Нет заказов по выбранному фильтру"}
           </div>
         ) : (
-          orders.map((order) => (
+          filteredOrders.map((order) => (
             <div key={order.id} className="bg-white rounded-xl p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
@@ -278,7 +387,6 @@ export function AdminOrdersPage() {
                   </p>
                   <p className="text-sm text-gray-500">{order.customerPhone}</p>
 
-                  {/* ✅ Краткий список товаров с размерами */}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {order.items.slice(0, 3).map((item, i) => (
                       <span key={i} className="text-xs bg-gray-100 rounded px-2 py-0.5 text-gray-600">
@@ -307,7 +415,6 @@ export function AdminOrdersPage() {
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
-                  {/* Status Dropdown */}
                   <div className="relative">
                     <button
                       onClick={() =>

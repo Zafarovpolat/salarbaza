@@ -1,11 +1,7 @@
-// frontend/src/router.tsx
-
 import { Routes, Route, useLocation } from 'react-router-dom'
 
-// Layout
 import { Layout } from './components/layout/Layout'
 
-// Main pages
 import { HomePage } from './pages/HomePage'
 import { CatalogPage } from './pages/CatalogPage'
 import { CategoryPage } from './pages/CategoryPage'
@@ -17,10 +13,11 @@ import { OrdersPage } from './pages/OrdersPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SearchPage } from './pages/SearchPage'
-import { PromotionPage } from './pages/PromotionPage'  // 🆕
+import { PromotionPage } from './pages/PromotionPage'
+import { SpecialOffersPage } from './pages/SpecialOffersPage'    // 🆕
+import { NewArrivalsPage } from './pages/NewArrivalsPage'        // 🆕
 import { NotFoundPage } from './pages/NotFoundPage'
 
-// Admin pages
 import { AdminLoginPage } from './pages/admin/AdminLoginPage'
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage'
 import { AdminProductsPage } from './pages/admin/AdminProductsPage'
@@ -31,8 +28,8 @@ import { AdminOrdersPage } from './pages/admin/AdminOrdersPage'
 import { AdminWholesalePage } from './pages/admin/AdminWholesalePage'
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage'
 import { AdminCustomerDetailPage } from './pages/admin/AdminCustomerDetailPage'
-import { AdminPromotionsPage } from './pages/admin/AdminPromotionsPage'          // 🆕
-import { AdminPromotionEditPage } from './pages/admin/AdminPromotionEditPage'    // 🆕
+import { AdminPromotionsPage } from './pages/admin/AdminPromotionsPage'
+import { AdminPromotionEditPage } from './pages/admin/AdminPromotionEditPage'
 
 function MainRoutes() {
   return (
@@ -42,7 +39,9 @@ function MainRoutes() {
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/catalog/:slug" element={<CategoryPage />} />
         <Route path="/product/:slug" element={<ProductPage />} />
-        <Route path="/promotion/:slug" element={<PromotionPage />} />  {/* 🆕 */}
+        <Route path="/promotion/:slug" element={<PromotionPage />} />
+        <Route path="/special-offers" element={<SpecialOffersPage />} />  {/* 🆕 */}
+        <Route path="/new-arrivals" element={<NewArrivalsPage />} />      {/* 🆕 */}
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
@@ -70,9 +69,9 @@ function AdminRoutes() {
       <Route path="/admin/orders" element={<AdminOrdersPage />} />
       <Route path="/admin/customers" element={<AdminCustomersPage />} />
       <Route path="/admin/customers/:id" element={<AdminCustomerDetailPage />} />
-      <Route path="/admin/promotions" element={<AdminPromotionsPage />} />          {/* 🆕 */}
-      <Route path="/admin/promotions/new" element={<AdminPromotionEditPage />} />   {/* 🆕 */}
-      <Route path="/admin/promotions/:id" element={<AdminPromotionEditPage />} />   {/* 🆕 */}
+      <Route path="/admin/promotions" element={<AdminPromotionsPage />} />
+      <Route path="/admin/promotions/new" element={<AdminPromotionEditPage />} />
+      <Route path="/admin/promotions/:id" element={<AdminPromotionEditPage />} />
     </Routes>
   )
 }
@@ -80,10 +79,6 @@ function AdminRoutes() {
 export function AppRouter() {
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
-
-  if (isAdminRoute) {
-    return <AdminRoutes />
-  }
-
+  if (isAdminRoute) return <AdminRoutes />
   return <MainRoutes />
 }
