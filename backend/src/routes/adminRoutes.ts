@@ -4,6 +4,27 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { config } from '../config'
 
+// ✅ Хелпер: генерирует уникальный slug, добавляя суффикс -2, -3 и т.д. если slug занят
+async function generateUniqueSlug(base: string, excludeId?: string): Promise<string> {
+  const baseSlug = base
+    .toLowerCase()
+    .replace(/[\/\\]/g, '-')
+    .replace(/[^a-z0-9\-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  let slug = baseSlug
+  let counter = 2
+
+  while (true) {
+    const existing = await prisma.product.findUnique({ where: { slug } })
+    if (!existing || existing.id === excludeId) break
+    slug = `${baseSlug}-${counter++}`
+  }
+
+  return slug
+}
+
 const router = Router()
 
 // Простая проверка пароля админа
@@ -139,10 +160,24 @@ router.post('/products', async (req, res) => {
       images, variants,
     } = req.body
 
+    // ✅ Проверить уникальность code
+    if (code) {
+      const existingByCode = await prisma.product.findUnique({ where: { code } })
+      if (existingByCode) {
+        return res.status(400).json({
+          success: false,
+          message: `Товар с кодом "${code}" уже существует. Используйте другой код.`,
+        })
+      }
+    }
+
+    // ✅ Генерируем уникальный slug (добавляет -2, -3 и т.д. если slug занят)
+    const uniqueSlug = await generateUniqueSlug(slug || code)
+
     const product = await prisma.product.create({
       data: {
         code,
-        slug: slug || code.toLowerCase().replace(/[\/\\]/g, '-').replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''),
+        slug: uniqueSlug,
         nameRu,
         nameUz,
         descriptionRu,
@@ -195,6 +230,17 @@ router.post('/products', async (req, res) => {
 
     res.status(201).json({ success: true, data: product })
   } catch (error: any) {
+    // ✅ Понятные сообщения для ошибок уникальности
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0]
+      if (field === 'slug') {
+        return res.status(400).json({ success: false, message: 'Ошибка генерации slug. Попробуйте ещё раз.' })
+      }
+      if (field === 'code') {
+        return res.status(400).json({ success: false, message: `Товар с таким кодом уже существует.` })
+      }
+      return res.status(400).json({ success: false, message: `Значение поля "${field}" уже занято.` })
+    }
     res.status(500).json({ success: false, message: error.message })
   }
 })
@@ -209,6 +255,23 @@ router.put('/products/:id', async (req, res) => {
       variants,
     } = req.body
 
+    // ✅ Проверить уникальность code (только если code меняется)
+    if (code) {
+      const existingByCode = await prisma.product.findUnique({ where: { code } })
+      if (existingByCode && existingByCode.id !== req.params.id) {
+        return res.status(400).json({
+          success: false,
+          message: `Товар с кодом "${code}" уже существует. Используйте другой код.`,
+        })
+      }
+    }
+
+    // ✅ Генерируем уникальный slug (исключая текущий товар)
+    const baseForSlug = slug || code
+    const uniqueSlug = baseForSlug
+      ? await generateUniqueSlug(baseForSlug, req.params.id)
+      : undefined
+
     if (variants && Array.isArray(variants)) {
       await prisma.productVariant.deleteMany({
         where: { productId: req.params.id },
@@ -219,7 +282,7 @@ router.put('/products/:id', async (req, res) => {
       where: { id: req.params.id },
       data: {
         code,
-        slug: slug || (code ? code.toLowerCase().replace(/[\/\\]/g, '-').replace(/[^a-z0-9\-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : undefined),
+        slug: uniqueSlug,
         nameRu,
         nameUz,
         descriptionRu,
@@ -262,6 +325,14 @@ router.put('/products/:id', async (req, res) => {
 
     res.json({ success: true, data: product })
   } catch (error: any) {
+    // ✅ Понятные сообщения для ошибок уникальности
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0]
+      if (field === 'code') {
+        return res.status(400).json({ success: false, message: `Товар с таким кодом уже существует.` })
+      }
+      return res.status(400).json({ success: false, message: `Значение поля "${field}" уже занято.` })
+    }
     res.status(500).json({ success: false, message: error.message })
   }
 })
