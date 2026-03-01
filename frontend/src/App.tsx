@@ -1,34 +1,39 @@
 import { useEffect } from "react";
-import { BrowserRouter, useNavigate } from "react-router-dom";
+import { BrowserRouter, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import WebApp from "@twa-dev/sdk";
 import { AppRouter } from "./router";
 
-// ✅ НОВОЕ: обработка deep-link из startapp
 function DeepLinkHandler() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     try {
       const startParam = WebApp.initDataUnsafe?.start_param;
       if (!startParam) return;
 
+      // ✅ Только если мы на главной (не обрабатывать повторно)
+      if (location.pathname !== "/") return;
+
       console.log("📎 Deep link param:", startParam);
 
       if (startParam.startsWith("category_")) {
         const slug = startParam.replace("category_", "");
-        navigate(`/catalog/${slug}`, { replace: true });
+        // ✅ FIX: сначала главная в истории, потом категория
+        // Так кнопка «назад» вернёт на главную
+        navigate(`/catalog/${slug}`);
       } else if (startParam.startsWith("product_")) {
         const slug = startParam.replace("product_", "");
-        navigate(`/product/${encodeURIComponent(slug)}`, { replace: true });
+        navigate(`/product/${encodeURIComponent(slug)}`);
       } else if (startParam.startsWith("promo_")) {
         const slug = startParam.replace("promo_", "");
-        navigate(`/promotion/${slug}`, { replace: true });
+        navigate(`/promotion/${slug}`);
       }
     } catch (e) {
       console.log("Deep link handling error:", e);
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   return null;
 }
