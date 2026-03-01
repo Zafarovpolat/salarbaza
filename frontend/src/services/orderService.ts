@@ -5,6 +5,7 @@ interface OrderItem {
     productId: string
     quantity: number
     colorId?: string
+    variantId?: string  // ✅ ДОБАВЛЕНО
 }
 
 interface CreateOrderData {

@@ -19,6 +19,8 @@ services:
         sync: false
       - key: ADMIN_CHAT_ID
         sync: false
+      - key: ADMIN_PASSWORD
+        value: "8888"
       - key: FRONTEND_URL
         value: https://dekorhouse-web.onrender.com
       - key: JWT_SECRET
@@ -45,4 +47,4 @@ services:
       - key: VITE_API_URL
         value: https://dekorhouse-api.onrender.com/api
       - key: VITE_BOT_USERNAME
-        value: DekorHouseBot
+        value: DecorMarketUz_Bot

@@ -1,42 +1,45 @@
-import { useNavigate, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Search, ChevronLeft, ShoppingBag } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import { useLanguageStore } from '@/store/languageStore'
-import { useCartStore } from '@/store/cartStore'
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Search, ChevronLeft, ShoppingBag } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useLanguageStore } from "@/store/languageStore";
+import { useCartStore } from "@/store/cartStore";
 
 export function Header() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { t, language, setLanguage } = useLanguageStore()
-  const cartItems = useCartStore((state) => state.items)
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-  const [scrolled, setScrolled] = useState(false)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t, language, setLanguage } = useLanguageStore();
+  const cartItems = useCartStore((state) => state.items);
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const [scrolled, setScrolled] = useState(false);
 
-  const isHome = location.pathname === '/'
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    // ✅ FIX: Слушаем скролл на main, а не на window
+    const mainEl = document.querySelector("main");
+    if (!mainEl) return;
+    const handleScroll = () => setScrolled(mainEl.scrollTop > 20);
+    mainEl.addEventListener("scroll", handleScroll, { passive: true });
+    return () => mainEl.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const getPageTitle = () => {
-    const path = location.pathname
-    if (path === '/') return null
-    if (path === '/catalog') return t('nav.catalog')
-    if (path === '/cart') return t('nav.cart')
-    if (path === '/favorites') return t('nav.favorites')
-    if (path === '/profile') return t('nav.profile')
-    if (path === '/orders') return t('orders.title')
-    if (path === '/checkout') return t('checkout.title')
-    if (path === '/search') return t('common.search')
-    if (path.startsWith('/catalog/')) return t('nav.catalog')
-    if (path.startsWith('/product/')) return null
-    return null
-  }
+    const path = location.pathname;
+    if (path === "/") return null;
+    if (path === "/catalog") return t("nav.catalog");
+    if (path === "/cart") return t("nav.cart");
+    if (path === "/favorites") return t("nav.favorites");
+    if (path === "/profile") return t("nav.profile");
+    if (path === "/orders") return t("orders.title");
+    if (path === "/checkout") return t("checkout.title");
+    if (path === "/search") return t("common.search");
+    if (path.startsWith("/catalog/")) return t("nav.catalog");
+    if (path.startsWith("/product/")) return null;
+    return null;
+  };
 
-  const pageTitle = getPageTitle()
+  const pageTitle = getPageTitle();
 
   return (
     <header
@@ -48,7 +51,7 @@ export function Header() {
         flex items-center justify-between
         px-5
         transition-all duration-300
-        ${scrolled ? 'shadow-soft' : ''}
+        ${scrolled ? "shadow-soft" : ""}
       `}
     >
       {/* Left Side */}
@@ -57,13 +60,7 @@ export function Header() {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
-            className="
-              w-10 h-10 -ml-2
-              flex items-center justify-center
-              rounded-full
-              hover:bg-sand
-              transition-colors duration-300
-            "
+            className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-sand transition-colors duration-300"
           >
             <ChevronLeft className="w-6 h-6 text-dark-gray" />
           </motion.button>
@@ -74,15 +71,12 @@ export function Header() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
+            {/* ✅ CHANGED: Decor Market */}
             <span
-              onClick={() => navigate('/')}
-              className="
-                font-display text-[22px] font-semibold
-                text-forest tracking-[-0.01em]
-                cursor-pointer select-none
-              "
+              onClick={() => navigate("/")}
+              className="font-display text-[22px] font-semibold text-forest tracking-[-0.01em] cursor-pointer select-none"
             >
-              Decor<span className="text-sage font-normal">house</span>
+              Decor<span className="text-sage font-normal"> Market</span>
             </span>
           </motion.div>
         ) : pageTitle ? (
@@ -97,36 +91,22 @@ export function Header() {
         {/* Language Toggle */}
         <div className="flex bg-sand rounded-full p-[3px] gap-0.5">
           <button
-            onClick={() => setLanguage('ru')}
-            className={`
-              px-3 py-1.5
-              border-none rounded-full
-              font-sans text-xs font-semibold
-              uppercase tracking-[0.05em]
-              cursor-pointer
-              transition-all duration-300
-              ${language === 'ru'
-                ? 'bg-forest text-white'
-                : 'bg-transparent text-medium-gray hover:text-dark-gray'
-              }
-            `}
+            onClick={() => setLanguage("ru")}
+            className={`px-3 py-1.5 border-none rounded-full font-sans text-xs font-semibold uppercase tracking-[0.05em] cursor-pointer transition-all duration-300 ${
+              language === "ru"
+                ? "bg-forest text-white"
+                : "bg-transparent text-medium-gray hover:text-dark-gray"
+            }`}
           >
             Рус
           </button>
           <button
-            onClick={() => setLanguage('uz')}
-            className={`
-              px-3 py-1.5
-              border-none rounded-full
-              font-sans text-xs font-semibold
-              uppercase tracking-[0.05em]
-              cursor-pointer
-              transition-all duration-300
-              ${language === 'uz'
-                ? 'bg-forest text-white'
-                : 'bg-transparent text-medium-gray hover:text-dark-gray'
-              }
-            `}
+            onClick={() => setLanguage("uz")}
+            className={`px-3 py-1.5 border-none rounded-full font-sans text-xs font-semibold uppercase tracking-[0.05em] cursor-pointer transition-all duration-300 ${
+              language === "uz"
+                ? "bg-forest text-white"
+                : "bg-transparent text-medium-gray hover:text-dark-gray"
+            }`}
           >
             O'zb
           </button>
@@ -136,15 +116,8 @@ export function Header() {
         {isHome && (
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => navigate('/search')}
-            className="
-              w-10 h-10
-              flex items-center justify-center
-              rounded-full
-              hover:bg-sand
-              transition-colors duration-300
-              text-dark-gray
-            "
+            onClick={() => navigate("/search")}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-sand transition-colors duration-300 text-dark-gray"
           >
             <Search className="w-[22px] h-[22px]" strokeWidth={1.5} />
           </motion.button>
@@ -153,37 +126,21 @@ export function Header() {
         {/* Cart */}
         <motion.button
           whileTap={{ scale: 0.9 }}
-          onClick={() => navigate('/cart')}
-          className="
-            w-10 h-10
-            flex items-center justify-center
-            rounded-full
-            hover:bg-sand
-            transition-colors duration-300
-            text-dark-gray
-            relative
-          "
+          onClick={() => navigate("/cart")}
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-sand transition-colors duration-300 text-dark-gray relative"
         >
           <ShoppingBag className="w-[22px] h-[22px]" strokeWidth={1.5} />
           {cartCount > 0 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="
-                absolute top-1 right-1
-                w-[18px] h-[18px]
-                bg-terracotta text-white
-                rounded-full
-                text-[10px] font-bold
-                flex items-center justify-center
-                leading-none
-              "
+              className="absolute top-1 right-1 w-[18px] h-[18px] bg-terracotta text-white rounded-full text-[10px] font-bold flex items-center justify-center leading-none"
             >
-              {cartCount > 99 ? '99+' : cartCount}
+              {cartCount > 99 ? "99+" : cartCount}
             </motion.span>
           )}
         </motion.button>
       </div>
     </header>
-  )
+  );
 }

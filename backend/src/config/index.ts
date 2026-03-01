@@ -1,13 +1,12 @@
 import dotenv from 'dotenv'
 
-// Загружаем .env только если файл существует (не в production на Render)
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config()
 }
 
 export const config = {
     port: parseInt(process.env.PORT || '3001', 10),
-    adminPassword: process.env.ADMIN_PASSWORD || 'dekorhouse2024',
+    adminPassword: process.env.ADMIN_PASSWORD || '8888',  // ✅ CHANGED
     nodeEnv: process.env.NODE_ENV || 'development',
     databaseUrl: process.env.DATABASE_URL || '',
     botToken: process.env.BOT_TOKEN || '',
@@ -18,11 +17,9 @@ export const config = {
     freeDeliveryThreshold: 500000,
 }
 
-// Проверка обязательных переменных в production
 if (config.nodeEnv === 'production') {
     const required = ['DATABASE_URL']
     const missing = required.filter(key => !process.env[key])
-
     if (missing.length > 0) {
         console.error(`❌ Missing required env vars: ${missing.join(', ')}`)
         process.exit(1)
