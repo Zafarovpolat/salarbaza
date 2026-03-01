@@ -5,61 +5,48 @@ export async function handleStart(bot: TelegramBot, msg: TelegramBot.Message) {
   const chatId = msg.chat.id
   const firstName = msg.from?.first_name || 'Foydalanuvchi'
 
-  // 🆕 Проверяем deep-link параметр
   const text = msg.text || ''
   const match = text.match(/\/start\s+(.+)/)
   const startParam = match ? match[1] : null
 
-  // Определяем URL для Web App
   let webAppUrl = config.frontendUrl
 
   if (startParam) {
-    // category_slug → открыть категорию
     if (startParam.startsWith('category_')) {
       const slug = startParam.replace('category_', '')
       webAppUrl = `${config.frontendUrl}/catalog/${slug}`
-    }
-    // product_slug → открыть товар
-    else if (startParam.startsWith('product_')) {
+    } else if (startParam.startsWith('product_')) {
       const slug = startParam.replace('product_', '')
       webAppUrl = `${config.frontendUrl}/product/${encodeURIComponent(slug)}`
-    }
-    // promotion_slug → открыть акцию
-    else if (startParam.startsWith('promo_')) {
+    } else if (startParam.startsWith('promo_')) {
       const slug = startParam.replace('promo_', '')
       webAppUrl = `${config.frontendUrl}/promotion/${slug}`
     }
   }
 
+  // ✅ CHANGED: Decor Market, контакты
   const welcomeMessage = `
 👋 Salom, ${firstName}!
 
-🏠 *DekorHouse* — uy va bog' uchun dekoratsiyalar do'koniga xush kelibsiz!
+🏠 *Decor Market* — uy va bog' uchun dekoratsiyalar do'koniga xush kelibsiz!
 
 🪴 Bizda:
 • Guldonlar va kashpolar
-• Sun'iy o'simliklar  
+• Sun'iy o'simliklar
 • O'simliklar uchun tagliklar
+
+📞 Aloqa: +998 (99) 368-11-00
+📱 Telegram: @DekorHouseAdmin
 `.trim()
 
   const isHttps = config.frontendUrl.startsWith('https://')
 
   if (isHttps) {
-    const buttonText = startParam
-      ? '🛒 Ochish'
-      : "🛒 Do'konni ochish"
-
+    const buttonText = startParam ? '🛒 Ochish' : "🛒 Do'konni ochish"
     await bot.sendMessage(chatId, welcomeMessage + '\n\n👇 Pastdagi tugmani bosing:', {
       parse_mode: 'Markdown',
       reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: buttonText,
-              web_app: { url: webAppUrl },
-            },
-          ],
-        ],
+        inline_keyboard: [[{ text: buttonText, web_app: { url: webAppUrl } }]],
       },
     })
   } else {
@@ -72,6 +59,7 @@ export async function handleStart(bot: TelegramBot, msg: TelegramBot.Message) {
 export async function handleHelp(bot: TelegramBot, msg: TelegramBot.Message) {
   const chatId = msg.chat.id
 
+  // ✅ CHANGED: название, контакты, доставка
   const helpMessage = `
 ℹ️ *Yordam*
 
@@ -81,9 +69,13 @@ export async function handleHelp(bot: TelegramBot, msg: TelegramBot.Message) {
 3. Savatga qo'shing
 4. Buyurtmani rasmiylang
 
+🚚 *Yetkazib berish:*
+Toshkent shahriga — Yandex yetkazib berish orqali
+Viloyatlarga — tanish haydovchilar orqali
+
 📞 *Bog'lanish:*
-Telegram: @DekorHouseSupport
-Telefon: +998 90 123 45 67
+Telegram: @DekorHouseAdmin
+Telefon: +998 (99) 368-11-00
 
 🕐 *Ish vaqti:*
 Dushanba - Shanba: 9:00 - 18:00
@@ -96,14 +88,7 @@ Yakshanba: Dam olish
     await bot.sendMessage(chatId, helpMessage, {
       parse_mode: 'Markdown',
       reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "🛒 Do'konni ochish",
-              web_app: { url: config.frontendUrl },
-            },
-          ],
-        ],
+        inline_keyboard: [[{ text: "🛒 Do'konni ochish", web_app: { url: config.frontendUrl } }]],
       },
     })
   } else {

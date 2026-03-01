@@ -1,5 +1,3 @@
-// backend/prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,6 +7,8 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
+// ==================== USERS ====================
 
 model User {
   id         String     @id @default(cuid())
@@ -47,6 +47,8 @@ model Address {
   @@map("addresses")
 }
 
+// ==================== CATALOG ====================
+
 model Category {
   id                  String                  @id @default(cuid())
   slug                String                  @unique
@@ -68,29 +70,29 @@ model Category {
 }
 
 model Product {
-  id            String   @id @default(cuid())
-  code          String   @unique
-  slug          String   @unique
+  id             String   @id @default(cuid())
+  code           String   @unique
+  slug           String   @unique
   isSpecialOffer Boolean  @default(false)
-  nameRu        String
-  nameUz        String
-  descriptionRu String?
-  descriptionUz String?
-  categoryId    String?
-  price         Int
-  oldPrice      Int?
-  material      String?
-  dimensions    Json?
-  inStock       Boolean  @default(true)
-  stockQuantity Int      @default(0)
-  setQuantity   Int      @default(1)
-  packaging     Json?
-  isActive      Boolean  @default(true)
-  isFeatured    Boolean  @default(false)
-  isNew         Boolean  @default(false)
-  viewCount     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  nameRu         String
+  nameUz         String
+  descriptionRu  String?
+  descriptionUz  String?
+  categoryId     String?
+  price          Int
+  oldPrice       Int?
+  material       String?
+  dimensions     Json?
+  inStock        Boolean  @default(true)
+  stockQuantity  Int      @default(0)
+  setQuantity    Int      @default(1)
+  packaging      Json?
+  isActive       Boolean  @default(true)
+  isFeatured     Boolean  @default(false)
+  isNew          Boolean  @default(false)
+  viewCount      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   category   Category?          @relation(fields: [categoryId], references: [id])
   images     ProductImage[]
@@ -160,6 +162,8 @@ model ProductColor {
   @@map("product_colors")
 }
 
+// ==================== CART ====================
+
 model Cart {
   id        String     @id @default(cuid())
   userId    String     @unique
@@ -188,6 +192,8 @@ model CartItem {
   @@unique([cartId, productId, colorId, variantId])
   @@map("cart_items")
 }
+
+// ==================== ORDERS ====================
 
 model Order {
   id                String        @id @default(cuid())
@@ -251,6 +257,8 @@ model OrderItem {
   @@map("order_items")
 }
 
+// ==================== FAVORITES ====================
+
 model Favorite {
   id        String   @id @default(cuid())
   userId    String
@@ -262,6 +270,8 @@ model Favorite {
   @@unique([userId, productId])
   @@map("favorites")
 }
+
+// ==================== WHOLESALE ====================
 
 model WholesalePriceTemplate {
   id          String               @id @default(cuid())
@@ -287,39 +297,27 @@ model WholesalePriceTier {
   @@map("wholesale_price_tiers")
 }
 
-// =============================================
-// 🆕 МАРКЕТИНГОВЫЕ ПРЕДЛОЖЕНИЯ (АКЦИИ)
-// =============================================
+// ==================== PROMOTIONS ====================
 
 model Promotion {
-  id          String          @id @default(cuid())
-  slug        String          @unique
-  // Название
-  nameRu      String
-  nameUz      String
-  // Краткое описание (для виджета на главной)
+  id            String          @id @default(cuid())
+  slug          String          @unique
+  nameRu        String
+  nameUz        String
   descriptionRu String?
   descriptionUz String?
-  // Полные правила акции (для отдельной страницы)
-  rulesRu     String?         @db.Text
-  rulesUz     String?         @db.Text
-  // Изображение баннера (опционально)
-  image       String?
-  // Тип предложения
-  type        PromotionType   @default(SALE)
-  // Статус
-  status      PromotionStatus @default(DRAFT)
-  // Срок действия
-  startDate   DateTime
-  endDate     DateTime
-  // Сортировка на главной
-  sortOrder   Int             @default(0)
-  // Метаданные
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  rulesRu       String?         @db.Text
+  rulesUz       String?         @db.Text
+  image         String?
+  type          PromotionType   @default(SALE)
+  status        PromotionStatus @default(DRAFT)
+  startDate     DateTime
+  endDate       DateTime
+  sortOrder     Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
-  // Товары в акции (many-to-many)
-  products    PromotionProduct[]
+  products PromotionProduct[]
 
   @@index([status, startDate, endDate])
   @@index([slug])
@@ -333,14 +331,16 @@ model PromotionProduct {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
 
-  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([promotionId, productId])
   @@index([promotionId])
   @@index([productId])
   @@map("promotion_products")
 }
+
+// ==================== ENUMS ====================
 
 enum PromotionStatus {
   DRAFT

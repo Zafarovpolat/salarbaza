@@ -41,6 +41,29 @@ const adminAuth = (req: Request, res: Response, next: NextFunction) => {
 // Применяем ко всем роутам
 router.use(adminAuth)
 
+// ==================== RESET PRODUCT STATUSES ====================
+// ✅ НОВОЕ: Сброс всех статусов товаров
+router.post('/products/reset-statuses', async (req, res) => {
+  try {
+    const result = await prisma.product.updateMany({
+      data: {
+        isFeatured: false,
+        isNew: false,
+        isSpecialOffer: false,
+      },
+    })
+
+    res.json({
+      success: true,
+      message: `Статусы сброшены для ${result.count} товаров`,
+      data: { updatedCount: result.count },
+    })
+  } catch (error) {
+    console.error('Reset statuses error:', error)
+    res.status(500).json({ success: false, message: 'Server error' })
+  }
+})
+
 // ==================== DASHBOARD ====================
 router.get('/stats', async (req, res) => {
   try {
