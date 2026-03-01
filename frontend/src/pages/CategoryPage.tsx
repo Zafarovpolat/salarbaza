@@ -30,16 +30,22 @@ export function CategoryPage() {
 
   const categoryName = category ? getCategoryName(category, language) : "";
 
-  // ✅ НОВОЕ: Поделиться категорией
+  // ✅ ИСПРАВЛЕНО: прямая ссылка на WebApp (не через бота)
   const handleShare = () => {
     if (!slug) return;
 
-    const shareUrl = `https://t.me/${BOT_USERNAME}?start=category_${slug}`;
-    const shareText = `${categoryName} — Decor Market`;
-    const tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+    // ✅ Формат: t.me/Bot/app?startapp=category_SLUG
+    // Это откроет мини-приложение СРАЗУ, без захода в бота
+    const directAppUrl = `https://t.me/${BOT_USERNAME}/app?startapp=category_${slug}`;
+    const shareText =
+      language === "uz"
+        ? `${categoryName} — Decor Market do'konida ko'ring!`
+        : `${categoryName} — смотрите в Decor Market!`;
 
     try {
-      // Пробуем открыть через Telegram SDK
+      // Вариант 1: Telegram Share через SDK
+      const tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent(directAppUrl)}&text=${encodeURIComponent(shareText)}`;
+
       if (typeof WebApp.openTelegramLink === "function") {
         WebApp.openTelegramLink(tgShareUrl);
       } else {
@@ -48,14 +54,20 @@ export function CategoryPage() {
     } catch {
       // Fallback: копируем ссылку
       navigator.clipboard
-        .writeText(shareUrl)
+        .writeText(directAppUrl)
         .then(() =>
           toast.success(
             language === "uz" ? "Havola nusxalandi" : "Ссылка скопирована",
             { duration: 1500 },
           ),
         )
-        .catch(() => window.open(tgShareUrl, "_blank"));
+        .catch(() => {
+          // Последний fallback
+          window.open(
+            `https://t.me/share/url?url=${encodeURIComponent(directAppUrl)}`,
+            "_blank",
+          );
+        });
     }
   };
 
@@ -84,7 +96,6 @@ export function CategoryPage() {
                   </p>
                 </div>
 
-                {/* ✅ НОВОЕ: Кнопка «Поделиться» */}
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={handleShare}
