@@ -25,10 +25,10 @@ import { cn } from "@/utils/helpers";
 const BRANCHES = [
   {
     id: 1,
-    nameRu: "Филиал Чиланзар",
-    nameUz: "Chilonzor filiali",
-    addressRu: "г. Ташкент, Чиланзарский район, ул. Бунёдкор, 42",
-    addressUz: "Toshkent sh., Chilonzor tumani, Bunyodkor ko'chasi, 42",
+    nameRu: "Филиал Мирзо-Улугбек",
+    nameUz: "Mirzo Ulug'bek filiali",
+    addressRu: "г. Ташкент, Мирзо-Улугбекский район, 7-й проезд Сайрам, 92А",
+    addressUz: "Toshkent sh., Mirzo Ulug'bek tumani, 7-Sayram o'tish, 92A",
     phone: "+998 (99) 368-11-00",
     hours: "09:00 – 18:00",
     daysRu: "Пн–Сб",
@@ -37,10 +37,10 @@ const BRANCHES = [
   },
   {
     id: 2,
-    nameRu: "Филиал Сергели",
-    nameUz: "Sergeli filiali",
-    addressRu: "г. Ташкент, Сергелийский район, массив Янги Сергели",
-    addressUz: "Toshkent sh., Sergeli tumani, Yangi Sergeli massivi",
+    nameRu: "Филиал Юнусабад",
+    nameUz: "Yunusobod filiali",
+    addressRu: "г. Ташкент, Юнусабадский район, Малая кольцевая дорога, 106",
+    addressUz: "Toshkent sh., Yunusobod tumani, Kichik halqa yo'li, 106",
     phone: "+998 (99) 368-11-00",
     hours: "09:00 – 18:00",
     daysRu: "Пн–Сб",
@@ -208,12 +208,11 @@ export function ProfilePage() {
         onClose={() => setIsHelpModalOpen(false)}
         title={language === "uz" ? "Yordam" : "Помощь"}
       >
-        {/* ✅ FIX: добавлен max-height, overflow-y-auto и safe-area padding */}
         <div
           className="p-5 space-y-5 overflow-y-auto"
           style={{
-            maxHeight: "calc(70vh - 60px)",
-            paddingBottom: "max(20px, env(safe-area-inset-bottom, 20px))",
+            maxHeight: "calc(70dvh - 60px)",
+            paddingBottom: "calc(40px + env(safe-area-inset-bottom, 0px))",
           }}
         >
           <div>
@@ -248,24 +247,32 @@ export function ProfilePage() {
           </div>
           <div>
             <h3 className="font-display text-base font-medium text-charcoal mb-2">
-              {language === "uz" ? "Yetkazib berish" : "Доставка"}
-            </h3>
-            <p className="text-dark-gray text-sm leading-relaxed">
-              {language === "uz"
-                ? "Toshkent shahriga Yandex yetkazib berish orqali, viloyatlarga tanish haydovchilar orqali yetkazamiz."
-                : "В город Ташкент через Яндекс Доставку, а в регионы через знакомых водителей."}
-            </p>
-          </div>
-          <div>
-            <h3 className="font-display text-base font-medium text-charcoal mb-2">
               {language === "uz" ? "Bog'lanish" : "Контакты"}
             </h3>
-            <p className="text-dark-gray text-sm">
-              Telegram: @DekorHouseAdmin
-              <br />
-              {language === "uz" ? "Telefon" : "Телефон"}: +998 (99) 368-11-00
-            </p>
+            <div className="space-y-2 text-dark-gray text-sm">
+              <p>
+                Telegram:{" "}
+                <a
+                  href="https://t.me/DekorHouseAdmin"
+                  className="text-forest font-semibold"
+                >
+                  @DekorHouseAdmin
+                </a>
+              </p>
+              <p>
+                {language === "uz" ? "Telefon" : "Телефон"}:{" "}
+                <a
+                  href="tel:+998993681100"
+                  className="text-forest font-semibold"
+                >
+                  +998 (99) 368-11-00
+                </a>
+              </p>
+            </div>
           </div>
+
+          {/* ✅ Невидимый spacer чтобы контент не обрезался */}
+          <div className="h-8" aria-hidden="true" />
         </div>
       </Modal>
 

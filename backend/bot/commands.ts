@@ -24,19 +24,19 @@ export async function handleStart(bot: TelegramBot, msg: TelegramBot.Message) {
     }
   }
 
-  // ✅ CHANGED: Decor Market, контакты
+  // ✅ НОВЫЙ приветственный текст
   const welcomeMessage = `
 👋 Salom, ${firstName}!
 
-🏠 *Decor Market* — uy va bog' uchun dekoratsiyalar do'koniga xush kelibsiz!
+Decor Market — O'zbekistondagi birinchi sun'iy gullar va dekor internet-do'koni 🌸
 
-🪴 Bizda:
-• Guldonlar va kashpolar
-• Sun'iy o'simliklar
-• O'simliklar uchun tagliklar
+Bizning katalogda sun'iy gullar, dekorativ daraxtlar va inter'yer bezaklari — uy, biznes va tadbirlar uchun. Hammasi bir joyda — qulay va tez 🛒
 
-📞 Aloqa: +998 (99) 368-11-00
-📱 Telegram: @DekorHouseAdmin
+📍 Toshkent sh., Mirzo Ulug'bek tumani, 7-Sayram o'tish, 92A
+📍 Toshkent sh., Yunusobod tumani, Kichik halqa yo'li, 106
+
+📲 Administrator: @DekorHouseAdmin
+📞 +998 (99) 368-11-00
 `.trim()
 
   const isHttps = config.frontendUrl.startsWith('https://')
@@ -59,7 +59,6 @@ export async function handleStart(bot: TelegramBot, msg: TelegramBot.Message) {
 export async function handleHelp(bot: TelegramBot, msg: TelegramBot.Message) {
   const chatId = msg.chat.id
 
-  // ✅ CHANGED: название, контакты, доставка
   const helpMessage = `
 ℹ️ *Yordam*
 
@@ -68,10 +67,6 @@ export async function handleHelp(bot: TelegramBot, msg: TelegramBot.Message) {
 2. Mahsulotlarni tanlang
 3. Savatga qo'shing
 4. Buyurtmani rasmiylang
-
-🚚 *Yetkazib berish:*
-Toshkent shahriga — Yandex yetkazib berish orqali
-Viloyatlarga — tanish haydovchilar orqali
 
 📞 *Bog'lanish:*
 Telegram: @DekorHouseAdmin
