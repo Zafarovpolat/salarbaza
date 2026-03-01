@@ -208,7 +208,14 @@ export function ProfilePage() {
         onClose={() => setIsHelpModalOpen(false)}
         title={language === "uz" ? "Yordam" : "Помощь"}
       >
-        <div className="p-5 space-y-5">
+        {/* ✅ FIX: добавлен max-height, overflow-y-auto и safe-area padding */}
+        <div
+          className="p-5 space-y-5 overflow-y-auto"
+          style={{
+            maxHeight: "calc(70vh - 60px)",
+            paddingBottom: "max(20px, env(safe-area-inset-bottom, 20px))",
+          }}
+        >
           <div>
             <h3 className="font-display text-base font-medium text-charcoal mb-2">
               {language === "uz"
@@ -239,7 +246,6 @@ export function ProfilePage() {
               </li>
             </ol>
           </div>
-          {/* ✅ CHANGED: Текст доставки */}
           <div>
             <h3 className="font-display text-base font-medium text-charcoal mb-2">
               {language === "uz" ? "Yetkazib berish" : "Доставка"}
@@ -250,7 +256,6 @@ export function ProfilePage() {
                 : "В город Ташкент через Яндекс Доставку, а в регионы через знакомых водителей."}
             </p>
           </div>
-          {/* ✅ CHANGED: Контакты */}
           <div>
             <h3 className="font-display text-base font-medium text-charcoal mb-2">
               {language === "uz" ? "Bog'lanish" : "Контакты"}
