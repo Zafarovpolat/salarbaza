@@ -1,4 +1,6 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import WebApp from "@twa-dev/sdk";
 
 import { Layout } from "./components/layout/Layout";
 
@@ -32,6 +34,43 @@ import { AdminPromotionsPage } from "./pages/admin/AdminPromotionsPage";
 import { AdminPromotionEditPage } from "./pages/admin/AdminPromotionEditPage";
 
 function MainRoutes() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const deepLinkDone = useRef(false);
+
+  // ✅ Deep link — один раз, только на главной
+  useEffect(() => {
+    if (deepLinkDone.current) return;
+    if (location.pathname !== "/") return;
+
+    let param: string | null = null;
+
+    try {
+      param = WebApp.initDataUnsafe?.start_param || null;
+    } catch {}
+
+    if (!param) {
+      try {
+        param = new URLSearchParams(window.location.search).get(
+          "tgWebAppStartParam",
+        );
+      } catch {}
+    }
+
+    if (!param) return;
+
+    deepLinkDone.current = true;
+
+    if (param.startsWith("category_")) {
+      navigate(`/catalog/${param.replace("category_", "")}`);
+    } else if (param.startsWith("product_")) {
+      navigate(`/product/${encodeURIComponent(param.replace("product_", ""))}`);
+    } else if (param.startsWith("promo_")) {
+      navigate(`/promotion/${param.replace("promo_", "")}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Layout>
       <Routes>
