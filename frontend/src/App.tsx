@@ -9,10 +9,10 @@ function App() {
     try {
       WebApp.ready();
       WebApp.expand();
-      WebApp.setHeaderColor("#1B4332");
-      WebApp.setBackgroundColor("#FFFCF5");
+      WebApp.setHeaderColor("#22c55e");
+      WebApp.setBackgroundColor("#f9fafb");
     } catch (e) {
-      console.log("Not in Telegram environment");
+      // Not in Telegram environment
     }
   }, []);
 
