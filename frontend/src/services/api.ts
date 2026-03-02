@@ -13,36 +13,27 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
     (config) => {
-        // ✅ Добавь логирование
-        console.log('🔗 API Request:', config.method?.toUpperCase(), config.url)
-        console.log('📱 WebApp.initData exists:', !!WebApp.initData)
-        console.log('📱 WebApp.initData length:', WebApp.initData?.length || 0)
-
-        // Add Telegram init data for authentication
+        // ✅ Убраны console.log — они замедляли работу
         if (WebApp.initData) {
             config.headers['X-Telegram-Init-Data'] = WebApp.initData
-        } else {
-            console.warn('⚠️ No initData - request may fail auth')
         }
         return config
     },
-    (error) => {
-        console.error('❌ Request interceptor error:', error)
-        return Promise.reject(error)
-    }
+    (error) => Promise.reject(error)
 )
 
 // Response interceptor
 api.interceptors.response.use(
-    (response) => {
-        console.log('✅ API Response:', response.status, response.config.url)
-        return response
-    },
+    (response) => response,
     (error: AxiosError) => {
-        console.error('❌ API Error:', error.response?.status, error.config?.url)
-        console.error('❌ Error data:', error.response?.data)
-
         if (error.response) {
+            const status = error.response.status
+
+            // ✅ 429 — отдельная обработка
+            if (status === 429) {
+                return Promise.reject(new Error('TOO_MANY_REQUESTS'))
+            }
+
             const message = (error.response.data as { message?: string })?.message ||
                 'An error occurred'
             return Promise.reject(new Error(message))
@@ -60,7 +51,6 @@ export async function get<T>(url: string, config?: AxiosRequestConfig): Promise<
 }
 
 export async function post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
-    console.log('📤 POST data:', JSON.stringify(data).substring(0, 500))
     const response = await api.post<T>(url, data, config)
     return response.data
 }
