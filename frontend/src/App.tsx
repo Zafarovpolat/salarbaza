@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { BrowserRouter, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import WebApp from "@twa-dev/sdk";
@@ -6,22 +6,25 @@ import { AppRouter } from "./router";
 
 function DeepLinkHandler() {
   const navigate = useNavigate();
-  const location = useLocation();
+  // ✅ FIX: флаг — обработать deep link ТОЛЬКО ОДИН РАЗ
+  const handled = useRef(false);
 
   useEffect(() => {
+    // Если уже обработали — больше не трогаем
+    if (handled.current) return;
+
     try {
       const startParam = WebApp.initDataUnsafe?.start_param;
       if (!startParam) return;
 
-      // ✅ Только если мы на главной (не обрабатывать повторно)
-      if (location.pathname !== "/") return;
+      // Помечаем как обработанный
+      handled.current = true;
 
       console.log("📎 Deep link param:", startParam);
 
       if (startParam.startsWith("category_")) {
         const slug = startParam.replace("category_", "");
-        // ✅ FIX: сначала главная в истории, потом категория
-        // Так кнопка «назад» вернёт на главную
+        // ✅ push (не replace) — чтобы «назад» вёл на главную
         navigate(`/catalog/${slug}`);
       } else if (startParam.startsWith("product_")) {
         const slug = startParam.replace("product_", "");
@@ -33,7 +36,7 @@ function DeepLinkHandler() {
     } catch (e) {
       console.log("Deep link handling error:", e);
     }
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   return null;
 }
