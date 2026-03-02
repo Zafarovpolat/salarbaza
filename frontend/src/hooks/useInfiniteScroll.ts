@@ -15,13 +15,21 @@ export function useInfiniteScroll({
 }: UseInfiniteScrollOptions) {
     const observerRef = useRef<IntersectionObserver | null>(null)
     const loadMoreRef = useRef<HTMLDivElement | null>(null)
+    const lastCallTime = useRef<number>(0)
 
     const handleObserver = useCallback(
         (entries: IntersectionObserverEntry[]) => {
             const [target] = entries
-            if (target.isIntersecting && hasMore && !isLoading) {
-                onLoadMore()
-            }
+            if (!target.isIntersecting) return
+            if (!hasMore) return
+            if (isLoading) return
+
+            // ✅ Минимум 1 сек между вызовами
+            const now = Date.now()
+            if (now - lastCallTime.current < 1000) return
+            lastCallTime.current = now
+
+            onLoadMore()
         },
         [hasMore, isLoading, onLoadMore]
     )

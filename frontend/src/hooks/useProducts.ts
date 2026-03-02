@@ -1,6 +1,5 @@
-// frontend/src/hooks/useProducts.ts
-import { useState, useEffect, useCallback } from 'react'
-import { Product, ProductFilters, PaginatedResponse } from '@/types'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Product, ProductFilters } from '@/types'
 import { productService } from '@/services/productService'
 
 interface UseProductsOptions {
@@ -20,7 +19,18 @@ export function useProducts(options: UseProductsOptions = {}) {
     const [hasMore, setHasMore] = useState(true)
     const [total, setTotal] = useState(0)
 
+    // ✅ Защита от лавины запросов
+    const isRateLimited = useRef(false)
+    const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const isFetching = useRef(false)
+
     const fetchProducts = useCallback(async (pageNum: number, append = false) => {
+        // ✅ Не делать запрос если уже идёт или rate limited
+        if (isFetching.current) return
+        if (isRateLimited.current) return
+
+        isFetching.current = true
+
         try {
             setIsLoading(true)
             setError(null)
@@ -36,6 +46,8 @@ export function useProducts(options: UseProductsOptions = {}) {
                 search: filters?.search,
             })
 
+            isRateLimited.current = false
+
             if (append) {
                 setProducts(prev => [...prev, ...response.data])
             } else {
@@ -44,45 +56,73 @@ export function useProducts(options: UseProductsOptions = {}) {
 
             setTotal(response.pagination.total)
             setHasMore(pageNum < response.pagination.totalPages)
+
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch products')
+            const message = err instanceof Error ? err.message : 'Failed to fetch products'
+
+            if (message === 'TOO_MANY_REQUESTS') {
+                // ✅ При 429 — стоп, ждём 30 секунд
+                isRateLimited.current = true
+                setHasMore(false)
+                setError(null) // Не показываем ошибку пользователю
+
+                retryTimer.current = setTimeout(() => {
+                    isRateLimited.current = false
+                    setHasMore(true)
+                }, 30000)
+            } else {
+                setError(message)
+            }
         } finally {
             setIsLoading(false)
+            isFetching.current = false
         }
-    }, [categorySlug, filters?.sortBy, filters?.minPrice, filters?.maxPrice, filters?.inStock, filters?.search, limit])
+    }, [
+        categorySlug,
+        filters?.sortBy,
+        filters?.minPrice,
+        filters?.maxPrice,
+        filters?.inStock,
+        filters?.search,
+        limit
+    ])
 
-    // Initial fetch and refetch when filters change
     useEffect(() => {
+        // ✅ Сброс при смене фильтров
+        isRateLimited.current = false
+        isFetching.current = false
+        if (retryTimer.current) clearTimeout(retryTimer.current)
+
         setPage(1)
         setProducts([])
+        setHasMore(true)
         fetchProducts(1, false)
     }, [fetchProducts])
 
-    // Load more
-    const loadMore = useCallback(() => {
-        if (!isLoading && hasMore) {
-            const nextPage = page + 1
-            setPage(nextPage)
-            fetchProducts(nextPage, true)
+    useEffect(() => {
+        return () => {
+            if (retryTimer.current) clearTimeout(retryTimer.current)
         }
+    }, [])
+
+    const loadMore = useCallback(() => {
+        if (isLoading || !hasMore || isRateLimited.current || isFetching.current) return
+        const nextPage = page + 1
+        setPage(nextPage)
+        fetchProducts(nextPage, true)
     }, [isLoading, hasMore, page, fetchProducts])
 
-    // Refresh
     const refresh = useCallback(() => {
+        isRateLimited.current = false
+        isFetching.current = false
+        if (retryTimer.current) clearTimeout(retryTimer.current)
         setPage(1)
         setProducts([])
+        setHasMore(true)
         fetchProducts(1, false)
     }, [fetchProducts])
 
-    return {
-        products,
-        isLoading,
-        error,
-        hasMore,
-        total,
-        loadMore,
-        refresh,
-    }
+    return { products, isLoading, error, hasMore, total, loadMore, refresh }
 }
 
 export function useProduct(slug: string) {
@@ -103,10 +143,7 @@ export function useProduct(slug: string) {
                 setIsLoading(false)
             }
         }
-
-        if (slug) {
-            fetchProduct()
-        }
+        if (slug) fetchProduct()
     }, [slug])
 
     return { product, isLoading, error }
