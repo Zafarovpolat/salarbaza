@@ -1,6 +1,4 @@
-import { useEffect, useRef } from "react";
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import WebApp from "@twa-dev/sdk";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import { Layout } from "./components/layout/Layout";
 
@@ -33,44 +31,7 @@ import { AdminCustomerDetailPage } from "./pages/admin/AdminCustomerDetailPage";
 import { AdminPromotionsPage } from "./pages/admin/AdminPromotionsPage";
 import { AdminPromotionEditPage } from "./pages/admin/AdminPromotionEditPage";
 
-// ✅ Deep link handler — выполняется ОДИН РАЗ при первом монтировании
-function useDeepLink() {
-  const navigate = useNavigate();
-  const handled = useRef(false);
-
-  useEffect(() => {
-    if (handled.current) return;
-    handled.current = true;
-
-    try {
-      const startParam = WebApp.initDataUnsafe?.start_param;
-      if (!startParam) return;
-
-      console.log("📎 Deep link:", startParam);
-
-      // Небольшая задержка чтобы роутер успел инициализироваться
-      setTimeout(() => {
-        if (startParam.startsWith("category_")) {
-          const slug = startParam.replace("category_", "");
-          navigate(`/catalog/${slug}`);
-        } else if (startParam.startsWith("product_")) {
-          const slug = startParam.replace("product_", "");
-          navigate(`/product/${encodeURIComponent(slug)}`);
-        } else if (startParam.startsWith("promo_")) {
-          const slug = startParam.replace("promo_", "");
-          navigate(`/promotion/${slug}`);
-        }
-      }, 100);
-    } catch (e) {
-      console.log("Deep link error:", e);
-    }
-  }, []); // ✅ Пустой массив — только один раз
-}
-
 function MainRoutes() {
-  // ✅ Вызываем здесь — внутри роутера, один раз
-  useDeepLink();
-
   return (
     <Layout>
       <Routes>

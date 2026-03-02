@@ -11,14 +11,6 @@ function App() {
       WebApp.expand();
       WebApp.setHeaderColor("#1B4332");
       WebApp.setBackgroundColor("#FFFCF5");
-
-      if (typeof (WebApp as any).disableVerticalSwipes === "function") {
-        (WebApp as any).disableVerticalSwipes();
-      }
-
-      if (typeof WebApp.enableClosingConfirmation === "function") {
-        WebApp.enableClosingConfirmation();
-      }
     } catch (e) {
       console.log("Not in Telegram environment");
     }
