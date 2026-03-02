@@ -16,12 +16,9 @@ export function Header() {
   const isHome = location.pathname === "/";
 
   useEffect(() => {
-    // ✅ FIX: Слушаем скролл на main, а не на window
-    const mainEl = document.querySelector("main");
-    if (!mainEl) return;
-    const handleScroll = () => setScrolled(mainEl.scrollTop > 20);
-    mainEl.addEventListener("scroll", handleScroll, { passive: true });
-    return () => mainEl.removeEventListener("scroll", handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const getPageTitle = () => {
@@ -54,7 +51,6 @@ export function Header() {
         ${scrolled ? "shadow-soft" : ""}
       `}
     >
-      {/* Left Side */}
       <div className="flex items-center gap-2">
         {!isHome && (
           <motion.button
@@ -71,7 +67,6 @@ export function Header() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            {/* ✅ CHANGED: Decor Market */}
             <span
               onClick={() => navigate("/")}
               className="font-display text-[22px] font-semibold text-forest tracking-[-0.01em] cursor-pointer select-none"
@@ -86,9 +81,7 @@ export function Header() {
         ) : null}
       </div>
 
-      {/* Right Side */}
       <div className="flex items-center gap-2">
-        {/* Language Toggle */}
         <div className="flex bg-sand rounded-full p-[3px] gap-0.5">
           <button
             onClick={() => setLanguage("ru")}
@@ -112,7 +105,6 @@ export function Header() {
           </button>
         </div>
 
-        {/* Search */}
         {isHome && (
           <motion.button
             whileTap={{ scale: 0.9 }}
@@ -123,7 +115,6 @@ export function Header() {
           </motion.button>
         )}
 
-        {/* Cart */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate("/cart")}
