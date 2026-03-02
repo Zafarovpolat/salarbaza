@@ -1,4 +1,6 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import WebApp from "@twa-dev/sdk";
 
 import { Layout } from "./components/layout/Layout";
 
@@ -31,7 +33,67 @@ import { AdminCustomerDetailPage } from "./pages/admin/AdminCustomerDetailPage";
 import { AdminPromotionsPage } from "./pages/admin/AdminPromotionsPage";
 import { AdminPromotionEditPage } from "./pages/admin/AdminPromotionEditPage";
 
+// ✅ Получаем startapp параметр из разных источников
+function getStartParam(): string | null {
+  try {
+    // Способ 1: Telegram SDK
+    const fromSdk = WebApp.initDataUnsafe?.start_param;
+    if (fromSdk) return fromSdk;
+
+    // Способ 2: URL параметр tgWebAppStartParam
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromUrl = urlParams.get("tgWebAppStartParam");
+    if (fromUrl) return fromUrl;
+
+    // Способ 3: hash параметр
+    const hashParams = new URLSearchParams(
+      window.location.hash.replace("#", "?"),
+    );
+    const fromHash = hashParams.get("tgWebAppStartParam");
+    if (fromHash) return fromHash;
+  } catch (e) {
+    console.log("getStartParam error:", e);
+  }
+  return null;
+}
+
 function MainRoutes() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const deepLinkHandled = useRef(false);
+
+  useEffect(() => {
+    // Только один раз, только на главной
+    if (deepLinkHandled.current) return;
+    if (location.pathname !== "/") return;
+
+    const startParam = getStartParam();
+    if (!startParam) return;
+
+    deepLinkHandled.current = true;
+    console.log("📎 Deep link param:", startParam);
+
+    let targetPath = "";
+
+    if (startParam.startsWith("category_")) {
+      const slug = startParam.replace("category_", "");
+      targetPath = `/catalog/${slug}`;
+    } else if (startParam.startsWith("product_")) {
+      const slug = startParam.replace("product_", "");
+      targetPath = `/product/${encodeURIComponent(slug)}`;
+    } else if (startParam.startsWith("promo_")) {
+      const slug = startParam.replace("promo_", "");
+      targetPath = `/promotion/${slug}`;
+    }
+
+    if (targetPath) {
+      // Задержка чтобы роутер полностью инициализировался
+      requestAnimationFrame(() => {
+        navigate(targetPath);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Layout>
       <Routes>

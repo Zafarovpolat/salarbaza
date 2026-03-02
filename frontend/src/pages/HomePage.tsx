@@ -336,52 +336,59 @@ export function HomePage() {
       )}
 
       {/* ===== FEATURED ===== */}
-      <section className="py-8">
-        <Container>
-          <div className="flex items-end justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-forest to-sage rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-white" strokeWidth={1.5} />
+      {featuredProducts.length > 0 && (
+        <section className="py-8">
+          <Container>
+            <div className="flex items-end justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 bg-gradient-to-br from-forest to-sage rounded-xl flex items-center justify-center">
+                  <TrendingUp
+                    className="w-4 h-4 text-white"
+                    strokeWidth={1.5}
+                  />
+                </div>
+                <h2 className="font-display text-2xl font-medium text-charcoal">
+                  {t("home.featured")}
+                </h2>
               </div>
-              <h2 className="font-display text-2xl font-medium text-charcoal">
-                {t("home.featured")}
-              </h2>
+              <button
+                onClick={() => navigate("/catalog?featured=true")}
+                className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300"
+              >
+                {t("home.viewAll")}
+                <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
+              </button>
             </div>
-            <button
-              onClick={() => navigate("/catalog?featured=true")}
-              className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300"
-            >
-              {t("home.viewAll")}
-              <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
-            </button>
-          </div>
-          <ProductGrid products={featuredProducts} isLoading={isLoading} />
-        </Container>
-      </section>
+            <ProductGrid products={featuredProducts} isLoading={isLoading} />
+          </Container>
+        </section>
+      )}
 
       {/* ===== NEW ===== */}
-      <section className="py-8 bg-ivory">
-        <Container>
-          <div className="flex items-end justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-warning to-terracotta rounded-xl flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" strokeWidth={1.5} />
+      {newProducts.length > 0 && (
+        <section className="py-8 bg-ivory">
+          <Container>
+            <div className="flex items-end justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 bg-gradient-to-br from-warning to-terracotta rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" strokeWidth={1.5} />
+                </div>
+                <h2 className="font-display text-2xl font-medium text-charcoal">
+                  {t("home.new")}
+                </h2>
               </div>
-              <h2 className="font-display text-2xl font-medium text-charcoal">
-                {t("home.new")}
-              </h2>
+              <button
+                onClick={() => navigate("/catalog")}
+                className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300"
+              >
+                {t("home.viewAll")}
+                <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
+              </button>
             </div>
-            <button
-              onClick={() => navigate("/new-arrivals")}
-              className="text-sm font-semibold text-forest flex items-center gap-1 hover:gap-2 transition-all duration-300"
-            >
-              {t("home.viewAll")}
-              <ChevronRight className="w-[18px] h-[18px]" strokeWidth={2} />
-            </button>
-          </div>
-          <ProductGrid products={newProducts} isLoading={isLoading} />
-        </Container>
-      </section>
+            <ProductGrid products={newProducts} isLoading={isLoading} />
+          </Container>
+        </section>
+      )}
 
       {/* ===== CTA BANNER ===== */}
       <section className="py-8 px-4">
