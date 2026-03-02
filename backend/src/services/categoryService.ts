@@ -4,6 +4,16 @@ import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 
 export async function getAllCategories() {
+
+  try {
+    const count = await prisma.category.count()
+    console.log(`📊 DB: всего категорий в БД = ${count}`)
+    const activeCount = await prisma.category.count({ where: { isActive: true } })
+    console.log(`📊 DB: активных категорий = ${activeCount}`)
+  } catch (dbError: any) {
+    console.error(`❌ DB CONNECTION ERROR: ${dbError.message}`)
+  }
+
   const categories = await prisma.category.findMany({
     where: { isActive: true },
     orderBy: { sortOrder: 'asc' },
