@@ -64,6 +64,39 @@ router.post('/products/reset-statuses', async (req, res) => {
   }
 })
 
+// ==================== BULK TAG UPDATE ====================
+// ✅ Массовое обновление тегов товаров
+router.post('/products/bulk-tags', async (req, res) => {
+  try {
+    const { productIds, tags } = req.body
+    // tags: { isFeatured?: boolean, isNew?: boolean, isSpecialOffer?: boolean, isActive?: boolean }
+
+    if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'productIds required' })
+    }
+
+    const updateData: any = {}
+    if (tags.isFeatured !== undefined) updateData.isFeatured = tags.isFeatured
+    if (tags.isNew !== undefined) updateData.isNew = tags.isNew
+    if (tags.isSpecialOffer !== undefined) updateData.isSpecialOffer = tags.isSpecialOffer
+    if (tags.isActive !== undefined) updateData.isActive = tags.isActive
+
+    const result = await prisma.product.updateMany({
+      where: { id: { in: productIds } },
+      data: updateData,
+    })
+
+    res.json({
+      success: true,
+      message: `Обновлено ${result.count} товаров`,
+      data: { updatedCount: result.count },
+    })
+  } catch (error: any) {
+    console.error('Bulk tags error:', error)
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 // ==================== DASHBOARD ====================
 router.get('/stats', async (req, res) => {
   try {

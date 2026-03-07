@@ -16,10 +16,6 @@ export async function sendOrderNotification(order: any) {
         return
     }
 
-    const deliveryTypeText = order.deliveryType === 'DELIVERY'
-        ? '🚚 Yetkazib berish'
-        : '🏪 Olib ketish'
-
     const paymentMethodText: Record<string, string> = {
         CASH: '💵 Naqd',
         CARD: '💳 Karta',
@@ -31,7 +27,8 @@ export async function sendOrderNotification(order: any) {
     const items = order.items || []
     const itemsList = items.map((item: any) => {
         const color = item.colorName ? ` (${item.colorName})` : ''
-        return `  • ${item.productName}${color}\n    ${item.quantity} × ${formatPrice(item.price)} = ${formatPrice(item.total)} so'm`
+        const size = item.variantSize ? ` [${item.variantSize}]` : ''
+        return `  • ${item.productName}${color}${size}\n    ${item.quantity} × ${formatPrice(item.price)} = ${formatPrice(item.total)} so'm`
     }).join('\n')
 
     // Адрес
@@ -40,10 +37,12 @@ export async function sendOrderNotification(order: any) {
         const addr = typeof order.deliveryAddress === 'object'
             ? order.deliveryAddress.address
             : order.deliveryAddress
-        addressText = `\n📍 *Manzil:* ${addr}`
+        if (addr && addr !== 'Геолокация') {
+            addressText = `\n📍 *Manzil:* ${addr}`
+        }
     }
 
-    // Ссылка на Яндекс Карты (если есть координаты)
+    // Яндекс Карты
     let locationLink = ''
     if (order.latitude && order.longitude) {
         locationLink = `\n🗺 *Xaritada:* [Yandex Maps](https://yandex.uz/maps/?pt=${order.longitude},${order.latitude}&z=17&l=map)`
@@ -58,32 +57,27 @@ export async function sendOrderNotification(order: any) {
         ? `@${user.username}`
         : user.firstName || 'Noma\'lum'
 
-    // Полное имя клиента
     const customerFullName = order.customerLastName
         ? `${order.customerFirstName || order.customerName} ${order.customerLastName}`
         : (order.customerFirstName || order.customerName)
 
+    // ✅ Убраны: deliveryTypeText, Jami (subtotal), Yetkazash (deliveryFee)
     const message = `
 🆕 *YANGI BUYURTMA*
 
 📋 *Buyurtma:* \`${order.orderNumber}\`
 👤 *Mijoz:* ${customerFullName}
 📞 *Telefon:* ${order.customerPhone}
-🔗 *Telegram:* ${userInfo}
-
-${deliveryTypeText}${addressText}${locationLink}
+🔗 *Telegram:* ${userInfo}${addressText}${locationLink}
 💳 *To'lov:* ${paymentMethodText[order.paymentMethod] || order.paymentMethod}
 
 📦 *Mahsulotlar:*
 ${itemsList}
 
-💰 *Jami:* ${formatPrice(order.subtotal)} so'm
-🚚 *Yetkazash:* ${order.deliveryFee > 0 ? formatPrice(order.deliveryFee) + " so'm" : 'Bepul'}
 ✅ *Umumiy:* *${formatPrice(order.total)} so'm*${note}
 `.trim()
 
     try {
-        // Отправляем основное сообщение
         await bot.sendMessage(config.adminChatId, message, {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -96,7 +90,6 @@ ${itemsList}
             },
         })
 
-        // Если есть координаты — отправляем локацию отдельным сообщением
         if (order.latitude && order.longitude) {
             await bot.sendLocation(config.adminChatId, order.latitude, order.longitude)
         }

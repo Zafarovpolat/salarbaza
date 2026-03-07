@@ -32,6 +32,7 @@ import { AdminCustomersPage } from "./pages/admin/AdminCustomersPage";
 import { AdminCustomerDetailPage } from "./pages/admin/AdminCustomerDetailPage";
 import { AdminPromotionsPage } from "./pages/admin/AdminPromotionsPage";
 import { AdminPromotionEditPage } from "./pages/admin/AdminPromotionEditPage";
+import { AdminBulkTagsPage } from './pages/admin/AdminBulkTagsPage'
 
 function MainRoutes() {
   const navigate = useNavigate();
@@ -123,6 +124,7 @@ function AdminRoutes() {
         path="/admin/promotions/:id"
         element={<AdminPromotionEditPage />}
       />
+      <Route path="/admin/bulk-tags" element={<AdminBulkTagsPage />} />
     </Routes>
   );
 }
