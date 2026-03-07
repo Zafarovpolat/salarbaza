@@ -2,22 +2,23 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Package, FolderTree,
-  ShoppingCart, LogOut, Home, Menu, X, Percent, Tag,
+  ShoppingCart, LogOut, Home, Menu, X, Percent, Tag, Tags,
 } from 'lucide-react'
 
 interface AdminLayoutProps {
   children: ReactNode
-  title?: string  // 🆕 Опциональный заголовок
+  title?: string
 }
 
 const menuItems = [
-  { path: '/admin/dashboard', label: 'Дашборд', icon: LayoutDashboard },
-  { path: '/admin/products', label: 'Товары', icon: Package },
-  { path: '/admin/categories', label: 'Категории', icon: FolderTree },
-  { path: '/admin/promotions', label: 'Акции', icon: Tag },          // 🆕
-  { path: '/admin/wholesale', label: 'Оптовые цены', icon: Percent },
-  { path: '/admin/orders', label: 'Заказы', icon: ShoppingCart },
-  { path: '/admin/customers', label: 'Клиенты', icon: Users },
+  { path: '/admin/dashboard',  label: 'Дашборд',       icon: LayoutDashboard },
+  { path: '/admin/products',   label: 'Товары',         icon: Package },
+  { path: '/admin/bulk-tags',  label: 'Массовые теги',  icon: Tags },        // ✅ НОВОЕ
+  { path: '/admin/categories', label: 'Категории',      icon: FolderTree },
+  { path: '/admin/promotions', label: 'Акции',          icon: Tag },
+  { path: '/admin/wholesale',  label: 'Оптовые цены',   icon: Percent },
+  { path: '/admin/orders',     label: 'Заказы',         icon: ShoppingCart },
+  { path: '/admin/customers',  label: 'Клиенты',        icon: Users },
 ]
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
@@ -50,8 +51,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           >
             <Menu className="w-6 h-6 text-dark-gray" />
           </button>
+          {/* ✅ Decor Market */}
           <span className="font-display text-lg font-semibold text-forest">
-            Decor<span className="text-sage font-normal">house</span>
+            Decor<span className="text-sage font-normal"> Market</span>
           </span>
           <div className="w-10" />
         </div>
@@ -76,8 +78,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone/30">
           <div>
+            {/* ✅ Decor Market */}
             <span className="font-display text-xl font-semibold text-forest">
-              Decor<span className="text-sage font-normal">house</span>
+              Decor<span className="text-sage font-normal"> Market</span>
             </span>
             <p className="text-xs text-medium-gray mt-0.5">Админ-панель</p>
           </div>
@@ -92,7 +95,8 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         {/* Navigation */}
         <nav className="p-3 space-y-1">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path ||
+            const isActive =
+              location.pathname === item.path ||
               (item.path !== '/admin/dashboard' && location.pathname.startsWith(item.path))
             const Icon = item.icon
 

@@ -251,7 +251,6 @@ export function HomePage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-4xl">
-                            🌿
                           </div>
                         )}
                         {discount > 0 && (
@@ -400,10 +399,8 @@ export function HomePage() {
           className="bg-gradient-to-br from-forest via-emerald to-sage rounded-3xl p-8 md:p-10 text-center text-white cursor-pointer relative overflow-hidden transition-all duration-400 hover:shadow-card-hover"
         >
           <div className="absolute -top-2.5 -right-2.5 text-[100px] opacity-[0.08] rotate-[15deg]">
-            🌿
           </div>
           <div className="absolute -bottom-2.5 left-5 text-[60px] opacity-[0.08] -rotate-[20deg]">
-            🍃
           </div>
           <h3 className="font-display text-2xl md:text-3xl font-medium mb-2 relative z-[2]">
             {language === "uz" ? "Barcha mahsulotlar" : "Все товары"}

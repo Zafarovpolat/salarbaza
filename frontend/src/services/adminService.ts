@@ -324,4 +324,24 @@ export const adminService = {
     if (!data.success) throw new Error(data.message)
     return data.data
   },
+
+    // =============================================
+  // 🆕 BULK TAGS (Массовое редактирование тегов)
+  // =============================================
+
+  async bulkUpdateTags(productIds: string[], tags: {
+    isFeatured?: boolean
+    isNew?: boolean
+    isSpecialOffer?: boolean
+    isActive?: boolean
+  }) {
+    const res = await fetch(`${API_URL}/admin/products/bulk-tags`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ productIds, tags }),
+    })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
 }
