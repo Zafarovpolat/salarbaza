@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   MapPin,
   Phone,
@@ -30,7 +30,6 @@ interface OrderFormProps {
   isLoading?: boolean;
 }
 
-// ✅ НОВОЕ: Загрузка сохранённых данных
 function getSavedFormData(): Partial<OrderFormData> {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -46,7 +45,6 @@ export function OrderForm({
 }: OrderFormProps) {
   const { t, language } = useLanguageStore();
 
-  // ✅ Мержим: initialData (Telegram) > сохранённые данные > пустые значения
   const savedData = getSavedFormData();
 
   const [formData, setFormData] = useState<OrderFormData>({
@@ -65,7 +63,6 @@ export function OrderForm({
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationReceived, setLocationReceived] = useState(false);
 
-  // ✅ Показываем подсказку если данные были автозаполнены
   const [wasAutoFilled] = useState(() => {
     return !!(savedData.phone || savedData.address);
   });
@@ -90,12 +87,8 @@ export function OrderForm({
           : "Неверный номер телефона";
     }
 
-    if (!formData.address.trim() && !formData.latitude) {
-      newErrors.address =
-        language === "uz"
-          ? "Manzil kiriting yoki joylashuvni yuboring"
-          : "Введите адрес или отправьте геолокацию";
-    }
+    // ✅ FIX: адрес НЕ обязателен — убрана валидация
+    // Геолокация тоже необязательна
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -104,7 +97,6 @@ export function OrderForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      // ✅ НОВОЕ: Сохраняем данные для следующего заказа
       try {
         localStorage.setItem(
           STORAGE_KEY,
@@ -113,7 +105,7 @@ export function OrderForm({
             lastName: formData.lastName,
             phone: formData.phone,
             address: formData.address,
-          }),
+          })
         );
       } catch {}
 
@@ -123,7 +115,7 @@ export function OrderForm({
 
   const updateField = <K extends keyof OrderFormData>(
     field: K,
-    value: OrderFormData[K],
+    value: OrderFormData[K]
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -134,7 +126,7 @@ export function OrderForm({
       toast.error(
         language === "uz"
           ? "Geolokatsiya qo'llab-quvvatlanmaydi"
-          : "Геолокация не поддерживается",
+          : "Геолокация не поддерживается"
       );
       return;
     }
@@ -150,12 +142,10 @@ export function OrderForm({
         }));
         setLocationReceived(true);
         setIsGettingLocation(false);
-        if (errors.address)
-          setErrors((prev) => ({ ...prev, address: undefined }));
         toast.success(
           language === "uz"
             ? "Joylashuv aniqlandi"
-            : "Местоположение определено",
+            : "Местоположение определено"
         );
       },
       (error) => {
@@ -173,13 +163,13 @@ export function OrderForm({
         }
         toast.error(message);
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
   return (
     <form id="order-form" onSubmit={handleSubmit} className="space-y-5">
-      {/* ✅ Подсказка автозаполнения */}
+      {/* Подсказка автозаполнения */}
       {wasAutoFilled && (
         <div className="bg-sage/10 border border-sage/20 rounded-2xl px-4 py-3 text-sm text-forest flex items-center gap-2">
           <CheckCircle className="w-4 h-4 flex-shrink-0" />
@@ -269,15 +259,13 @@ export function OrderForm({
         )}
       </div>
 
-      {/* Address */}
+      {/* ✅ FIX: Адрес — убраны тексты о доставке */}
       <div>
         <Input
           label={
-            locationReceived
-              ? language === "uz"
-                ? "Manzil (ixtiyoriy)"
-                : "Адрес (необязательно)"
-              : t("checkout.address")
+            language === "uz"
+              ? "Manzil (ixtiyoriy)"
+              : "Адрес (необязательно)"
           }
           value={formData.address}
           onChange={(e) => updateField("address", e.target.value)}
@@ -286,7 +274,7 @@ export function OrderForm({
           placeholder={
             language === "uz"
               ? "Manzilingizni kiriting"
-              : "Введите адрес доставки"
+              : "Введите ваш адрес"
           }
           disabled={isLoading}
         />
@@ -317,8 +305,8 @@ export function OrderForm({
             className="w-full pl-12 pr-4 py-3 bg-sand border-2 border-transparent rounded-xl font-sans text-[15px] text-charcoal placeholder:text-taupe resize-none outline-none transition-all duration-300 focus:bg-white focus:border-forest focus:shadow-focus disabled:opacity-50 disabled:cursor-not-allowed"
             placeholder={
               language === "uz"
-                ? "Qo'shimcha izoh (eshik kodi, mo'ljal va h.k.)"
-                : "Дополнительный комментарий (код двери, ориентир и т.д.)"
+                ? "Qo'shimcha izoh (mo'ljal va h.k.)"
+                : "Дополнительный комментарий (ориентир и т.д.)"
             }
           />
         </div>
