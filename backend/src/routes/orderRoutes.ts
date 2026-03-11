@@ -13,10 +13,11 @@ import { logger } from '../utils/logger'
 const router = Router()
 router.use(authMiddleware)
 
-// ✅ ИСПРАВЛЕНО: добавлен variantId в items
+// ✅ FIX: Обновлённая валидация — без обязательных deliveryType, items
 const createOrderSchema = z.object({
-    deliveryType: z.enum(['PICKUP', 'DELIVERY']),
-    customerFirstName: z.string().min(2),
+    // ✅ Принимаем ОБА формата имени
+    customerName: z.string().min(2).optional(),
+    customerFirstName: z.string().min(2).optional(),
     customerLastName: z.string().optional(),
     customerPhone: z.string().min(9),
     address: z.string().optional(),
@@ -24,15 +25,17 @@ const createOrderSchema = z.object({
     longitude: z.number().optional(),
     customerNote: z.string().optional(),
     paymentMethod: z.enum(['CASH', 'CARD', 'PAYME', 'CLICK', 'UZUM']),
+    // ✅ items теперь optional — если нет, берём из корзины
     items: z.array(z.object({
         productId: z.string(),
         quantity: z.number().min(1),
         colorId: z.string().optional(),
-        variantId: z.string().optional(),   // ✅ ДОБАВЛЕНО
-    })).min(1, 'Cart is empty'),
+        variantId: z.string().optional(),
+    })).optional(),
 }).refine(
-    (data) => data.address || data.latitude,
-    { message: 'Address or location required', path: ['address'] }
+    // ✅ Хотя бы одно имя должно быть
+    (data) => data.customerName || data.customerFirstName,
+    { message: 'Customer name is required', path: ['customerName'] }
 )
 
 // ==================== GET ALL ORDERS ====================
@@ -84,10 +87,48 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
         const data = parseResult.data
         logger.info('✅ Validation passed')
 
-        const productIds = data.items.map(item => item.productId)
+        // ✅ FIX: Определяем имя клиента (поддержка обоих форматов)
+        const customerFirstName = data.customerFirstName || data.customerName?.split(' ')[0] || ''
+        const customerLastName = data.customerLastName || data.customerName?.split(' ').slice(1).join(' ') || null
+        const customerName = data.customerName || 
+            (customerLastName ? `${customerFirstName} ${customerLastName}` : customerFirstName)
+
+        // ✅ FIX: Получаем items — из тела запроса ИЛИ из корзины
+        let itemsToProcess = data.items
+
+        if (!itemsToProcess || itemsToProcess.length === 0) {
+            logger.info('🛒 No items in request, loading from cart...')
+
+            const cart = await prisma.cart.findUnique({
+                where: { userId: req.user!.id },
+                include: {
+                    items: {
+                        include: {
+                            product: true,
+                            variant: true,
+                        },
+                    },
+                },
+            })
+
+            if (!cart || cart.items.length === 0) {
+                throw new AppError('Cart is empty', 400)
+            }
+
+            itemsToProcess = cart.items.map(ci => ({
+                productId: ci.productId,
+                quantity: ci.quantity,
+                colorId: ci.colorId || undefined,
+                variantId: ci.variantId || undefined,
+            }))
+
+            logger.info(`🛒 Loaded ${itemsToProcess.length} items from cart`)
+        }
+
+        const productIds = itemsToProcess.map(item => item.productId)
         logger.info(`🛒 Product IDs: ${productIds.join(', ')}`)
 
-        // ✅ ИСПРАВЛЕНО: загружаем products с variants и category wholesale
+        // Загружаем products с variants и category wholesale
         const products = await prisma.product.findMany({
             where: { id: { in: productIds } },
             include: {
@@ -116,13 +157,13 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
         let subtotal = 0
         let totalDiscount = 0
 
-        const orderItems = data.items.map(item => {
+        const orderItems = itemsToProcess.map(item => {
             const product = productMap.get(item.productId)
             if (!product) {
                 throw new AppError(`Product ${item.productId} not found`, 400)
             }
 
-            // ✅ Вариант (размер)
+            // Вариант (размер)
             const variant = item.variantId
                 ? product.variants.find(v => v.id === item.variantId)
                 : null
@@ -131,18 +172,18 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
                 logger.warn(`⚠️ Variant ${item.variantId} not found for product ${item.productId}`)
             }
 
-            // ✅ Цвет
+            // Цвет
             const color = item.colorId
                 ? product.colors.find(c => c.id === item.colorId)
                 : null
 
             const priceModifier = color?.priceModifier || 0
 
-            // ✅ Цена: из варианта или базовая + модификатор цвета
+            // Цена: из варианта или базовая + модификатор цвета
             const basePrice = variant ? variant.price : product.price
             const unitPrice = basePrice + priceModifier
 
-            // ✅ Оптовая скидка из категории
+            // Оптовая скидка из категории
             let wholesaleDiscountPercent = 0
             const tiers = (product.category as any)?.wholesaleTemplate?.tiers || []
             if (tiers.length > 0) {
@@ -176,8 +217,8 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
             return {
                 productId: item.productId,
-                variantId: variant?.id || null,          // ✅ ДОБАВЛЕНО
-                variantSize: variant?.size || null,      // ✅ ДОБАВЛЕНО
+                variantId: variant?.id || null,
+                variantSize: variant?.size || null,
                 productName: product.nameRu,
                 productCode: product.code,
                 productImage: product.images[0]?.url || null,
@@ -190,41 +231,30 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
         logger.info(`💰 Subtotal: ${subtotal}, Discount: ${totalDiscount}`)
 
-        // ✅ Расчёт доставки (после скидки)
-        const totalAfterDiscount = subtotal - totalDiscount
-        const deliveryFee =
-            data.deliveryType === 'DELIVERY' && totalAfterDiscount < config.freeDeliveryThreshold
-                ? config.deliveryFee
-                : 0
-
-        const total = totalAfterDiscount + deliveryFee
+        // ✅ FIX: Доставка убрана — всегда 0
+        const total = subtotal - totalDiscount
 
         // Адрес
         const deliveryAddress = data.address || data.latitude
             ? { address: data.address || 'Геолокация', lat: data.latitude, lng: data.longitude }
             : Prisma.JsonNull
 
-        // Полное имя
-        const customerName = data.customerLastName
-            ? `${data.customerFirstName} ${data.customerLastName}`
-            : data.customerFirstName
-
         logger.info('📝 Creating order in database...')
 
-        // ✅ Создаём заказ
+        // Создаём заказ
         const order = await prisma.order.create({
             data: {
                 orderNumber: generateOrderNumber(),
                 userId: req.user!.id,
                 status: OrderStatus.PENDING,
                 subtotal,
-                deliveryFee,
-                discount: totalDiscount,           // ✅ ИСПРАВЛЕНО (было 0)
-                total,                              // ✅ ИСПРАВЛЕНО (учитывает скидку)
-                deliveryType: data.deliveryType,
+                deliveryFee: 0,                          // ✅ FIX: всегда 0
+                discount: totalDiscount,
+                total,
+                deliveryType: 'PICKUP',                  // ✅ FIX: всегда PICKUP
                 deliveryAddress,
-                customerFirstName: data.customerFirstName,
-                customerLastName: data.customerLastName || null,
+                customerFirstName,
+                customerLastName: customerLastName || null,
                 customerName,
                 customerPhone: data.customerPhone,
                 latitude: data.latitude || null,
@@ -238,13 +268,27 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
         logger.info(`✅ Order created: ${order.orderNumber} | Total: ${total} | Discount: ${totalDiscount}`)
 
+        // ✅ FIX: Очищаем корзину после создания заказа
+        try {
+            const cart = await prisma.cart.findUnique({
+                where: { userId: req.user!.id },
+            })
+            if (cart) {
+                await prisma.cartItem.deleteMany({
+                    where: { cartId: cart.id },
+                })
+                logger.info('🛒 Cart cleared')
+            }
+        } catch (cartError: any) {
+            logger.warn(`⚠️ Failed to clear cart: ${cartError.message}`)
+        }
+
         // Отправляем уведомление
         try {
             await sendOrderNotification(order)
             logger.info('📨 Notification sent')
         } catch (notifError: any) {
             logger.error(`⚠️ Notification failed: ${notifError.message}`)
-            // Не прерываем — заказ уже создан
         }
 
         res.status(201).json({ success: true, data: serializeBigInt(order) })
