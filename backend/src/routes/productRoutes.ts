@@ -1,5 +1,3 @@
-// backend/src/routes/productRoutes.ts
-
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
@@ -7,7 +5,23 @@ import { Prisma } from '@prisma/client'
 
 const router = Router()
 
-// ✅ Стандартный include с variants и wholesale
+// ✅ SPEED: только 1 главное фото для списков (было: ВСЕ фото)
+const productListInclude = {
+  images: {
+    orderBy: [
+      { isMain: 'desc' as const },
+      { sortOrder: 'asc' as const },
+    ],
+    take: 1,                                          // ✅ Только 1 фото
+  },
+  colors: true,
+  variants: { orderBy: { sortOrder: 'asc' as const } },
+  category: {
+    select: { id: true, slug: true, nameRu: true, nameUz: true },  // ✅ Только нужные поля
+  },
+}
+
+// Полный include для детальной страницы товара
 const productDetailInclude = {
   images: { orderBy: { sortOrder: 'asc' as const } },
   colors: true,
@@ -21,13 +35,6 @@ const productDetailInclude = {
       },
     },
   },
-}
-
-const productListInclude = {
-  images: { orderBy: { sortOrder: 'asc' as const } },
-  colors: true,
-  variants: { orderBy: { sortOrder: 'asc' as const } },
-  category: true,
 }
 
 // ===== СПИСОК ТОВАРОВ =====
@@ -44,14 +51,14 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     } = req.query
 
     const pageNum = parseInt(page as string)
-    const limitNum = parseInt(limit as string)
+    const limitNum = Math.min(parseInt(limit as string) || 20, 50)  // ✅ Макс 50
     const skip = (pageNum - 1) * limitNum
 
     const where: Prisma.ProductWhereInput = { isActive: true }
 
+    // ✅ SPEED: relation filter вместо отдельного запроса на категорию
     if (category) {
-      const cat = await prisma.category.findUnique({ where: { slug: category as string } })
-      if (cat) where.categoryId = cat.id
+      where.category = { slug: category as string }
     }
 
     if (minPrice) where.price = { ...(where.price as object), gte: parseInt(minPrice as string) }
@@ -74,6 +81,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       prisma.product.count({ where }),
     ])
 
+    // ✅ SPEED: HTTP кэш — повторные запросы мгновенные
+    res.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120')
+
     res.json({
       success: true,
       data: products,
@@ -93,12 +103,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/featured', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { limit = '10' } = req.query
+    const limitNum = Math.min(parseInt(limit as string) || 10, 20)
+
     const products = await prisma.product.findMany({
       where: { isActive: true, isFeatured: true },
       include: productListInclude,
       orderBy: { viewCount: 'desc' },
-      take: parseInt(limit as string),
+      take: limitNum,
     })
+
+    res.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300')
     res.json({ success: true, data: products })
   } catch (error) {
     next(error)
@@ -109,12 +123,16 @@ router.get('/featured', async (req: Request, res: Response, next: NextFunction) 
 router.get('/new', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { limit = '10' } = req.query
+    const limitNum = Math.min(parseInt(limit as string) || 10, 20)
+
     const products = await prisma.product.findMany({
       where: { isActive: true, isNew: true },
       include: productListInclude,
       orderBy: { createdAt: 'desc' },
-      take: parseInt(limit as string),
+      take: limitNum,
     })
+
+    res.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300')
     res.json({ success: true, data: products })
   } catch (error) {
     next(error)
@@ -127,6 +145,8 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
     const { q, limit = '20' } = req.query
     if (!q) return res.json({ success: true, data: [] })
 
+    const limitNum = Math.min(parseInt(limit as string) || 20, 30)
+
     const products = await prisma.product.findMany({
       where: {
         isActive: true,
@@ -137,7 +157,7 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
         ],
       },
       include: productListInclude,
-      take: parseInt(limit as string),
+      take: limitNum,
     })
     res.json({ success: true, data: products })
   } catch (error) {
@@ -149,12 +169,16 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
 router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { limit = '10' } = req.query
+    const limitNum = Math.min(parseInt(limit as string) || 10, 20)
+
     const products = await prisma.product.findMany({
       where: { isActive: true, oldPrice: { not: null } },
       include: productListInclude,
       orderBy: { viewCount: 'desc' },
-      take: parseInt(limit as string),
+      take: limitNum,
     })
+
+    res.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300')
     res.json({ success: true, data: products })
   } catch (error) {
     next(error)
@@ -166,6 +190,7 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
   try {
     const { id } = req.params
     const { limit = '8' } = req.query
+    const limitNum = Math.min(parseInt(limit as string) || 8, 12)
 
     const currentProduct = await prisma.product.findUnique({
       where: { id },
@@ -191,21 +216,25 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
         ],
       },
       include: {
-        images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        images: {
+          orderBy: [{ isMain: 'desc' }, { sortOrder: 'asc' }],
+          take: 1,                                    // ✅ Только 1 фото
+        },
         colors: true,
         variants: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: [{ isFeatured: 'desc' }, { viewCount: 'desc' }],
-      take: parseInt(limit as string),
+      take: limitNum,
     })
 
+    res.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300')
     res.json({ success: true, data: recommendations })
   } catch (error) {
     next(error)
   }
 })
 
-// ===== ✅ ПОЛУЧИТЬ ПО ID (fallback для slug со спецсимволами) =====
+// ===== ПОЛУЧИТЬ ПО ID =====
 router.get('/by-id/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params
@@ -218,12 +247,13 @@ router.get('/by-id/:id', async (req: Request, res: Response, next: NextFunction)
       throw new AppError('Product not found', 404)
     }
 
-    // Increment view count
-    await prisma.product.update({
+    // ✅ SPEED: fire-and-forget — не ждём обновления счётчика
+    prisma.product.update({
       where: { id: product.id },
       data: { viewCount: { increment: 1 } },
-    })
+    }).catch(() => {})
 
+    res.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')
     res.json({ success: true, data: product })
   } catch (error) {
     next(error)
@@ -231,12 +261,10 @@ router.get('/by-id/:id', async (req: Request, res: Response, next: NextFunction)
 })
 
 // ===== /:slug — ВСЕГДА В КОНЦЕ! =====
-// ✅ Теперь с wildcard для поддержки slug со слешами (на случай если ещё остались)
 router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) => {
   try {
     let { slug } = req.params
 
-    // ✅ Защита: если slug содержит слеши — заменяем на дефисы и пробуем найти
     const originalSlug = slug
     const normalizedSlug = slug.replace(/\//g, '-')
 
@@ -272,12 +300,13 @@ router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) 
       throw new AppError('Product not found', 404)
     }
 
-    // Increment view count
-    await prisma.product.update({
+    // ✅ SPEED: fire-and-forget — не ждём обновления счётчика
+    prisma.product.update({
       where: { id: product.id },
       data: { viewCount: { increment: 1 } },
-    })
+    }).catch(() => {})
 
+    res.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')
     res.json({ success: true, data: product })
   } catch (error) {
     next(error)

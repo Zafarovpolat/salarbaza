@@ -12,7 +12,7 @@ export function initTelegramBot() {
         return null
     }
 
-    // ✅ FIX: Polling включён ВСЕГДА (и в dev, и в production)
+    // Polling включён ВСЕГДА (и в dev, и в production)
     bot = new TelegramBot(config.botToken, {
         polling: {
             interval: 1000,
@@ -23,7 +23,7 @@ export function initTelegramBot() {
         }
     })
 
-    // ✅ Команды работают везде
+    // Команды работают везде
     bot.onText(/\/start(.*)/, async (msg) => {
         try {
             await handleStart(bot!, msg)
@@ -49,7 +49,7 @@ export function initTelegramBot() {
         }
     })
 
-    // ✅ Обработка ошибок polling
+    // Обработка ошибок polling
     bot.on('polling_error', (error: any) => {
         // 409 = другой инстанс бота (при редеплое)
         if (error.code === 'ETELEGRAM' && error.message?.includes('409')) {
