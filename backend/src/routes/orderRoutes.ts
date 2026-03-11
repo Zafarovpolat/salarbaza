@@ -13,20 +13,27 @@ import { logger } from '../utils/logger'
 const router = Router()
 router.use(authMiddleware)
 
-// ✅ УБРАНА ДОСТАВКА: нет deliveryType, address, latitude, longitude, refine
+// ✅ ИСПРАВЛЕНО: добавлен variantId в items
 const createOrderSchema = z.object({
+    deliveryType: z.enum(['PICKUP', 'DELIVERY']),
     customerFirstName: z.string().min(2),
     customerLastName: z.string().optional(),
     customerPhone: z.string().min(9),
+    address: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
     customerNote: z.string().optional(),
     paymentMethod: z.enum(['CASH', 'CARD', 'PAYME', 'CLICK', 'UZUM']),
     items: z.array(z.object({
         productId: z.string(),
         quantity: z.number().min(1),
         colorId: z.string().optional(),
-        variantId: z.string().optional(),
+        variantId: z.string().optional(),   // ✅ ДОБАВЛЕНО
     })).min(1, 'Cart is empty'),
-})
+}).refine(
+    (data) => data.address || data.latitude,
+    { message: 'Address or location required', path: ['address'] }
+)
 
 // ==================== GET ALL ORDERS ====================
 router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -80,7 +87,7 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
         const productIds = data.items.map(item => item.productId)
         logger.info(`🛒 Product IDs: ${productIds.join(', ')}`)
 
-        // Загружаем products с variants и category wholesale
+        // ✅ ИСПРАВЛЕНО: загружаем products с variants и category wholesale
         const products = await prisma.product.findMany({
             where: { id: { in: productIds } },
             include: {
@@ -115,7 +122,7 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
                 throw new AppError(`Product ${item.productId} not found`, 400)
             }
 
-            // Вариант (размер)
+            // ✅ Вариант (размер)
             const variant = item.variantId
                 ? product.variants.find(v => v.id === item.variantId)
                 : null
@@ -124,18 +131,18 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
                 logger.warn(`⚠️ Variant ${item.variantId} not found for product ${item.productId}`)
             }
 
-            // Цвет
+            // ✅ Цвет
             const color = item.colorId
                 ? product.colors.find(c => c.id === item.colorId)
                 : null
 
             const priceModifier = color?.priceModifier || 0
 
-            // Цена: из варианта или базовая + модификатор цвета
+            // ✅ Цена: из варианта или базовая + модификатор цвета
             const basePrice = variant ? variant.price : product.price
             const unitPrice = basePrice + priceModifier
 
-            // Оптовая скидка из категории
+            // ✅ Оптовая скидка из категории
             let wholesaleDiscountPercent = 0
             const tiers = (product.category as any)?.wholesaleTemplate?.tiers || []
             if (tiers.length > 0) {
@@ -169,8 +176,8 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
             return {
                 productId: item.productId,
-                variantId: variant?.id || null,
-                variantSize: variant?.size || null,
+                variantId: variant?.id || null,          // ✅ ДОБАВЛЕНО
+                variantSize: variant?.size || null,      // ✅ ДОБАВЛЕНО
                 productName: product.nameRu,
                 productCode: product.code,
                 productImage: product.images[0]?.url || null,
@@ -183,8 +190,19 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
         logger.info(`💰 Subtotal: ${subtotal}, Discount: ${totalDiscount}`)
 
-        // ✅ БЕЗ ДОСТАВКИ — deliveryFee всегда 0
-        const total = subtotal - totalDiscount
+        // ✅ Расчёт доставки (после скидки)
+        const totalAfterDiscount = subtotal - totalDiscount
+        const deliveryFee =
+            data.deliveryType === 'DELIVERY' && totalAfterDiscount < config.freeDeliveryThreshold
+                ? config.deliveryFee
+                : 0
+
+        const total = totalAfterDiscount + deliveryFee
+
+        // Адрес
+        const deliveryAddress = data.address || data.latitude
+            ? { address: data.address || 'Геолокация', lat: data.latitude, lng: data.longitude }
+            : Prisma.JsonNull
 
         // Полное имя
         const customerName = data.customerLastName
@@ -193,22 +211,24 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
         logger.info('📝 Creating order in database...')
 
-        // Создаём заказ
+        // ✅ Создаём заказ
         const order = await prisma.order.create({
             data: {
                 orderNumber: generateOrderNumber(),
                 userId: req.user!.id,
                 status: OrderStatus.PENDING,
                 subtotal,
-                deliveryFee: 0,                          // ✅ Всегда 0
-                discount: totalDiscount,
-                total,
-                deliveryType: 'PICKUP',                  // ✅ Всегда самовывоз
-                deliveryAddress: Prisma.JsonNull,         // ✅ Нет адреса
+                deliveryFee,
+                discount: totalDiscount,           // ✅ ИСПРАВЛЕНО (было 0)
+                total,                              // ✅ ИСПРАВЛЕНО (учитывает скидку)
+                deliveryType: data.deliveryType,
+                deliveryAddress,
                 customerFirstName: data.customerFirstName,
                 customerLastName: data.customerLastName || null,
                 customerName,
                 customerPhone: data.customerPhone,
+                latitude: data.latitude || null,
+                longitude: data.longitude || null,
                 customerNote: data.customerNote,
                 paymentMethod: data.paymentMethod,
                 items: { create: orderItems },
