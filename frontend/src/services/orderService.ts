@@ -5,13 +5,14 @@ interface OrderItem {
     productId: string
     quantity: number
     colorId?: string
-    variantId?: string  // ✅ ДОБАВЛЕНО
+    variantId?: string
 }
 
 interface CreateOrderData {
-    deliveryType: 'PICKUP' | 'DELIVERY'
-    customerFirstName: string
+    deliveryType?: 'PICKUP' | 'DELIVERY'   // ✅ FIX: optional
+    customerFirstName?: string
     customerLastName?: string
+    customerName?: string
     customerPhone: string
     address?: string
     latitude?: number
@@ -33,7 +34,20 @@ export const orderService = {
     },
 
     async createOrder(data: CreateOrderData): Promise<Order> {
-        const response = await post<{ success: boolean; data: Order }>('/orders', data)
+        // ✅ Маппинг полей — бэкенд ожидает customerName
+        const payload = {
+            customerName: data.customerFirstName
+                ? `${data.customerFirstName}${data.customerLastName ? ' ' + data.customerLastName : ''}`
+                : data.customerName || '',
+            customerPhone: data.customerPhone,
+            address: data.address,
+            customerNote: data.customerNote,
+            paymentMethod: data.paymentMethod,
+            latitude: data.latitude,
+            longitude: data.longitude,
+        }
+
+        const response = await post<{ success: boolean; data: Order }>('/orders', payload)
         return response.data
     },
 

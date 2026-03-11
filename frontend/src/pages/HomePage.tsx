@@ -1,6 +1,4 @@
-// frontend/src/pages/HomePage.tsx
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -17,15 +15,21 @@ import { productService } from "@/services/productService";
 import { Product } from "@/types";
 import { CategoryList } from "@/components/category/CategoryList";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { PromotionWidget } from "@/components/home/PromotionWidget"; // 🆕
+import { PromotionWidget } from "@/components/home/PromotionWidget";
 import { Container } from "@/components/layout/Container";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { getProductName, cn, safeProductUrl } from "@/utils/helpers";
 import { formatPrice } from "@/utils/formatPrice";
 import { useFavoritesStore } from "@/store/favoritesStore";
 import { useCartStore } from "@/store/cartStore";
 import toast from "react-hot-toast";
+
+// ✅ FIX: кэш продуктов — не грузим заново при каждом переходе на главную
+let cachedFeatured: Product[] | null = null;
+let cachedNew: Product[] | null = null;
+let cachedSale: Product[] | null = null;
+let cacheTime = 0;
+const CACHE_TTL = 60_000; // 1 минута
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -34,12 +38,28 @@ export function HomePage() {
   const { isFavorite, toggleFavorite } = useFavoritesStore();
   const { addItem } = useCartStore();
 
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [newProducts, setNewProducts] = useState<Product[]>([]);
-  const [saleProducts, setSaleProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(
+    cachedFeatured || []
+  );
+  const [newProducts, setNewProducts] = useState<Product[]>(cachedNew || []);
+  const [saleProducts, setSaleProducts] = useState<Product[]>(cachedSale || []);
+  const [isLoading, setIsLoading] = useState(!cachedFeatured);
 
   useEffect(() => {
+    // ✅ FIX: если кэш свежий — не грузим
+    if (
+      cachedFeatured &&
+      cachedNew &&
+      cachedSale &&
+      Date.now() - cacheTime < CACHE_TTL
+    ) {
+      setFeaturedProducts(cachedFeatured);
+      setNewProducts(cachedNew);
+      setSaleProducts(cachedSale);
+      setIsLoading(false);
+      return;
+    }
+
     async function fetchProducts() {
       try {
         setIsLoading(true);
@@ -48,6 +68,13 @@ export function HomePage() {
           productService.getNewProducts(6),
           productService.getSaleProducts(8),
         ]);
+
+        // Сохраняем в кэш
+        cachedFeatured = featured;
+        cachedNew = newOnes;
+        cachedSale = sale;
+        cacheTime = Date.now();
+
         setFeaturedProducts(featured);
         setNewProducts(newOnes);
         setSaleProducts(sale);
@@ -61,6 +88,19 @@ export function HomePage() {
   }, []);
 
   const currency = language === "uz" ? "so'm" : "сум";
+
+  // ✅ FIX: мемоизация обработчиков
+  const handleAddToCart = useCallback(
+    (e: React.MouseEvent, product: Product) => {
+      e.stopPropagation();
+      addItem(product as any, 1);
+      toast.success(
+        language === "uz" ? "Savatga qo'shildi" : "Добавлено в корзину",
+        { duration: 1500 }
+      );
+    },
+    [addItem, language]
+  );
 
   return (
     <div className="pb-4">
@@ -89,7 +129,7 @@ export function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.1 }}
           >
             <Badge variant="outline" className="mb-4">
               <span className="w-1.5 h-1.5 bg-mint rounded-full animate-pulse-dot" />
@@ -100,7 +140,7 @@ export function HomePage() {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.2 }}
             className="font-display text-3xl md:text-[44px] font-medium leading-[1.15] mb-3 tracking-[-0.02em]"
           >
             {language === "uz"
@@ -111,7 +151,7 @@ export function HomePage() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.3 }}
             className="text-[15px] leading-[1.7] opacity-85 mb-6 max-w-[420px]"
           >
             {language === "uz"
@@ -122,7 +162,7 @@ export function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: 0.4 }}
             className="flex gap-3 flex-wrap"
           >
             <button
@@ -136,12 +176,7 @@ export function HomePage() {
       </motion.section>
 
       {/* ===== STATS ===== */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="flex justify-center gap-2 py-6 px-4 flex-wrap"
-      >
+      <div className="flex justify-center gap-2 py-6 px-4 flex-wrap">
         {[
           { number: "500+", labelRu: "Товаров", labelUz: "Mahsulotlar" },
           { number: "150+", labelRu: "Проектов", labelUz: "Loyihalar" },
@@ -159,7 +194,7 @@ export function HomePage() {
             </div>
           </div>
         ))}
-      </motion.div>
+      </div>
 
       {/* ===== CATEGORIES ===== */}
       <section className="py-6">
@@ -191,7 +226,7 @@ export function HomePage() {
         </Container>
       </section>
 
-      {/* ===== 🆕 PROMOTIONS WIDGET ===== */}
+      {/* ===== PROMOTIONS WIDGET ===== */}
       <PromotionWidget />
 
       {/* ===== SALE PRODUCTS ===== */}
@@ -234,7 +269,7 @@ export function HomePage() {
                     key={product.id}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    transition={{ delay: index * 0.03 }}
                     className="flex-none w-[260px] snap-start"
                   >
                     <div
@@ -248,9 +283,11 @@ export function HomePage() {
                             alt={name}
                             className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105"
                             loading="lazy"
+                            decoding="async"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-4xl">
+                            🪴
                           </div>
                         )}
                         {discount > 0 && (
@@ -266,16 +303,14 @@ export function HomePage() {
                             e.stopPropagation();
                             toggleFavorite(product);
                           }}
-                          className={cn(
-                            "absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110",
-                          )}
+                          className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
                         >
                           <Heart
                             className={cn(
                               "w-[18px] h-[18px]",
                               isLiked
                                 ? "fill-terracotta stroke-terracotta"
-                                : "fill-none stroke-terracotta",
+                                : "fill-none stroke-terracotta"
                             )}
                             strokeWidth={2}
                           />
@@ -296,16 +331,7 @@ export function HomePage() {
                           )}
                         </div>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addItem(product as any, 1);
-                            toast.success(
-                              language === "uz"
-                                ? "Savatga qo'shildi"
-                                : "Добавлено в корзину",
-                              { duration: 1500 },
-                            );
-                          }}
+                          onClick={(e) => handleAddToCart(e, product)}
                           className="w-full mt-3 py-3 bg-forest text-white rounded-xl font-sans text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all duration-300 hover:bg-emerald hover:-translate-y-[1px] active:translate-y-0"
                         >
                           <ShoppingBag className="w-4 h-4" strokeWidth={2} />
@@ -318,7 +344,6 @@ export function HomePage() {
               })}
             </div>
 
-            {/* 🆕 Кнопка «Смотреть все» */}
             <div className="relative z-[2] text-center mt-6">
               <button
                 onClick={() => navigate("/special-offers")}
@@ -391,16 +416,15 @@ export function HomePage() {
 
       {/* ===== CTA BANNER ===== */}
       <section className="py-8 px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
+        <div
           onClick={() => navigate("/catalog")}
           className="bg-gradient-to-br from-forest via-emerald to-sage rounded-3xl p-8 md:p-10 text-center text-white cursor-pointer relative overflow-hidden transition-all duration-400 hover:shadow-card-hover"
         >
           <div className="absolute -top-2.5 -right-2.5 text-[100px] opacity-[0.08] rotate-[15deg]">
+            🌿
           </div>
           <div className="absolute -bottom-2.5 left-5 text-[60px] opacity-[0.08] -rotate-[20deg]">
+            🪴
           </div>
           <h3 className="font-display text-2xl md:text-3xl font-medium mb-2 relative z-[2]">
             {language === "uz" ? "Barcha mahsulotlar" : "Все товары"}
@@ -414,7 +438,7 @@ export function HomePage() {
             {language === "uz" ? "Katalogni ko'rish" : "Смотреть каталог"}
             <ChevronRight className="w-5 h-5" />
           </div>
-        </motion.div>
+        </div>
       </section>
     </div>
   );

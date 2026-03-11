@@ -40,8 +40,8 @@ export function CheckoutPage() {
         variantId: item.variant?.id,
       }));
 
+      // ✅ FIX: убран deliveryType, бэкенд ставит PICKUP по умолчанию
       const order = await orderService.createOrder({
-        deliveryType: "DELIVERY",
         customerFirstName: formData.firstName,
         customerLastName: formData.lastName || undefined,
         customerPhone: formData.phone,
@@ -58,7 +58,9 @@ export function CheckoutPage() {
       navigate(`/order-success/${order.id}`, { replace: true });
     } catch (error: any) {
       haptic.notification("error");
-      toast.error(language === "uz" ? "Xatolik yuz berdi" : "Произошла ошибка");
+      toast.error(
+        language === "uz" ? "Xatolik yuz berdi" : "Произошла ошибка"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -139,10 +141,11 @@ export function CheckoutPage() {
       {/* Form */}
       <section className="py-6 pb-20">
         <Container>
+          {/* ✅ FIX: убран текст про доставку */}
           <h2 className="font-display text-xl font-medium text-charcoal mb-5">
             {language === "uz"
-              ? "Yetkazib berish ma'lumotlari"
-              : "Данные для доставки"}
+              ? "Buyurtma ma'lumotlari"
+              : "Данные заказа"}
           </h2>
           <OrderForm
             initialData={{
@@ -167,6 +170,7 @@ export function CheckoutPage() {
                 {formatPrice(subtotal)} {currency}
               </span>
             </div>
+            {/* ✅ FIX: убрана строка доставки, оставлен только итог */}
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-stone/30">
               <span className="text-charcoal">
                 {language === "uz" ? "Jami" : "Итого"}
