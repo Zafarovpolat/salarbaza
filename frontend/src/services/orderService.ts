@@ -9,7 +9,7 @@ interface OrderItem {
 }
 
 interface CreateOrderData {
-    deliveryType?: 'PICKUP' | 'DELIVERY'   // ✅ FIX: optional
+    deliveryType?: 'PICKUP' | 'DELIVERY'
     customerFirstName?: string
     customerLastName?: string
     customerName?: string
@@ -34,17 +34,20 @@ export const orderService = {
     },
 
     async createOrder(data: CreateOrderData): Promise<Order> {
-        // ✅ Маппинг полей — бэкенд ожидает customerName
+        const customerName = data.customerFirstName
+            ? `${data.customerFirstName}${data.customerLastName ? ' ' + data.customerLastName : ''}`
+            : data.customerName || ''
+
+        // ✅ FIX: items включены в payload
         const payload = {
-            customerName: data.customerFirstName
-                ? `${data.customerFirstName}${data.customerLastName ? ' ' + data.customerLastName : ''}`
-                : data.customerName || '',
+            customerName,
             customerPhone: data.customerPhone,
             address: data.address,
             customerNote: data.customerNote,
             paymentMethod: data.paymentMethod,
             latitude: data.latitude,
             longitude: data.longitude,
+            items: data.items,    // ← ЭТО БЫЛО ПРОПУЩЕНО
         }
 
         const response = await post<{ success: boolean; data: Order }>('/orders', payload)
