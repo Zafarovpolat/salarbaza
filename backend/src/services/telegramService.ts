@@ -3,6 +3,16 @@ import { formatPrice } from '../utils/helpers'
 import { logger } from '../utils/logger'
 import { getBot } from '../../bot/index'
 
+// ✅ FIX: HTML escaping — предотвращает падение уведомлений
+// Markdown ломается если в username есть _ или * (напр. @user_name)
+function escapeHtml(text: string | null | undefined): string {
+    if (!text) return ''
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+}
+
 export async function sendOrderNotification(order: any) {
     const bot = getBot()
 
@@ -26,81 +36,95 @@ export async function sendOrderNotification(order: any) {
 
     const items = order.items || []
     const itemsList = items.map((item: any) => {
-        const color = item.colorName ? ` (${item.colorName})` : ''
-        const size = item.variantSize ? ` [${item.variantSize}]` : ''
-        return `  • ${item.productName}${color}${size}\n    ${item.quantity} × ${formatPrice(item.price)} = ${formatPrice(item.total)} so'm`
+        const color = item.colorName ? ` (${escapeHtml(item.colorName)})` : ''
+        const size = item.variantSize ? ` [${escapeHtml(item.variantSize)}]` : ''
+        return `  • ${escapeHtml(item.productName)}${color}${size}\n    ${item.quantity} × ${formatPrice(item.price)} = ${formatPrice(item.total)} so'm`
     }).join('\n')
-
-    // Адрес
-    let addressText = ''
-    if (order.deliveryAddress) {
-        const addr = typeof order.deliveryAddress === 'object'
-            ? order.deliveryAddress.address
-            : order.deliveryAddress
-        if (addr && addr !== 'Геолокация') {
-            addressText = `\n📍 *Manzil:* ${addr}`
-        }
-    }
-
-    // Яндекс Карты
-    let locationLink = ''
-    if (order.latitude && order.longitude) {
-        locationLink = `\n🗺 *Xaritada:* [Yandex Maps](https://yandex.uz/maps/?pt=${order.longitude},${order.latitude}&z=17&l=map)`
-    }
-
-    const note = order.customerNote
-        ? `\n💬 *Izoh:* ${order.customerNote}`
-        : ''
 
     const user = order.user || {}
     const userInfo = user.username
-        ? `@${user.username}`
-        : user.firstName || 'Noma\'lum'
+        ? `@${escapeHtml(user.username)}`
+        : escapeHtml(user.firstName) || 'Noma\'lum'
 
     const customerFullName = order.customerLastName
         ? `${order.customerFirstName || order.customerName} ${order.customerLastName}`
         : (order.customerFirstName || order.customerName)
 
-    // ✅ Убраны: deliveryTypeText, Jami (subtotal), Yetkazash (deliveryFee)
+    const note = order.customerNote
+        ? `\n💬 <b>Izoh:</b> ${escapeHtml(order.customerNote)}`
+        : ''
+
+    const discount = order.discount > 0
+        ? `\n🏷 <b>Chegirma:</b> -${formatPrice(order.discount)} so'm`
+        : ''
+
+    // ✅ FIX: HTML вместо Markdown — работает с любыми символами в именах
     const message = `
-🆕 *YANGI BUYURTMA*
+🆕 <b>YANGI BUYURTMA</b>
 
-📋 *Buyurtma:* \`${order.orderNumber}\`
-👤 *Mijoz:* ${customerFullName}
-📞 *Telefon:* ${order.customerPhone}
-🔗 *Telegram:* ${userInfo}${addressText}${locationLink}
-💳 *To'lov:* ${paymentMethodText[order.paymentMethod] || order.paymentMethod}
+📋 <b>Buyurtma:</b> <code>${order.orderNumber}</code>
+👤 <b>Mijoz:</b> ${escapeHtml(customerFullName)}
+📞 <b>Telefon:</b> ${escapeHtml(order.customerPhone)}
+🔗 <b>Telegram:</b> ${userInfo}
+💳 <b>To'lov:</b> ${paymentMethodText[order.paymentMethod] || order.paymentMethod}
 
-📦 *Mahsulotlar:*
+📦 <b>Mahsulotlar:</b>
 ${itemsList}
-
-✅ *Umumiy:* *${formatPrice(order.total)} so'm*${note}
+${discount}
+✅ <b>Jami:</b> <b>${formatPrice(order.total)} so'm</b>${note}
 `.trim()
+
+    const keyboard = {
+        inline_keyboard: [
+            [
+                { text: '✅ Tasdiqlash', callback_data: `confirm_${order.id}` },
+                { text: '❌ Bekor qilish', callback_data: `cancel_${order.id}` },
+            ],
+        ],
+    }
 
     try {
         await bot.sendMessage(config.adminChatId, message, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: '✅ Tasdiqlash', callback_data: `confirm_${order.id}` },
-                        { text: '❌ Bekor qilish', callback_data: `cancel_${order.id}` },
-                    ],
-                ],
-            },
+            parse_mode: 'HTML',
+            reply_markup: keyboard,
         })
 
-        if (order.latitude && order.longitude) {
-            await bot.sendLocation(config.adminChatId, order.latitude, order.longitude)
-        }
-
-        logger.info(`Order notification sent for ${order.orderNumber}`)
+        logger.info(`✅ Order notification sent for ${order.orderNumber}`)
     } catch (error: any) {
-        logger.error('Failed to send order notification:', {
+        logger.error('HTML notification failed:', {
             message: error?.message || 'Unknown error',
             code: error?.code,
             orderNumber: order.orderNumber
         })
+
+        // ✅ FALLBACK: если даже HTML не прошёл — отправляем без форматирования
+        try {
+            const plainMessage =
+                `🆕 YANGI BUYURTMA\n\n` +
+                `📋 ${order.orderNumber}\n` +
+                `👤 ${customerFullName}\n` +
+                `📞 ${order.customerPhone}\n` +
+                `🔗 ${userInfo}\n` +
+                `💳 ${paymentMethodText[order.paymentMethod] || order.paymentMethod}\n\n` +
+                `📦 Mahsulotlar:\n${items.map((item: any) => {
+                    const color = item.colorName ? ` (${item.colorName})` : ''
+                    const size = item.variantSize ? ` [${item.variantSize}]` : ''
+                    return `  • ${item.productName}${color}${size} - ${item.quantity} x ${formatPrice(item.price)} = ${formatPrice(item.total)} so'm`
+                }).join('\n')}\n\n` +
+                `✅ Jami: ${formatPrice(order.total)} so'm`
+
+            await bot.sendMessage(config.adminChatId, plainMessage, {
+                reply_markup: keyboard,
+            })
+
+            logger.info(`✅ Order notification sent (plain fallback) for ${order.orderNumber}`)
+        } catch (fallbackError: any) {
+            logger.error('All notification attempts failed:', {
+                message: fallbackError?.message || 'Unknown error',
+                code: fallbackError?.code,
+                orderNumber: order.orderNumber
+            })
+        }
     }
 }
 

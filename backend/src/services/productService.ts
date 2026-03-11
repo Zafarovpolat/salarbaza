@@ -1,11 +1,25 @@
-// backend/src/services/productService.ts
-
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 import { Prisma } from '@prisma/client'
 
-// ✅ Стандартный include для товаров — теперь с variants и wholesale
-const productInclude = {
+// ✅ SPEED: только 1 главное фото + минимум полей категории для списков
+const productListInclude = {
+  images: {
+    orderBy: [
+      { isMain: 'desc' as const },
+      { sortOrder: 'asc' as const },
+    ],
+    take: 1,
+  },
+  colors: true,
+  variants: { orderBy: { sortOrder: 'asc' as const } },
+  category: {
+    select: { id: true, slug: true, nameRu: true, nameUz: true },
+  },
+}
+
+// Полный include для детальной страницы — с wholesale
+const productDetailInclude = {
   images: { orderBy: { sortOrder: 'asc' as const } },
   colors: true,
   variants: { orderBy: { sortOrder: 'asc' as const } },
@@ -18,14 +32,6 @@ const productInclude = {
       },
     },
   },
-}
-
-// Минимальный include (для списков)
-const productListInclude = {
-  images: { orderBy: { sortOrder: 'asc' as const } },
-  colors: true,
-  variants: { orderBy: { sortOrder: 'asc' as const } },
-  category: true,
 }
 
 interface GetProductsParams {
@@ -55,13 +61,9 @@ export async function getProducts(params: GetProductsParams) {
     isActive: true,
   }
 
+  // ✅ SPEED: relation filter вместо отдельного запроса
   if (categorySlug) {
-    const category = await prisma.category.findUnique({
-      where: { slug: categorySlug },
-    })
-    if (category) {
-      where.categoryId = category.id
-    }
+    where.category = { slug: categorySlug }
   }
 
   if (minPrice !== undefined) {
@@ -104,7 +106,7 @@ export async function getProducts(params: GetProductsParams) {
     prisma.product.count({ where }),
   ])
 
-  // ✅ Обогащаем данные: добавляем ценовой диапазон если есть варианты
+  // Обогащаем данные: добавляем ценовой диапазон если есть варианты
   const enrichedProducts = products.map(enrichProductData)
 
   return {
@@ -121,7 +123,7 @@ export async function getProducts(params: GetProductsParams) {
 export async function getProductBySlug(slug: string) {
   const product = await prisma.product.findUnique({
     where: { slug },
-    include: productInclude,
+    include: productDetailInclude,
   })
 
   if (!product || !product.isActive) {
@@ -181,14 +183,14 @@ export async function searchProducts(query: string, limit: number = 20) {
 }
 
 export async function incrementViewCount(productId: string) {
-  await prisma.product.update({
+  // ✅ SPEED: fire-and-forget — не ждём результата
+  prisma.product.update({
     where: { id: productId },
     data: { viewCount: { increment: 1 } },
-  })
+  }).catch(() => {})
 }
 
-// ✅ НОВАЯ ФУНКЦИЯ: обогащение данных товара
-// Добавляет priceRange, minPrice, maxPrice если есть варианты
+// Обогащение данных товара: ценовой диапазон для вариантов
 function enrichProductData(product: any) {
   const hasVariants = product.variants && product.variants.length > 0
 
