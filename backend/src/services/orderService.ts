@@ -1,14 +1,17 @@
+// backend/src/services/orderService.ts
+
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 import { config } from '../config'
 import { generateOrderNumber } from '../utils/helpers'
-import { PaymentMethod, OrderStatus, Prisma } from '@prisma/client'
+import { DeliveryType, PaymentMethod, OrderStatus, Prisma } from '@prisma/client'
 import { getWholesaleDiscount } from './categoryService'
 
-// ✅ УБРАНА ДОСТАВКА: нет deliveryType, address
 interface CreateOrderData {
+  deliveryType: DeliveryType
   customerName: string
   customerPhone: string
+  address?: string
   customerNote?: string
   paymentMethod: PaymentMethod
 }
@@ -85,11 +88,11 @@ export async function createOrder(userId: string, data: CreateOrderData) {
       : null
     const priceModifier = color?.priceModifier || 0
 
-    // Цена из варианта или базовая
+    // ✅ Цена из варианта или базовая
     const basePrice = item.variant ? item.variant.price : item.product.price
     const unitPrice = basePrice + priceModifier
 
-    // Оптовая скидка из категории
+    // ✅ Оптовая скидка из категории
     const wholesaleDiscountPercent = getWholesaleDiscount(
       item.product.category?.wholesaleTemplate,
       item.quantity
@@ -111,15 +114,21 @@ export async function createOrder(userId: string, data: CreateOrderData) {
       productCode: item.product.code,
       productImage: item.product.images[0]?.url || null,
       colorName: color?.nameRu || null,
-      // Сохраняем финальную цену (уже со скидкой)
+      // ✅ Сохраняем финальную цену (уже со скидкой)
       price: finalPrice,
       quantity: item.quantity,
       total: itemTotal,
     }
   })
 
-  // ✅ БЕЗ ДОСТАВКИ
-  const total = subtotal - totalDiscount
+  // Calculate delivery fee
+  const totalAfterDiscount = subtotal - totalDiscount
+  const deliveryFee =
+    data.deliveryType === 'DELIVERY' && totalAfterDiscount < config.freeDeliveryThreshold
+      ? config.deliveryFee
+      : 0
+
+  const total = totalAfterDiscount + deliveryFee
 
   // Create order
   const order = await prisma.order.create({
@@ -128,11 +137,13 @@ export async function createOrder(userId: string, data: CreateOrderData) {
       userId,
       status: OrderStatus.PENDING,
       subtotal,
-      deliveryFee: 0,                              // ✅ Всегда 0
+      deliveryFee,
       discount: totalDiscount,
       total,
-      deliveryType: 'PICKUP',                      // ✅ Всегда самовывоз
-      deliveryAddress: Prisma.JsonNull,              // ✅ Нет адреса
+      deliveryType: data.deliveryType,
+      deliveryAddress: data.address
+        ? { address: data.address }
+        : Prisma.JsonNull,
       customerName: data.customerName,
       customerPhone: data.customerPhone,
       customerNote: data.customerNote,
