@@ -1,13 +1,26 @@
-// backend/src/routes/productRoutes.ts
-
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 import { Prisma } from '@prisma/client'
+import { getCached, setCache } from '../utils/cache'
 
 const router = Router()
 
-// ✅ Стандартный include с variants и wholesale
+// ✅ FIX: используем include вместо select — никаких TS ошибок
+const productListInclude = {
+  images: { where: { isMain: true }, take: 1 },
+  colors: true,
+  variants: { orderBy: { sortOrder: 'asc' as const } },
+  category: {
+    select: {
+      id: true,
+      slug: true,
+      nameRu: true,
+      nameUz: true,
+    },
+  },
+}
+
 const productDetailInclude = {
   images: { orderBy: { sortOrder: 'asc' as const } },
   colors: true,
@@ -23,25 +36,117 @@ const productDetailInclude = {
   },
 }
 
-const productListInclude = {
-  images: { orderBy: { sortOrder: 'asc' as const } },
-  colors: true,
-  variants: { orderBy: { sortOrder: 'asc' as const } },
-  category: true,
-}
+// ===== FEATURED ===== (кэш 60 сек)
+router.get('/featured', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10
+    const cacheKey = `featured_${limit}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
 
-// ===== СПИСОК ТОВАРОВ =====
+    const products = await prisma.product.findMany({
+      where: { isActive: true, isFeatured: true },
+      include: productListInclude,
+      orderBy: { viewCount: 'desc' },
+      take: limit,
+    })
+
+    const response = { success: true, data: products }
+    setCache(cacheKey, response, 60)
+    res.json(response)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ===== NEW ===== (кэш 60 сек)
+router.get('/new', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10
+    const cacheKey = `new_${limit}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
+
+    const products = await prisma.product.findMany({
+      where: { isActive: true, isNew: true },
+      include: productListInclude,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    })
+
+    const response = { success: true, data: products }
+    setCache(cacheKey, response, 60)
+    res.json(response)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ===== SALE ===== (кэш 60 сек)
+router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10
+    const cacheKey = `sale_${limit}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
+
+    const products = await prisma.product.findMany({
+      where: { isActive: true, oldPrice: { not: null } },
+      include: productListInclude,
+      orderBy: { viewCount: 'desc' },
+      take: limit,
+    })
+
+    const response = { success: true, data: products }
+    setCache(cacheKey, response, 60)
+    res.json(response)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ===== SEARCH ===== (кэш 30 сек)
+router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { q, limit = '20' } = req.query
+    if (!q) return res.json({ success: true, data: [] })
+
+    const cacheKey = `search_${q}_${limit}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
+
+    const products = await prisma.product.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { nameRu: { contains: q as string, mode: 'insensitive' } },
+          { nameUz: { contains: q as string, mode: 'insensitive' } },
+          { code: { contains: q as string, mode: 'insensitive' } },
+        ],
+      },
+      include: productListInclude,
+      take: parseInt(limit as string),
+    })
+
+    const response = { success: true, data: products }
+    setCache(cacheKey, response, 30)
+    res.json(response)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ===== СПИСОК ===== (кэш 30 сек)
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
-      page = '1',
-      limit = '20',
-      category,
-      minPrice,
-      maxPrice,
-      sortBy = 'newest',
-      inStock,
+      page = '1', limit = '20', category,
+      minPrice, maxPrice, sortBy = 'newest', inStock,
     } = req.query
+
+    const cacheKey = `products_${page}_${limit}_${category || ''}_${minPrice || ''}_${maxPrice || ''}_${sortBy}_${inStock || ''}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
 
     const pageNum = parseInt(page as string)
     const limitNum = parseInt(limit as string)
@@ -74,107 +179,35 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       prisma.product.count({ where }),
     ])
 
-    res.json({
+    const response = {
       success: true,
       data: products,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        totalPages: Math.ceil(total / limitNum),
-      },
-    })
+      pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
+    }
+
+    setCache(cacheKey, response, 30)
+    res.json(response)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== FEATURED =====
-router.get('/featured', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { limit = '10' } = req.query
-    const products = await prisma.product.findMany({
-      where: { isActive: true, isFeatured: true },
-      include: productListInclude,
-      orderBy: { viewCount: 'desc' },
-      take: parseInt(limit as string),
-    })
-    res.json({ success: true, data: products })
-  } catch (error) {
-    next(error)
-  }
-})
-
-// ===== NEW =====
-router.get('/new', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { limit = '10' } = req.query
-    const products = await prisma.product.findMany({
-      where: { isActive: true, isNew: true },
-      include: productListInclude,
-      orderBy: { createdAt: 'desc' },
-      take: parseInt(limit as string),
-    })
-    res.json({ success: true, data: products })
-  } catch (error) {
-    next(error)
-  }
-})
-
-// ===== SEARCH =====
-router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { q, limit = '20' } = req.query
-    if (!q) return res.json({ success: true, data: [] })
-
-    const products = await prisma.product.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          { nameRu: { contains: q as string, mode: 'insensitive' } },
-          { nameUz: { contains: q as string, mode: 'insensitive' } },
-          { code: { contains: q as string, mode: 'insensitive' } },
-        ],
-      },
-      include: productListInclude,
-      take: parseInt(limit as string),
-    })
-    res.json({ success: true, data: products })
-  } catch (error) {
-    next(error)
-  }
-})
-
-// ===== SALE =====
-router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { limit = '10' } = req.query
-    const products = await prisma.product.findMany({
-      where: { isActive: true, oldPrice: { not: null } },
-      include: productListInclude,
-      orderBy: { viewCount: 'desc' },
-      take: parseInt(limit as string),
-    })
-    res.json({ success: true, data: products })
-  } catch (error) {
-    next(error)
-  }
-})
-
-// ===== RECOMMENDATIONS =====
+// ===== RECOMMENDATIONS ===== (кэш 60 сек)
 router.get('/:id/recommendations', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params
-    const { limit = '8' } = req.query
+    const limit = parseInt(req.query.limit as string) || 8
+
+    const cacheKey = `recs_${id}_${limit}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
 
     const currentProduct = await prisma.product.findUnique({
       where: { id },
       select: { id: true, categoryId: true, price: true },
     })
 
-    if (!currentProduct) {
-      return res.json({ success: true, data: [] })
-    }
+    if (!currentProduct) return res.json({ success: true, data: [] })
 
     const recommendations = await prisma.product.findMany({
       where: {
@@ -191,62 +224,64 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
         ],
       },
       include: {
-        images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        images: { where: { isMain: true }, take: 1 },
         colors: true,
         variants: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: [{ isFeatured: 'desc' }, { viewCount: 'desc' }],
-      take: parseInt(limit as string),
+      take: limit,
     })
 
-    res.json({ success: true, data: recommendations })
+    const response = { success: true, data: recommendations }
+    setCache(cacheKey, response, 60)
+    res.json(response)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== ✅ ПОЛУЧИТЬ ПО ID (fallback для slug со спецсимволами) =====
+// ===== ПО ID =====
 router.get('/by-id/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params
+    const cacheKey = `product_id_${id}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
+
     const product = await prisma.product.findUnique({
       where: { id },
       include: productDetailInclude,
     })
 
-    if (!product || !product.isActive) {
-      throw new AppError('Product not found', 404)
-    }
+    if (!product || !product.isActive) throw new AppError('Product not found', 404)
 
-    // Increment view count
-    await prisma.product.update({
-      where: { id: product.id },
-      data: { viewCount: { increment: 1 } },
-    })
+    // Async — не блокируем ответ
+    prisma.product.update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
 
-    res.json({ success: true, data: product })
+    const response = { success: true, data: product }
+    setCache(cacheKey, response, 30)
+    res.json(response)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== /:slug — ВСЕГДА В КОНЦЕ! =====
-// ✅ Теперь с wildcard для поддержки slug со слешами (на случай если ещё остались)
+// ===== /:slug =====
 router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) => {
   try {
     let { slug } = req.params
+    const cacheKey = `product_${slug}`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
 
-    // ✅ Защита: если slug содержит слеши — заменяем на дефисы и пробуем найти
     const originalSlug = slug
     const normalizedSlug = slug.replace(/\//g, '-')
 
-    // Пробуем найти по оригинальному slug
     let product = await prisma.product.findUnique({
       where: { slug: originalSlug },
       include: productDetailInclude,
     })
 
-    // Если не нашли — пробуем нормализованный
     if (!product && normalizedSlug !== originalSlug) {
       product = await prisma.product.findUnique({
         where: { slug: normalizedSlug },
@@ -254,7 +289,6 @@ router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) 
       })
     }
 
-    // Если всё ещё не нашли — пробуем поиск по коду
     if (!product) {
       product = await prisma.product.findFirst({
         where: {
@@ -268,17 +302,13 @@ router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) 
       })
     }
 
-    if (!product || !product.isActive) {
-      throw new AppError('Product not found', 404)
-    }
+    if (!product || !product.isActive) throw new AppError('Product not found', 404)
 
-    // Increment view count
-    await prisma.product.update({
-      where: { id: product.id },
-      data: { viewCount: { increment: 1 } },
-    })
+    prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
 
-    res.json({ success: true, data: product })
+    const response = { success: true, data: product }
+    setCache(cacheKey, response, 30)
+    res.json(response)
   } catch (error) {
     next(error)
   }
