@@ -3,6 +3,7 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { config } from '../config'
+import { invalidateCache } from '../utils/cache'
 
 // ✅ Хелпер: генерирует уникальный slug, добавляя суффикс -2, -3 и т.д. если slug занят
 async function generateUniqueSlug(base: string, excludeId?: string): Promise<string> {
@@ -53,6 +54,8 @@ router.post('/products/reset-statuses', async (req, res) => {
       },
     })
 
+    invalidateCache()
+
     res.json({
       success: true,
       message: `Статусы сброшены для ${result.count} товаров`,
@@ -85,6 +88,8 @@ router.post('/products/bulk-tags', async (req, res) => {
       where: { id: { in: productIds } },
       data: updateData,
     })
+
+    invalidateCache()
 
     res.json({
       success: true,
@@ -284,6 +289,8 @@ router.post('/products', async (req, res) => {
       },
     })
 
+    invalidateCache()
+
     res.status(201).json({ success: true, data: product })
   } catch (error: any) {
     // ✅ Понятные сообщения для ошибок уникальности
@@ -379,6 +386,8 @@ router.put('/products/:id', async (req, res) => {
       },
     })
 
+    invalidateCache()
+
     res.json({ success: true, data: product })
   } catch (error: any) {
     // ✅ Понятные сообщения для ошибок уникальности
@@ -398,6 +407,8 @@ router.delete('/products/:id', async (req, res) => {
     await prisma.product.delete({
       where: { id: req.params.id },
     })
+
+    invalidateCache()
     res.json({ success: true, message: 'Product deleted' })
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' })
@@ -426,6 +437,8 @@ router.post('/products/:id/images', async (req, res) => {
       },
     })
 
+    invalidateCache('product')
+
     res.status(201).json({ success: true, data: image })
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' })
@@ -437,6 +450,9 @@ router.delete('/products/:productId/images/:imageId', async (req, res) => {
     await prisma.productImage.delete({
       where: { id: req.params.imageId },
     })
+
+    invalidateCache('product')
+
     res.json({ success: true, message: 'Image deleted' })
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' })
@@ -556,6 +572,8 @@ router.post('/categories', async (req, res) => {
       },
     })
 
+    invalidateCache('categor')
+
     res.status(201).json({ success: true, data: category })
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message })
@@ -580,6 +598,8 @@ router.put('/categories/:id', async (req, res) => {
       },
     })
 
+    invalidateCache('categor')
+
     res.json({ success: true, data: category })
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message })
@@ -596,6 +616,8 @@ router.delete('/categories/:id', async (req, res) => {
     await prisma.category.delete({
       where: { id: req.params.id },
     })
+
+    invalidateCache()
 
     res.json({ success: true, message: 'Category deleted' })
   } catch (error) {

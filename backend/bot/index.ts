@@ -5,89 +5,91 @@ import { handleStart, handleHelp } from './commands'
 import { handleCallbackQuery } from './handlers'
 
 let bot: TelegramBot | null = null
+let last409Log = 0
 
 export function initTelegramBot() {
-    if (!config.botToken) {
-        logger.warn('BOT_TOKEN not set, skipping bot initialization')
-        return null
+  if (!config.botToken) {
+    logger.warn('BOT_TOKEN not set, skipping bot initialization')
+    return null
+  }
+
+  // ✅ FIX: простой polling без async проблем
+  bot = new TelegramBot(config.botToken, {
+    polling: {
+      interval: 1500,
+      autoStart: true,
+      params: {
+        timeout: 10,
+      },
+    },
+  })
+
+  // ✅ FIX: deleteWebhook без параметров (TS совместимо)
+  try { (bot as any).deleteWebhook() } catch {}
+ // Игнорируем если не было webhook
+
+  // Команды
+  bot.onText(/\/start(.*)/, async (msg) => {
+    try {
+      await handleStart(bot!, msg)
+    } catch (error: any) {
+      logger.error('Error in /start:', error?.message || 'Unknown')
     }
+  })
 
-    // ✅ FIX: Polling включён ВСЕГДА (и в dev, и в production)
-    bot = new TelegramBot(config.botToken, {
-        polling: {
-            interval: 1000,
-            autoStart: true,
-            params: {
-                timeout: 10
-            }
-        }
+  bot.onText(/\/help/, async (msg) => {
+    try {
+      await handleHelp(bot!, msg)
+    } catch (error: any) {
+      logger.error('Error in /help:', error?.message || 'Unknown')
+    }
+  })
+
+  bot.on('callback_query', async (query) => {
+    try {
+      await handleCallbackQuery(bot!, query)
+    } catch (error: any) {
+      logger.error('Error in callback:', error?.message || 'Unknown')
+    }
+  })
+
+  // Ошибки polling
+  bot.on('polling_error', (error: any) => {
+    if (error.code === 'ETELEGRAM' && error.message?.includes('409')) {
+      // ✅ FIX: логируем только раз в 60 сек
+      const now = Date.now()
+      if (now - last409Log > 60000) {
+        logger.warn('Bot polling conflict (409) — will resolve after old instance stops')
+        last409Log = now
+      }
+      return
+    }
+    if (error.code === 'ETELEGRAM' && error.message?.includes('401')) {
+      logger.error('❌ INVALID BOT TOKEN!')
+      return
+    }
+    logger.error('Bot polling error:', {
+      message: error?.message || 'Unknown',
+      code: error?.code || 'N/A',
     })
+  })
 
-    // ✅ Команды работают везде
-    bot.onText(/\/start(.*)/, async (msg) => {
-        try {
-            await handleStart(bot!, msg)
-        } catch (error: any) {
-            logger.error('Error in /start command:', error?.message || 'Unknown error')
-        }
-    })
+  bot.on('error', (error: any) => {
+    logger.error('Bot error:', { message: error?.message || 'Unknown' })
+  })
 
-    bot.onText(/\/help/, async (msg) => {
-        try {
-            await handleHelp(bot!, msg)
-        } catch (error: any) {
-            logger.error('Error in /help command:', error?.message || 'Unknown error')
-        }
-    })
-
-    // Callback queries (подтверждение/отмена заказов)
-    bot.on('callback_query', async (query) => {
-        try {
-            await handleCallbackQuery(bot!, query)
-        } catch (error: any) {
-            logger.error('Error in callback query:', error?.message || 'Unknown error')
-        }
-    })
-
-    // ✅ Обработка ошибок polling
-    bot.on('polling_error', (error: any) => {
-        // 409 = другой инстанс бота (при редеплое)
-        if (error.code === 'ETELEGRAM' && error.message?.includes('409')) {
-            logger.warn('Bot polling conflict (409) — will retry automatically')
-            return
-        }
-        // 401 = неверный токен
-        if (error.code === 'ETELEGRAM' && error.message?.includes('401')) {
-            logger.error('❌ BOT TOKEN IS INVALID! Check BOT_TOKEN in environment variables.')
-            return
-        }
-        logger.error('Bot polling error:', {
-            message: error?.message || 'Unknown error',
-            code: error?.code || 'N/A',
-            statusCode: error?.response?.statusCode
-        })
-    })
-
-    bot.on('error', (error: any) => {
-        logger.error('Bot error:', {
-            message: error?.message || 'Unknown error',
-            code: error?.code || 'N/A'
-        })
-    })
-
-    logger.info('🤖 Telegram bot started (polling mode)')
-
-    return bot
+  logger.info('🤖 Telegram bot started (polling mode)')
+  return bot
 }
 
 export function stopBot() {
-    if (bot) {
-        bot.stopPolling()
-        logger.info('🤖 Telegram bot stopped')
-        bot = null
-    }
+  if (bot) {
+    bot.stopPolling()
+    logger.info('🤖 Telegram bot stopped')
+    bot = null
+  }
 }
 
 export function getBot() {
-    return bot
+  return bot
 }

@@ -19,25 +19,37 @@ export default defineConfig({
     sourcemap: false,
     minify: "esbuild",
     target: "es2020",
-    // ✅ FIX: оптимизация CSS
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // ✅ FIX: разбиваем на более мелкие чанки
-          "react-core": ["react", "react-dom"],
-          router: ["react-router-dom"],
-          motion: ["framer-motion"],
-          icons: ["lucide-react"],
-          state: ["zustand"],
-          http: ["axios"],
+        manualChunks(id) {
+          // ✅ Supabase — отдельный чанк, грузится ТОЛЬКО в админке
+          if (id.includes('@supabase')) {
+            return 'supabase-admin'
+          }
+          if (id.includes('react-dom') || id.includes('react/')) {
+            return 'react-core'
+          }
+          if (id.includes('react-router')) {
+            return 'router'
+          }
+          if (id.includes('framer-motion')) {
+            return 'motion'
+          }
+          if (id.includes('lucide-react')) {
+            return 'icons'
+          }
+          if (id.includes('zustand')) {
+            return 'state'
+          }
+          if (id.includes('axios')) {
+            return 'http'
+          }
         },
       },
     },
-    // ✅ FIX: предупреждение при большом чанке
     chunkSizeWarningLimit: 500,
   },
-  // ✅ FIX: оптимизация dev-сервера
   optimizeDeps: {
     include: [
       "react",
@@ -45,7 +57,7 @@ export default defineConfig({
       "react-router-dom",
       "zustand",
       "axios",
-      "framer-motion",
     ],
+    // ✅ НЕ включаем supabase — он нужен только в админке
   },
 });
