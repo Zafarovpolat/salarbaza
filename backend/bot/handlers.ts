@@ -5,24 +5,90 @@ import { prisma } from '../src/config/database'
 import { OrderStatus } from '@prisma/client'
 import { sendStatusUpdateToUser } from '../src/services/telegramService'
 import { formatPrice } from '../src/utils/helpers'
+import { getLanguageKeyboard, getOpenShopKeyboard } from './keyboards'
 
-// ✅ FIX: Экранирование Markdown
 function escapeMarkdown(text: any): string {
   if (!text) return ''
   return String(text).replace(/([_*`\[\]])/g, '\\$1')
+}
+
+// ── Сохранить язык пользователя в БД ──────────────────────────────────────
+async function saveUserLanguage(telegramId: number, lang: 'uz' | 'ru') {
+  try {
+    await prisma.user.upsert({
+      where:  { telegramId: BigInt(telegramId) },
+      update: { language: lang },
+      create: {
+        telegramId: BigInt(telegramId),
+        language:   lang,
+      },
+    })
+  } catch (error: any) {
+    logger.error('Failed to save user language:', error?.message)
+  }
 }
 
 export async function handleCallbackQuery(
   bot: TelegramBot,
   query: TelegramBot.CallbackQuery
 ) {
-  const chatId = query.message?.chat.id
+  const chatId    = query.message?.chat.id
   const messageId = query.message?.message_id
-  const data = query.data
+  const data      = query.data
+  const telegramId = query.from.id
 
   if (!chatId || !messageId || !data) return
 
-  // Check if admin
+  // ── noop ──────────────────────────────────────────────────────────────
+  if (data === 'noop') {
+    await bot.answerCallbackQuery(query.id)
+    return
+  }
+
+  // ── Смена языка ───────────────────────────────────────────────────────
+  if (data === 'change_lang') {
+    await bot.answerCallbackQuery(query.id)
+    await bot.sendMessage(
+      chatId,
+      '🌐 Qaysi tilda davom ettirish sizga qulay?\nНа каком языке вам удобнее?',
+      { reply_markup: getLanguageKeyboard() }
+    )
+    return
+  }
+
+  // ── Выбор языка ───────────────────────────────────────────────────────
+  if (data === 'lang_uz' || data === 'lang_ru') {
+    const lang = data === 'lang_uz' ? 'uz' : 'ru'
+
+    // Сохраняем язык в БД
+    await saveUserLanguage(telegramId, lang)
+
+    // Подтверждение выбора
+    const confirmText = lang === 'uz'
+      ? "Til tanlandi: O'zbekcha ✅\n\nOnlayn do'konimizni ochish uchun quyidagi tugmani bosing."
+      : 'Язык выбран: Русский ✅\n\nЧтобы открыть наш интернет-магазин, нажмите на кнопку ниже.'
+
+    // Редактируем сообщение с кнопками языка
+    try {
+      await bot.editMessageText(confirmText, {
+        chat_id:      chatId,
+        message_id:   messageId,
+        reply_markup: getOpenShopKeyboard(lang),
+      })
+    } catch {
+      // Если редактирование не удалось — отправляем новое
+      await bot.sendMessage(chatId, confirmText, {
+        reply_markup: getOpenShopKeyboard(lang),
+      })
+    }
+
+    await bot.answerCallbackQuery(query.id, {
+      text: lang === 'uz' ? "Til saqlandi ✅" : 'Язык сохранён ✅',
+    })
+    return
+  }
+
+  // ── Только для админа: заказы ─────────────────────────────────────────
   if (chatId.toString() !== config.adminChatId) {
     await bot.answerCallbackQuery(query.id, {
       text: 'Bu amal faqat admin uchun!',
@@ -31,36 +97,23 @@ export async function handleCallbackQuery(
     return
   }
 
-  // ✅ FIX: noop — ничего не делать (для уже обработанных кнопок)
-  if (data === 'noop') {
-    await bot.answerCallbackQuery(query.id)
-    return
-  }
-
   try {
     if (data.startsWith('confirm_')) {
-      const orderId = data.replace('confirm_', '')
-      await handleConfirmOrder(bot, query, orderId, chatId, messageId)
+      await handleConfirmOrder(bot, query, data.replace('confirm_', ''), chatId, messageId)
     } else if (data.startsWith('cancel_')) {
-      const orderId = data.replace('cancel_', '')
-      await handleCancelOrder(bot, query, orderId, chatId, messageId)
-    }
-    // ✅ FIX: Добавлены обработчики ship_ и deliver_
-    else if (data.startsWith('ship_')) {
-      const orderId = data.replace('ship_', '')
-      await handleShipOrder(bot, query, orderId, chatId, messageId)
+      await handleCancelOrder(bot, query, data.replace('cancel_', ''), chatId, messageId)
+    } else if (data.startsWith('ship_')) {
+      await handleShipOrder(bot, query, data.replace('ship_', ''), chatId, messageId)
     } else if (data.startsWith('deliver_')) {
-      const orderId = data.replace('deliver_', '')
-      await handleDeliverOrder(bot, query, orderId, chatId, messageId)
+      await handleDeliverOrder(bot, query, data.replace('deliver_', ''), chatId, messageId)
     } else if (data.startsWith('details_')) {
-      const orderId = data.replace('details_', '')
-      await handleOrderDetails(bot, query, orderId, chatId)
+      await handleOrderDetails(bot, query, data.replace('details_', ''), chatId)
     }
   } catch (error: any) {
     logger.error('Callback query error:', {
       message: error?.message || 'Unknown error',
       code: error?.code,
-      data: data,
+      data,
     })
     await bot.answerCallbackQuery(query.id, {
       text: 'Xatolik yuz berdi!',
@@ -69,9 +122,9 @@ export async function handleCallbackQuery(
   }
 }
 
-// ────────────────────────────────────────
-// ✅ Подтвердить заказ
-// ────────────────────────────────────────
+// ── Все handleConfirm/Cancel/Ship/Deliver/Details — без изменений ─────────
+// (вставь свой оригинальный код ниже)
+
 async function handleConfirmOrder(
   bot: TelegramBot,
   query: TelegramBot.CallbackQuery,
@@ -85,27 +138,17 @@ async function handleConfirmOrder(
   })
 
   if (!order) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Buyurtma topilmadi!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Buyurtma topilmadi!', show_alert: true })
     return
   }
-
   if (order.status !== OrderStatus.PENDING) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Bu buyurtma allaqachon qayta ishlangan!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Bu buyurtma allaqachon qayta ishlangan!', show_alert: true })
     return
   }
 
   await prisma.order.update({
     where: { id: orderId },
-    data: {
-      status: OrderStatus.CONFIRMED,
-      confirmedAt: new Date(),
-    },
+    data:  { status: OrderStatus.CONFIRMED, confirmedAt: new Date() },
   })
 
   await bot.editMessageReplyMarkup(
@@ -113,7 +156,7 @@ async function handleConfirmOrder(
       inline_keyboard: [
         [{ text: '✅ TASDIQLANDI', callback_data: 'noop' }],
         [
-          { text: '📦 Tayyor', callback_data: `ship_${orderId}` },
+          { text: '📦 Tayyor',      callback_data: `ship_${orderId}` },
           { text: '🏠 Topshirildi', callback_data: `deliver_${orderId}` },
         ],
       ],
@@ -121,20 +164,10 @@ async function handleConfirmOrder(
     { chat_id: chatId, message_id: messageId }
   )
 
-  await sendStatusUpdateToUser(
-    order.user.telegramId,
-    order.orderNumber,
-    'CONFIRMED'
-  )
-
-  await bot.answerCallbackQuery(query.id, {
-    text: '✅ Buyurtma tasdiqlandi!',
-  })
+  await sendStatusUpdateToUser(order.user.telegramId, order.orderNumber, 'CONFIRMED')
+  await bot.answerCallbackQuery(query.id, { text: '✅ Buyurtma tasdiqlandi!' })
 }
 
-// ────────────────────────────────────────
-// ❌ Отменить заказ
-// ────────────────────────────────────────
 async function handleCancelOrder(
   bot: TelegramBot,
   query: TelegramBot.CallbackQuery,
@@ -148,52 +181,28 @@ async function handleCancelOrder(
   })
 
   if (!order) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Buyurtma topilmadi!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Buyurtma topilmadi!', show_alert: true })
     return
   }
-
   if (order.status === OrderStatus.CANCELLED) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Bu buyurtma allaqachon bekor qilingan!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Bu buyurtma allaqachon bekor qilingan!', show_alert: true })
     return
   }
 
   await prisma.order.update({
     where: { id: orderId },
-    data: {
-      status: OrderStatus.CANCELLED,
-      cancelledAt: new Date(),
-    },
+    data:  { status: OrderStatus.CANCELLED, cancelledAt: new Date() },
   })
 
   await bot.editMessageReplyMarkup(
-    {
-      inline_keyboard: [
-        [{ text: '❌ BEKOR QILINDI', callback_data: 'noop' }],
-      ],
-    },
+    { inline_keyboard: [[{ text: '❌ BEKOR QILINDI', callback_data: 'noop' }]] },
     { chat_id: chatId, message_id: messageId }
   )
 
-  await sendStatusUpdateToUser(
-    order.user.telegramId,
-    order.orderNumber,
-    'CANCELLED'
-  )
-
-  await bot.answerCallbackQuery(query.id, {
-    text: '❌ Buyurtma bekor qilindi!',
-  })
+  await sendStatusUpdateToUser(order.user.telegramId, order.orderNumber, 'CANCELLED')
+  await bot.answerCallbackQuery(query.id, { text: '❌ Buyurtma bekor qilindi!' })
 }
 
-// ────────────────────────────────────────
-// 📦 Заказ готов / отправлен
-// ────────────────────────────────────────
 async function handleShipOrder(
   bot: TelegramBot,
   query: TelegramBot.CallbackQuery,
@@ -207,58 +216,33 @@ async function handleShipOrder(
   })
 
   if (!order) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Buyurtma topilmadi!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Buyurtma topilmadi!', show_alert: true })
     return
   }
-
   if (order.status === OrderStatus.SHIPPED) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Buyurtma allaqachon tayyor deb belgilangan!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Buyurtma allaqachon tayyor!', show_alert: true })
     return
   }
 
   await prisma.order.update({
     where: { id: orderId },
-    data: {
-      status: OrderStatus.SHIPPED,
-      shippedAt: new Date(),
-    },
+    data:  { status: OrderStatus.SHIPPED, shippedAt: new Date() },
   })
 
   await bot.editMessageReplyMarkup(
     {
       inline_keyboard: [
-        [{ text: '📦 TAYYOR', callback_data: 'noop' }],
-        [
-          {
-            text: '🏠 Topshirildi',
-            callback_data: `deliver_${orderId}`,
-          },
-        ],
+        [{ text: '📦 TAYYOR',       callback_data: 'noop' }],
+        [{ text: '🏠 Topshirildi', callback_data: `deliver_${orderId}` }],
       ],
     },
     { chat_id: chatId, message_id: messageId }
   )
 
-  await sendStatusUpdateToUser(
-    order.user.telegramId,
-    order.orderNumber,
-    'SHIPPED'
-  )
-
-  await bot.answerCallbackQuery(query.id, {
-    text: '📦 Buyurtma tayyor deb belgilandi!',
-  })
+  await sendStatusUpdateToUser(order.user.telegramId, order.orderNumber, 'SHIPPED')
+  await bot.answerCallbackQuery(query.id, { text: '📦 Buyurtma tayyor!' })
 }
 
-// ────────────────────────────────────────
-// 🏠 Заказ вручён клиенту
-// ────────────────────────────────────────
 async function handleDeliverOrder(
   bot: TelegramBot,
   query: TelegramBot.CallbackQuery,
@@ -272,52 +256,28 @@ async function handleDeliverOrder(
   })
 
   if (!order) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Buyurtma topilmadi!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Buyurtma topilmadi!', show_alert: true })
     return
   }
-
   if (order.status === OrderStatus.DELIVERED) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Buyurtma allaqachon topshirilgan!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Buyurtma allaqachon topshirilgan!', show_alert: true })
     return
   }
 
   await prisma.order.update({
     where: { id: orderId },
-    data: {
-      status: OrderStatus.DELIVERED,
-      deliveredAt: new Date(),
-    },
+    data:  { status: OrderStatus.DELIVERED, deliveredAt: new Date() },
   })
 
   await bot.editMessageReplyMarkup(
-    {
-      inline_keyboard: [
-        [{ text: '🏠 TOPSHIRILDI ✅', callback_data: 'noop' }],
-      ],
-    },
+    { inline_keyboard: [[{ text: '🏠 TOPSHIRILDI ✅', callback_data: 'noop' }]] },
     { chat_id: chatId, message_id: messageId }
   )
 
-  await sendStatusUpdateToUser(
-    order.user.telegramId,
-    order.orderNumber,
-    'DELIVERED'
-  )
-
-  await bot.answerCallbackQuery(query.id, {
-    text: '🏠 Buyurtma topshirildi!',
-  })
+  await sendStatusUpdateToUser(order.user.telegramId, order.orderNumber, 'DELIVERED')
+  await bot.answerCallbackQuery(query.id, { text: '🏠 Buyurtma topshirildi!' })
 }
 
-// ────────────────────────────────────────
-// 📋 Детали заказа
-// ────────────────────────────────────────
 async function handleOrderDetails(
   bot: TelegramBot,
   query: TelegramBot.CallbackQuery,
@@ -326,26 +286,16 @@ async function handleOrderDetails(
 ) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: {
-      items: true,
-      user: true,
-    },
+    include: { items: true, user: true },
   })
 
   if (!order) {
-    await bot.answerCallbackQuery(query.id, {
-      text: 'Buyurtma topilmadi!',
-      show_alert: true,
-    })
+    await bot.answerCallbackQuery(query.id, { text: 'Buyurtma topilmadi!', show_alert: true })
     return
   }
 
-  // ✅ FIX: escapeMarkdown чтобы не ломались названия с _
   const itemsList = order.items
-    .map(
-      (item) =>
-        `• ${escapeMarkdown(item.productName)} x${item.quantity} = ${formatPrice(item.total)} so'm`
-    )
+    .map(item => `• ${escapeMarkdown(item.productName)} x${item.quantity} = ${formatPrice(item.total)} so'm`)
     .join('\n')
 
   const message = `
@@ -364,7 +314,6 @@ ${itemsList}
   try {
     await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' })
   } catch {
-    // Fallback plain text
     await bot.sendMessage(chatId, message.replace(/[*_`]/g, ''))
   }
 
