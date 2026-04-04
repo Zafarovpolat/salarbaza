@@ -9,7 +9,7 @@ async function handleStart(bot, msg) {
     const welcomeMessage = `
 👋 Salom, ${firstName}!
 
-🏠 *DekorHouse* — uy va bog' uchun dekoratsiyalar do'koniga xush kelibsiz!
+🏠 *DecorMarket* — uy va bog' uchun dekoratsiyalar do'koniga xush kelibsiz!
 
 🪴 Bizda:
 • Guldonlar va kashpolar
@@ -52,7 +52,7 @@ async function handleHelp(bot, msg) {
 4. Buyurtmani rasmiylang
 
 📞 *Bog'lanish:*
-Telegram: @DekorHouseSupport
+Telegram: @DekorHouseAdmin
 Telefon: +998 90 123 45 67
 
 🕐 *Ish vaqti:*

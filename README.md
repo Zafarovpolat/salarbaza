@@ -1,4 +1,4 @@
-# 🏠 DekorHouse - Telegram Mini App
+# 🏠 DecorMarket - Telegram Mini App
 
 > Современное Telegram Mini App для продажи декоративных товаров для дома и сада в Узбекистане 🇺🇿
 
@@ -16,7 +16,7 @@
 
 ## 📖 О проекте
 
-**DekorHouse** — полнофункциональное Telegram Mini App для продажи декоративных товаров:
+**DecorMarket** — полнофункциональное Telegram Mini App для продажи декоративных товаров:
 
 ### 🛍️ Ассортимент
 - 🪴 **Горшки и кашпо** — более 100+ SKU (пластик, металл, плетёные)
@@ -104,7 +104,7 @@
 
 ```bash
 # 1. Клонировать репозиторий
-git clone https://github.com/your-username/dekorhouse.git
+git clone https://github.com/Zafarovpolat/salarbaza.git
 cd dekorhouse
 ```
 
@@ -238,7 +238,7 @@ createdb dekorhouse
 ## 📁 Структура проекта
 
 ```
-DekorHouse/
+DecorMarket/
 ├── 📁 frontend/          # React Telegram Mini App
 │   ├── src/
 │   │   ├── components/   # 33+ компонентов (UI, Product, Cart, Order, Admin)
@@ -361,6 +361,14 @@ npm run db:studio
 
 ## 🤖 Telegram Bot
 
+### Flow взаимодействия
+
+1. **Пользователь запускает бота** (`/start`) → видит двуязычное приветствие
+2. **Выбор языка** → O'zbekcha / Русский (сохраняется в БД)
+3. **Повторный запуск** → если язык уже выбран, сразу показывается кнопка «Открыть магазин»
+4. **Deep Link** → `/start category_xxx`, `/start product_xxx`, `/start promo_xxx` — прямой переход на нужную страницу
+5. **Смена языка** → кнопка «Сменить язык» под кнопкой магазина
+
 ### Настройка бота
 
 ```bash
@@ -368,27 +376,35 @@ npm run db:studio
 /newbot
 # Следовать инструкциям
 
-# 2. Настроить команды
-/setcommands
-start - Ishni boshlash / Начать работу
-catalog - Katalog / Каталог
-cart - Savat / Корзина
-orders - Buyurtmalarim / Мои заказы
-help - Yordam / Помощь
-
-# 3. Настроить Menu Button
+# 2. Настроить Menu Button
 /setmenubutton
 # URL: https://your-app-url.onrender.com
 ```
 
-### Команды администратора
+### Команды
+
+| Команда | Описание |
+|---------|----------|
+| `/start` | Запуск бота (приветствие + выбор языка + deep link) |
+| `/help` | Справка с контактами и кнопкой магазина |
+
+### Deep Link параметры
+
+| Параметр | Переход на страницу |
+|----------|---------------------|
+| `/start category_<slug>` | `/catalog/<slug>` |
+| `/start product_<slug>` | `/product/<slug>` |
+| `/start promo_<slug>` | `/promotion/<slug>` |
+
+### Управление заказами (Admin)
 
 Бот автоматически отправляет уведомления администратору о новых заказах:
 
-- ✅ **Подтвердить заказ** - Inline кнопка
-- ❌ **Отменить заказ** - Inline кнопка
-- 📦 **Изменить статус** - SHIPPED, DELIVERED
-- 📋 **Просмотр деталей** - Товары, клиент, адрес
+- ✅ **Подтвердить** — `confirm_<orderId>` → статус CONFIRMED
+- ❌ **Отменить** — `cancel_<orderId>` → статус CANCELLED
+- 📦 **Готов** — `ship_<orderId>` → статус SHIPPED
+- 🏠 **Доставлен** — `deliver_<orderId>` → статус DELIVERED
+- 📋 **Детали** — `details_<orderId>` — показать информацию о заказе
 
 ---
 
@@ -670,7 +686,7 @@ curl http://localhost:3001/api/health
 
 MIT License
 
-Copyright (c) 2026 DekorHouse Team
+Copyright (c) 2026 DecorMarket Team
 
 Свободное использование для коммерческих и личных целей.
 
@@ -678,7 +694,7 @@ Copyright (c) 2026 DekorHouse Team
 
 ## 👥 Контакты
 
-**Проект:** DekorHouse Telegram Mini App  
+**Проект:** DecorMarket Telegram Mini App  
 **Версия:** 3.0.0 (TZ 3.0 Complete)  
 **Последнее обновление:** Апрель 4, 2026
 
@@ -697,10 +713,10 @@ Copyright (c) 2026 DekorHouse Team
 
 <div align="center">
 
-**🏠 DekorHouse** - Сделано с ❤️ для Узбекистана 🇺🇿
+**🏠 DecorMarket** - Сделано с ❤️ для Узбекистана 🇺🇿
 
-[Report Bug](https://github.com/your-username/dekorhouse/issues) · 
-[Request Feature](https://github.com/your-username/dekorhouse/issues) · 
+[Report Bug](https://github.com/Zafarovpolat/salarbaza/issues) · 
+[Request Feature](https://github.com/Zafarovpolat/salarbaza/issues) · 
 [Documentation](./project_review.md)
 
 </div>

@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/Input'
 import { ProductGrid } from '@/components/product/ProductGrid'
 import { EmptyState } from '@/components/ui/EmptyState'
 
-const RECENT_SEARCHES_KEY = 'dekorhouse-recent-searches'
+const RECENT_SEARCHES_KEY = 'decormarket-recent-searches'
 const MAX_RECENT_SEARCHES = 5
 
 export function SearchPage() {

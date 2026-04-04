@@ -46,7 +46,7 @@ export const useFavoritesStore = create<FavoritesState>()(
             clearFavorites: () => set({ favorites: [] }),
         }),
         {
-            name: 'dekorhouse-favorites',
+            name: 'decormarket-favorites',
         }
     )
 )
