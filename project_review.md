@@ -2,7 +2,7 @@
 
 ## Документация проекта
 
-**Обновлено:** Февраль 11, 2026
+**Обновлено:** Апрель 4, 2026
 
 ---
 
@@ -91,7 +91,7 @@
 ## 📁 Структура проекта
 
 ```
-salarbaza/
+DekorHouse/
 ├── 📁 frontend/
 │   ├── 📁 src/
 │   │   ├── 📁 components/
@@ -109,6 +109,8 @@ salarbaza/
 │   │   │   │   ├── EmptyState.tsx
 │   │   │   │   ├── ErrorBoundary.tsx
 │   │   │   │   └── LoadingScreen.tsx
+│   │   │   ├── 📁 home/            # (1 файл)
+│   │   │   │   └── PromotionWidget.tsx  # 🆕 Виджет акций
 │   │   │   ├── 📁 layout/          # (4 файла)
 │   │   │   │   ├── Header.tsx
 │   │   │   │   ├── BottomNav.tsx
@@ -116,17 +118,26 @@ salarbaza/
 │   │   │   │   └── Layout.tsx
 │   │   │   ├── 📁 order/           # (2 файла)
 │   │   │   │   ├── OrderForm.tsx
-│   │   │   │   └── OrderCard.tsx
-│   │   │   ├── 📁 product/         # (6 файлов)
+│   │   │   │   └── OrderStatus.tsx
+│   │   │   ├── 📁 product/         # (7 файлов)
 │   │   │   │   ├── ProductCard.tsx     # ✅ Ценовой диапазон
 │   │   │   │   ├── ProductGrid.tsx
-│   │   │   │   ├── ProductGallery.tsx
+│   │   │   │   ├── ProductRecommendations.tsx  # ✅ Рекомендации
 │   │   │   │   ├── ColorSelector.tsx
 │   │   │   │   ├── SizeSelector.tsx    # 🆕 Выбор размера
-│   │   │   │   └── PriceDisplay.tsx
+│   │   │   │   ├── PriceDisplay.tsx
+│   │   │   │   └── WholesalePrices.tsx # 🆕 Таблица оптовых цен
 │   │   │   └── 📁 ui/              # (9 файлов)
-│   │   │
-│   │   ├── 📁 pages/               # (12 + 10 admin)
+│   │   │       ├── Badge.tsx
+│   │   │       ├── Button.tsx
+│   │   │       ├── Card.tsx
+│   │   │       ├── EmptyState.tsx
+│   │   │       ├── Input.tsx
+│   │   │       ├── Modal.tsx
+│   │   │       ├── QuantitySelector.tsx
+│   │   │       ├── Skeleton.tsx
+│   │   │       └── index.ts
+│   │   ├── 📁 pages/               # (15 user + 13 admin = 28)
 │   │   │   ├── HomePage.tsx
 │   │   │   ├── CatalogPage.tsx
 │   │   │   ├── CategoryPage.tsx
@@ -138,8 +149,11 @@ salarbaza/
 │   │   │   ├── FavoritesPage.tsx
 │   │   │   ├── ProfilePage.tsx
 │   │   │   ├── SearchPage.tsx
+│   │   │   ├── PromotionPage.tsx       # 🆕 Страница акции
+│   │   │   ├── SpecialOffersPage.tsx   # 🆕 Спецпредложения
+│   │   │   ├── NewArrivalsPage.tsx     # 🆕 Новинки
 │   │   │   ├── NotFoundPage.tsx
-│   │   │   └── 📁 admin/              # (10 файлов)
+│   │   │   └── 📁 admin/              # (13 файлов)
 │   │   │       ├── AdminDashboardPage.tsx
 │   │   │       ├── AdminLoginPage.tsx
 │   │   │       ├── AdminProductsPage.tsx     # ✅ Колонка размеров
@@ -149,31 +163,41 @@ salarbaza/
 │   │   │       ├── AdminOrdersPage.tsx       # ✅ Размер в заказах
 │   │   │       ├── AdminCustomersPage.tsx
 │   │   │       ├── AdminCustomerDetailPage.tsx
-│   │   │       └── AdminWholesalePage.tsx    # ✅ Счётчик категорий
-│   │   │
+│   │   │       ├── AdminWholesalePage.tsx    # ✅ Счётчик категорий
+│   │   │       ├── AdminPromotionsPage.tsx   # 🆕 Управление акциями
+│   │   │       ├── AdminPromotionEditPage.tsx # 🆕 Редактирование акции
+│   │   │       └── AdminBulkTagsPage.tsx     # 🆕 Массовые теги
 │   │   ├── 📁 store/               # (4 Zustand хранилища)
 │   │   │   ├── cartStore.ts            # ✅ variantId support
 │   │   │   ├── favoritesStore.ts
 │   │   │   ├── languageStore.ts
 │   │   │   └── userStore.ts
-│   │   │
-│   │   ├── 📁 services/            # (6 сервисов)
+│   │   ├── 📁 services/            # (8 сервисов)
 │   │   │   ├── api.ts
 │   │   │   ├── cartService.ts          # ✅ variantId в addItem
 │   │   │   ├── categoryService.ts
 │   │   │   ├── productService.ts
 │   │   │   ├── orderService.ts
-│   │   │   └── adminService.ts
-│   │   │
-│   │   ├── 📁 hooks/
+│   │   │   ├── adminService.ts
+│   │   │   ├── promotionService.ts     # 🆕 Сервис акций
+│   │   │   └── mockData.ts
+│   │   ├── 📁 hooks/               # (5 хуков)
+│   │   │   ├── useCategories.ts
+│   │   │   ├── useDebounce.ts
+│   │   │   ├── useInfiniteScroll.ts
+│   │   │   ├── useProducts.ts
+│   │   │   └── useTelegram.ts
 │   │   ├── 📁 types/
-│   │   │   └── index.ts                # ✅ ProductVariant, WholesalePriceTier
+│   │   │   └── index.ts                # ✅ ProductVariant, WholesalePriceTier, Promotion
 │   │   └── 📁 utils/
 │
 ├── 📁 backend/
 │   ├── 📁 src/
 │   │   ├── 📁 config/
-│   │   ├── 📁 controllers/         # (5 контроллеров)
+│   │   │   ├── index.ts
+│   │   │   ├── database.ts
+│   │   │   └── telegram.ts             # (пустой файл)
+│   │   ├── 📁 controllers/         # (5 контроллеров — legacy)
 │   │   ├── 📁 services/            # (6 сервисов)
 │   │   │   ├── productService.ts       # ✅ enrichProductData + variants
 │   │   │   ├── categoryService.ts      # ✅ getWholesaleDiscount()
@@ -182,40 +206,52 @@ salarbaza/
 │   │   │   ├── userService.ts
 │   │   │   └── telegramService.ts
 │   │   ├── 📁 middleware/
-│   │   ├── 📁 routes/              # (7 файлов)
-│   │   │   ├── index.ts
-│   │   │   ├── productRoutes.ts
-│   │   │   ├── categoryRoutes.ts
-│   │   │   ├── cartRoutes.ts
-│   │   │   ├── orderRoutes.ts
-│   │   │   ├── userRoutes.ts
-│   │   │   ├── adminRoutes.ts          # ✅ CRUD variants
-│   │   │   └── wholesaleRoutes.ts      # ✅ Через категорию
+│   │   │   ├── auth.ts             # ✅ Telegram HMAC + dev mode
+│   │   │   ├── errorHandler.ts     # ✅ Zod, Prisma, AppError
+│   │   │   ├── rateLimiter.ts      # ✅ Express rate limiting
+│   │   │   └── validateTelegram.ts # (не используется)
+│   │   ├── 📁 routes/              # (10 файлов)
+│   │   │   ├── index.ts            # Роутер
+│   │   │   ├── productRoutes.ts    # ✅ /products (+ featured, new, sale, search, recommendations)
+│   │   │   ├── categoryRoutes.ts   # ✅ /categories
+│   │   │   ├── cartRoutes.ts       # ✅ /cart (auth required)
+│   │   │   ├── orderRoutes.ts      # ✅ /orders (auth required)
+│   │   │   ├── userRoutes.ts       # ✅ /user (auth required)
+│   │   │   ├── adminRoutes.ts      # ✅ /admin (stats, products, categories, orders, wholesale, promotions, customers, bulk-tags)
+│   │   │   ├── promotionRoutes.ts  # 🆕 /promotions (public)
+│   │   │   ├── wholesaleRoutes.ts  # ✅ /wholesale (calculate, seed)
+│   │   │   └── testRoutes.ts       # Тестовые эндпоинты
 │   │   └── 📁 utils/
-│   │
+│   │       ├── cache.ts            # ✅ In-memory TTL cache
+│   │       ├── constants.ts
+│   │       ├── helpers.ts
+│   │       ├── logger.ts           # ✅ Winston logging
+│   │       └── slugify.ts
 │   ├── 📁 bot/
 │   │   ├── index.ts
 │   │   ├── commands.ts
 │   │   ├── handlers.ts
 │   │   └── keyboards.ts
-│   │
 │   ├── 📁 prisma/
-│   │   ├── schema.prisma               # ✅ 12 моделей + 4 enum
-│   │   ├── seed.ts
-│   │   └── test-seed.ts                # 🆕 Тестовые данные
-│   │
-│   └── 📁 data/
+│   │   ├── schema.prisma               # ✅ 16 моделей + 6 enums
+│   │   └── seed.ts
+│   └── package.json
+│
+├── 📁 landing/
+│   ├── index.html                  # 🆕 Маркетинговая страница
+│   └── design.md                   # 🆕 Дизайн-система (832 строки)
 │
 ├── render.yaml
-├── README.md                           # ◀ Этот файл
-└── project_review.md                   # Старая документация
+├── .gitignore
+├── README.md
+└── project_review.md
 ```
 
 ---
 
 ## 🗄️ База данных
 
-### Prisma Schema (12 моделей + 4 enum)
+### Prisma Schema (16 моделей + 6 enums)
 
 | Модель                   | Описание                         | Связи                                               |
 | ------------------------ | -------------------------------- | --------------------------------------------------- |
@@ -233,6 +269,8 @@ salarbaza/
 | `Favorite`               | Избранные товары                 | → User, Product                                     |
 | `WholesalePriceTemplate` | Шаблоны оптовых скидок           | → **Categories**, Tiers                             |
 | `WholesalePriceTier`     | Пороги скидок (от X шт = Y%)     | → Template                                          |
+| **`Promotion`**          | **🆕 Акции и промо**             | **→ PromotionProduct[]**                            |
+| **`PromotionProduct`**   | **🆕 Связь акций с товарами**    | **→ Promotion, Product**                            |
 
 ### 🆕 Модель ProductVariant
 
@@ -294,7 +332,83 @@ enum PaymentMethod {
 enum PaymentStatus {
   PENDING | PAID | FAILED | REFUNDED
 }
+
+enum PromotionStatus {
+  DRAFT | SCHEDULED | ACTIVE | INACTIVE
+}
+
+enum PromotionType {
+  SALE | COLLECTION | LIMITED | NEW_ARRIVALS
+}
 ```
+
+---
+
+## 🎁 Акции (Promotions)
+
+### Модель Promotion
+
+```prisma
+model Promotion {
+  id            String          @id @default(cuid())
+  slug          String          @unique
+  nameRu        String
+  nameUz        String
+  descriptionRu String?
+  descriptionUz String?
+  rulesRu       String?         @db.Text
+  rulesUz       String?         @db.Text
+  image         String?
+  type          PromotionType   @default(SALE)
+  status        PromotionStatus @default(DRAFT)
+  startDate     DateTime
+  endDate       DateTime
+  sortOrder     Int             @default(0)
+  products      PromotionProduct[]
+}
+```
+
+### Типы акций
+- **SALE** — Распродажа со скидками
+- **COLLECTION** — Коллекция товаров
+- **LIMITED** — Ограниченное предложение
+- **NEW_ARRIVALS** — Новинки
+
+### Статусы акций
+- **DRAFT** — Черновик
+- **SCHEDULED** — Запланирована (автоактивация по startDate)
+- **ACTIVE** — Активна (видна пользователям)
+- **INACTIVE** — Неактивна (просрочена)
+
+### API эндпоинты акций
+
+#### Публичные (клиентские) — `/api/promotions`
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| GET | `/promotions` | Активные акции (автодеактивация просроченных) |
+| GET | `/promotions/:slug` | Детали акции с товарами |
+
+#### Админские — `/api/admin/promotions`
+| Method | Endpoint | Описание |
+|--------|----------|----------|
+| GET | `/admin/promotions` | Все акции |
+| GET | `/admin/promotions/:id` | Акция по ID с товарами |
+| POST | `/admin/promotions` | Создать акцию |
+| PUT | `/admin/promotions/:id` | Обновить акцию |
+| PATCH | `/admin/promotions/:id/status` | Изменить статус |
+| DELETE | `/admin/promotions/:id` | Удалить акцию |
+| POST | `/admin/promotions/:id/products` | Добавить товар |
+| DELETE | `/admin/promotions/:id/products/:productId` | Убрать товар |
+
+### Страницы акций (Frontend)
+- **PromotionPage** (`/promotion/:slug`) — Страница конкретной акции
+- **SpecialOffersPage** (`/special-offers`) — Все спецпредложения
+- **NewArrivalsPage** (`/new-arrivals`) — Новинки
+- **PromotionWidget** — Виджет акций на главной
+
+### Админ-страницы
+- **AdminPromotionsPage** — Список всех акций
+- **AdminPromotionEditPage** — Создание/редактирование акции
 
 ---
 
@@ -360,9 +474,21 @@ Production: https://dekorhouse-api.onrender.com/api
 | POST   | `/admin/products/:id/variants`       | 🆕 Добавить вариант                |
 | PUT    | `/admin/products/:pid/variants/:vid` | 🆕 Обновить вариант                |
 | DELETE | `/admin/products/:pid/variants/:vid` | 🆕 Удалить вариант                 |
+| POST   | `/admin/products/reset-statuses`     | 🆕 Сброс всех статусов товаров    |
+| POST   | `/admin/products/bulk-tags`          | 🆕 Массовое обновление тегов      |
 | GET    | `/admin/categories`                  | Категории + wholesaleTemplate      |
 | GET    | `/admin/wholesale-templates`         | Шаблоны **(+ \_count.categories)** |
 | DELETE | `/admin/wholesale-templates/:id`     | Удалить **(отвязать категории)**   |
+| GET    | `/admin/promotions`                  | 🆕 Все акции                       |
+| POST   | `/admin/promotions`                  | 🆕 Создать акцию                   |
+| PUT    | `/admin/promotions/:id`              | 🆕 Обновить акцию                  |
+| PATCH  | `/admin/promotions/:id/status`       | 🆕 Изменить статус                 |
+| DELETE | `/admin/promotions/:id`              | 🆕 Удалить акцию                   |
+| POST   | `/admin/promotions/:id/products`     | 🆕 Добавить товар в акцию          |
+| GET    | `/admin/customers`                   | Клиенты (пагинация, фильтры)       |
+| GET    | `/admin/customers/:id`               | Детали клиента                     |
+| GET    | `/admin/customers/stats`             | Статистика клиентов                |
+| GET    | `/admin/customers-export`            | Экспорт клиентов в CSV             |
 
 ---
 
@@ -386,6 +512,8 @@ Production: https://dekorhouse-api.onrender.com/api
 | 🌐 Мультиязычность UZ/RU                        | ✅     |
 | 👤 Профиль и адреса                             | ✅     |
 | 📱 Telegram SDK, auth, haptic                   | ✅     |
+| 🎁 **Просмотр акций и спецпредложений**         | ✅ 🆕  |
+| 🆕 **Страница новинок**                         | ✅ 🆕  |
 
 ### 👨‍💼 Для администратора (Админ-панель)
 
@@ -401,6 +529,9 @@ Production: https://dekorhouse-api.onrender.com/api
 | 👥 База клиентов + CRM                            | ✅     |
 | 📊 **Оптовые шаблоны (счётчик категорий)**        | ✅ 🆕  |
 | 📬 Уведомления в Telegram                         | ✅     |
+| 🎁 **Управление акциями (CRUD)**                  | ✅ 🆕  |
+| 🏷️ **Массовое обновление тегов**                 | ✅ 🆕  |
+| 📤 **Экспорт клиентов в CSV**                     | ✅ 🆕  |
 
 ### 👨‍💼 Для администратора (Telegram Bot)
 
@@ -497,10 +628,45 @@ Production: https://dekorhouse-api.onrender.com/api
 | Оптовые шаблоны       | Список привязанных категорий              |
 | Оптовые шаблоны       | Превью расчёта цен                        |
 | Категории             | Привязка оптового шаблона                 |
+| 🆕 Акции              | CRUD акций с привязкой товаров            |
+| 🆕 Акции              | Автоактивация/деактивация по датам        |
+| 🆕 Bulk Tags          | Массовое обновление статусов              |
+| 🆕 Landing Page       | Маркетинговая страница + дизайн-система   |
 
 ---
 
-## 🚀 Деплой
+## 🎁 Акции и массовые операции (TZ 3.0 дополнения)
+
+### 4. Система акций (Promotions)
+
+**Требование:** Создание маркетинговых акций с привязкой конкретных товаров, автоактивацией по датам.
+
+**Реализация:**
+```
+Акция: "Навруз — Скидки 20%"
+  ├── Тип: SALE
+  ├── Статус: SCHEDULED → ACTIVE (авто)
+  ├── Даты: 14.03.2026 — 25.03.2026
+  ├── Товары: [Дерево X, Горшок A, Пальма Y]
+  └── Страница: /promotion/navruz-skidki-20
+```
+
+**Как работает:**
+1. Админ создаёт акцию с названием, описанием, датами, типом
+2. Админ привязывает конкретные товары к акции
+3. При наступлении startDate — акция автоматически активируется
+4. При наступлении endDate — акция автоматически деактивируется
+5. На главной — виджет активных акций
+6. Отдельная страница `/promotion/:slug` с товарами акции
+
+### 5. Массовое обновление тегов (Bulk Tags)
+
+**Требование:** Быстрое обновление статусов нескольких товаров одновременно.
+
+**Реализация:**
+- `POST /admin/products/bulk-tags` — массовое обновление `isFeatured`, `isNew`, `isSpecialOffer`, `isActive`
+- `POST /admin/products/reset-statuses` — сброс всех статусов
+- Админ-страница: `AdminBulkTagsPage`
 
 ### Environment Variables
 
@@ -597,7 +763,30 @@ npx ts-node prisma/test-seed.ts
 ```
 
 #### Админка
+```
+☐ Создание товара с вариантами S/M/L
+☐ Кнопка "Быстро добавить S/M/L" работает
+☐ Редактирование вариантов
+☐ Привязка оптового шаблона к категории
+☐ Счётчик категорий в шаблонах
+```
 
+#### Акции
+```
+☐ Создание акции с датами и товарами
+☐ Автоактивация по startDate
+☐ Автодеактивация по endDate
+☐ Виджет акций на главной
+☐ Страница акции /promotion/:slug
+☐ Массовое обновление тегов
+☐ Сброс статусов товаров
+```
+
+#### Landing Page
+```
+☐ Страница открывается корректно
+☐ Все секции отображаются
+☐ Адаптивность на мобильных
 ```
 ☐ Создание товара с вариантами S/M/L
 ☐ Кнопка "Быстро добавить S/M/L" работает
@@ -609,6 +798,18 @@ npx ts-node prisma/test-seed.ts
 ---
 
 ## 📈 Changelog
+
+### April 4, 2026 — Обновление документации
+
+- 📝 Исправлена структура проекта (salarbaza → DekorHouse)
+- 📝 Добавлены Promotions (модели, эндпоинты, страницы)
+- 📝 Добавлены новые страницы: PromotionPage, SpecialOffersPage, NewArrivalsPage
+- 📝 Добавлены админ-страницы: AdminPromotionsPage, AdminPromotionEditPage, AdminBulkTagsPage
+- 📝 Добавлены эндпоинты: bulk-tags, reset-statuses, promotions CRUD, customers-export
+- 📝 Обновлены модели БД: 12 → 16 моделей, 4 → 6 enums
+- 📝 Добавлен раздел про Landing Page
+- 📝 Удалены ссылки на несуществующие файлы (test-seed.ts, data/)
+- 📝 Обновлены счётчики компонентов и страниц
 
 ### February 11, 2026 — ТЗ 3.0 ✅
 

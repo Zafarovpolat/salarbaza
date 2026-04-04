@@ -9,7 +9,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-latest-blue?logo=postgresql)](https://www.postgresql.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot%20API-blue?logo=telegram)](https://core.telegram.org/bots/api)
 
-> 🎉 **TZ 2.0 ЗАВЕРШЕНО:** Все функции ТЗ 2.0 успешно реализованы - оптовые цены, рекомендации товаров, улучшенные заказы и расширенная админка. Обновлено: 3 февраля 2026.
+> 🎉 **TZ 3.0 ЗАВЕРШЕНО:** Все функции ТЗ 3.0 реализованы — вариации размеров, оптовые цены, акции/промо, улучшенная админка. Обновлено: 4 апреля 2026.
 
 
 ---
@@ -44,6 +44,11 @@
 - 📱 **Полная интеграция** с Telegram WebApp SDK
 - 👤 **Личный кабинет** с историей заказов
 - 🎨 **Выбор цветов** для товаров с вариантами
+- 📏 **Выбор размеров** (S/M/L) с разными ценами
+- 💰 **Оптовые цены** — автоматические скидки при количестве
+- 🎁 **Акции и промо** — специальные предложения с таймером
+- 🆕 **Новинки** — отдельная страница новых товаров
+- ⭐ **Спецпредложения** — отдельная страница акций
 
 ### 👨‍💼 Для администратора
 - 🤖 **Telegram Bot** для управления заказами
@@ -51,6 +56,11 @@
 - ✅ **Подтверждение/отмена** заказов через inline-кнопки
 - 📊 **Admin Panel** для управления товарами и категориями
 - 📈 **Статистика заказов** и продаж
+- 👥 **CRM база клиентов** с экспортом в CSV
+- 📏 **Управление вариантами** размеров товаров
+- 💰 **Шаблоны оптовых цен** по категориям
+- 🎁 **Управление акциями** — создание, редактирование, привязка товаров
+- 🏷️ **Массовое обновление** тегов товаров (featured/new/sale)
 
 ---
 
@@ -228,13 +238,13 @@ createdb dekorhouse
 ## 📁 Структура проекта
 
 ```
-salarbaza/
+DekorHouse/
 ├── 📁 frontend/          # React Telegram Mini App
 │   ├── src/
-│   │   ├── components/   # 29 компонентов (UI, Product, Cart, etc.)
-│   │   ├── pages/        # 18 страниц (Main + Admin)
+│   │   ├── components/   # 33+ компонентов (UI, Product, Cart, Order, Admin)
+│   │   ├── pages/        # 28 страниц (15 пользовательских + 13 админ)
 │   │   ├── store/        # 4 Zustand stores (cart, favorites, language, user)
-│   │   ├── services/     # 7 API сервисов
+│   │   ├── services/     # 8 API сервисов
 │   │   ├── hooks/        # 5 custom hooks
 │   │   └── types/        # TypeScript definitions
 │   └── package.json
@@ -243,19 +253,21 @@ salarbaza/
 │   ├── src/
 │   │   ├── controllers/  # 5 контроллеров
 │   │   ├── services/     # 6 сервисов (business logic)
-│   │   ├── routes/       # 6 роутов (API endpoints)
+│   │   ├── routes/       # 10 роутов (API endpoints)
 │   │   ├── middleware/   # Auth, Error handling, Rate limiting
 │   │   └── config/       # Database, Telegram config
-│   ├── bot/              # Telegram Bot (4 файла)
+│   ├── bot/              # Telegram Bot (index, handlers, commands, keyboards)
 │   ├── prisma/
-│   │   ├── schema.prisma # 11 models + 4 enums
+│   │   ├── schema.prisma # 16 моделей + 6 enums
 │   │   └── seed.ts       # Database seeding
-│   └── data/             # Product JSON (163KB total)
-│       ├── pots.json              # 117KB - горшки
-│       ├── artificial_plants.json # 17KB - растения
-│       └── plant_stands.json      # 29KB - подставки
+│   └── package.json
+│
+├── 📁 landing/           # Статическая маркетинговая страница
+│   ├── index.html        # Одностраничный лендинг
+│   └── design.md         # Дизайн-система (цвета, типографика, компоненты)
 │
 ├── render.yaml           # Render deployment config
+├── .gitignore
 └── README.md             # Эта документация
 ```
 
@@ -275,8 +287,12 @@ salarbaza/
 | | GET | `/categories/:slug` | Детали категории |
 | **Products** | GET | `/products` | Список товаров (пагинация, фильтры) |
 | | GET | `/products/featured` | Популярные товары |
+| | GET | `/products/new` | Новинки |
+| | GET | `/products/sale` | Товары со скидкой |
 | | GET | `/products/search?q=` | Поиск товаров |
-| | GET | `/products/:slug` | Детали товара |
+| | GET | `/products/:id` | Товар по ID |
+| | GET | `/products/:slug` | Товар по slug |
+| | GET | `/products/:id/recommendations` | Рекомендации |
 | **Cart** | GET | `/cart` | Получить корзину |
 | | POST | `/cart/items` | Добавить товар |
 | | PATCH | `/cart/items/:id` | Изменить количество |
@@ -287,6 +303,11 @@ salarbaza/
 | **User** | GET | `/user/profile` | Профиль |
 | | PATCH | `/user/profile` | Обновить профиль |
 | | GET | `/user/addresses` | Адреса доставки |
+| | GET | `/user/favorites` | Избранные товары |
+| **Promotions** | GET | `/promotions` | Активные акции |
+| | GET | `/promotions/:slug` | Детали акции |
+| **Wholesale** | GET | `/wholesale/product/:id` | Оптовые цены товара |
+| | GET | `/wholesale/calculate` | Расчёт цены по количеству |
 | **System** | GET | `/health` | Health check |
 
 Полная документация API в [`project_review.md`](./project_review.md)
@@ -297,11 +318,12 @@ salarbaza/
 
 ### Prisma Schema
 
-**11 моделей:**
+**16 моделей:**
 - `User` - Пользователи Telegram
 - `Address` - Адреса доставки
 - `Category` - Категории товаров
 - `Product` - Товары
+- `ProductVariant` - Варианты размеров (S/M/L)
 - `ProductImage` - Изображения товаров
 - `ProductColor` - Цветовые варианты
 - `Cart` - Корзина
@@ -309,8 +331,14 @@ salarbaza/
 - `Order` - Заказы
 - `OrderItem` - Товары в заказе
 - `Favorite` - Избранное
+- `WholesalePriceTemplate` - Шаблоны оптовых скидок
+- `WholesalePriceTier` - Пороги скидок
+- `Promotion` - Акции и промо
+- `PromotionProduct` - Связь акций с товарами
 
-**4 Enums:**
+**6 Enums:**
+- `PromotionStatus` (DRAFT, SCHEDULED, ACTIVE, INACTIVE)
+- `PromotionType` (SALE, COLLECTION, LIMITED, NEW_ARRIVALS)
 - `OrderStatus` (PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, RETURNED)
 - `DeliveryType` (PICKUP, DELIVERY)
 - `PaymentMethod` (CASH, CARD, PAYME, CLICK, UZUM)
@@ -444,6 +472,8 @@ npm run db:seed
 | Product Data | ✅ Готово | 163KB (170+ товаров) |
 | Documentation | ✅ Готово | 100% |
 | TZ 2.0 Features | ✅ Готово | 100% |
+| TZ 3.0 Features | ✅ Готово | 100% |
+| Landing Page | ✅ Готово | 100% |
 
 ### 🎯 Статус запуска
 
@@ -498,6 +528,15 @@ npm run db:seed
 3. ✅ **Улучшенный заказ** - Геолокация и расширенная форма
 4. ✅ **База клиентов** - CRM функционал в админке
 5. ✅ **Шаблоны категорий** - Автозаполнение описаний товаров
+
+### ✅ Завершено (TZ 3.0)
+1. ✅ **Вариации размеров** - S/M/L с разными ценами для одного товара
+2. ✅ **Оптовые цены по категориям** - Шаблоны привязаны к категориям
+3. ✅ **Акции и промо** - CRUD акций, привязка товаров, автоактивация по датам
+4. ✅ **Новые страницы** - Новинки, Спецпредложения, страница акции
+5. ✅ **Массовое обновление тегов** - Bulk tags для featured/new/sale
+6. ✅ **Сброс статусов** - Массовый сброс isFeatured/isNew/isSpecialOffer
+7. ✅ **Landing page** - Маркетинговая страница с дизайн-системой
 
 ### 🔹 Низкий приоритет (Будущее)
 1. 🔹 **Payment Integration** - Интеграция Payme/Click/Uzum
@@ -564,13 +603,23 @@ npm run preview
 - [x] **Админ: база клиентов** - история заказов и статистика по клиентам ✅
 - [x] **Админ: шаблоны категорий** - автозаполнение описаний при создании товаров ✅
 
-### Phase 3: Marketing (в планах)
+### Phase 3: TZ 3.0 Features ✅ (ЗАВЕРШЕНО)
+- [x] **Вариации размеров** - S/M/L с разными ценами ✅
+- [x] **Оптовые цены по категориям** - шаблоны привязаны к категориям ✅
+- [x] **Акции и промо** - CRUD, привязка товаров, автоактивация ✅
+- [x] **Страница новинок** - /new-arrivals ✅
+- [x] **Страница спецпредложений** - /special-offers ✅
+- [x] **Страница акции** - /promotion/:slug ✅
+- [x] **Массовое обновление тегов** - bulk tags ✅
+- [x] **Landing page** - маркетинговая страница ✅
+
+### Phase 4: Marketing (в планах)
 - [ ] SEO оптимизация
 - [ ] Telegram Analytics
 - [ ] Реферальная программа
 - [ ] Промокоды и скидки
 
-### Phase 4: Scale (в планах)
+### Phase 5: Scale (в планах)
 - [ ] Redis caching
 - [ ] CDN для изображений
 - [ ] Микросервисная архитектура
@@ -630,8 +679,8 @@ Copyright (c) 2026 DekorHouse Team
 ## 👥 Контакты
 
 **Проект:** DekorHouse Telegram Mini App  
-**Версия:** 2.0.0 (TZ 2.0 Complete)  
-**Последнее обновление:** Февраль 3, 2026
+**Версия:** 3.0.0 (TZ 3.0 Complete)  
+**Последнее обновление:** Апрель 4, 2026
 
 **Stack:** React + TypeScript + Node.js + PostgreSQL + Telegram Bot API
 
