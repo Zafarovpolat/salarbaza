@@ -5,8 +5,8 @@ import { prisma } from '../src/config/database'
 
 // Приветствие (шаг 1) — двуязычное, без выбора языка
 const WELCOME_TEXT = `
-🌿 Assalomu alaykum, Decor House botiga xush kelibsiz!
-Здравствуйте, добро пожаловать в бот Decor House!
+🌿 Assalomu alaykum, Decor Market botiga xush kelibsiz!
+Здравствуйте, добро пожаловать в бот Decor Market!
 
 Bu yerda siz dekor mahsulotlarimizni ko'rib chiqishingiz va onlayn do'konimizga o'tishingiz mumkin.
 Здесь вы можете посмотреть наши декоративные товары и перейти в интернет-магазин.

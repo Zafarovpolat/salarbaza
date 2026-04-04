@@ -1,5 +1,5 @@
 {
-    "name": "dekorhouse-backend",
+    "name": "decormarket-backend",
     "version": "1.0.0",
     "private": true,
     "main": "dist/src/server.js",

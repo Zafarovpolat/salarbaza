@@ -70,7 +70,7 @@ export const useUserStore = create<UserState>()(
             logout: () => set({ user: null, isAuthenticated: false }),
         }),
         {
-            name: 'dekorhouse-user',
+            name: 'decormarket-user',
         }
     )
 )

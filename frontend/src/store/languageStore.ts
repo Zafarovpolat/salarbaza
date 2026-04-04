@@ -160,7 +160,7 @@ export const useLanguageStore = create<LanguageState>()(
             },
         }),
         {
-            name: 'dekorhouse-language',
+            name: 'decormarket-language',
         }
     )
 )

@@ -1,8 +1,8 @@
-# 🎨 DekorHouse Design System
+# 🎨 DecorMarket Design System
 
 ## Документ дизайн-системы
 
-**Источник:** Лендинг decorhouse.uz
+**Источник:** Лендинг decormarket.uz
 **Применение:** Telegram Mini App (React + Tailwind)
 **Версия:** 1.0
 **Дата:** Февраль 2026
