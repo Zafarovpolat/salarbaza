@@ -43,7 +43,7 @@ export function CategoryList({
         snap-x snap-mandatory
       ">
         {categories.map((category, index) => (
-          <div key={category.id} className="flex-none w-[160px] md:w-[200px] snap-start">
+          <div key={category.id} className="flex-none snap-start">
             <CategoryCard
               category={category}
               index={index}
