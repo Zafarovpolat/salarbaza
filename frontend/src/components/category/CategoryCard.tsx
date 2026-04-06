@@ -6,164 +6,165 @@ import { useLanguageStore } from '@/store/languageStore'
 import { getCategoryName } from '@/utils/helpers'
 
 // ── SVG иконки по теме ────────────────────────────────────────────────────
-const CategoryIcon = ({ slug, size = 48 }: { slug: string; size?: number }) => {
+const CategoryIcon = ({ slug, size = 36 }: { slug: string; size?: number }) => {
   const s = slug.toLowerCase()
 
-  // Декоративные ветки / Branch
+  // forest=#1B4332  sage=#40916C  terracotta=#C67C4E  mint=#52B788
+
   if (s.includes('branch') || s.includes('shox') || s.includes('vetk')) {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <path d="M24 40 C24 40 12 28 12 18 C12 11 17 7 24 7 C31 7 36 11 36 18 C36 28 24 40 24 40Z"
-          stroke="#2C5F2E" strokeWidth="2" fill="none"/>
-        <path d="M24 20 L16 12M24 26 L34 16M24 32 L18 26"
-          stroke="#2C5F2E" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="24" y1="7" x2="24" y2="40"
-          stroke="#2C5F2E" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="24" y1="42" x2="24" y2="8"
+          stroke="#1B4332" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M24 28 Q16 22 10 16"
+          stroke="#40916C" strokeWidth="2" strokeLinecap="round" fill="none"/>
+        <path d="M24 22 Q32 16 38 10"
+          stroke="#40916C" strokeWidth="2" strokeLinecap="round" fill="none"/>
+        <path d="M24 34 Q18 30 14 26"
+          stroke="#40916C" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+        <ellipse cx="10" cy="14" rx="5" ry="4"
+          fill="#40916C" opacity="0.7" transform="rotate(-30 10 14)"/>
+        <ellipse cx="38" cy="9" rx="5" ry="4"
+          fill="#52B788" opacity="0.7" transform="rotate(20 38 9)"/>
+        <ellipse cx="13" cy="25" rx="4" ry="3"
+          fill="#40916C" opacity="0.6" transform="rotate(-20 13 25)"/>
       </svg>
     )
   }
 
-  // Мини-цветы / Mini flowers
   if (s.includes('gul') || s.includes('tsvet') || s.includes('flower') || s.includes('mini')) {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="20" r="4" fill="#8B5E3C"/>
-        <ellipse cx="24" cy="12" rx="4" ry="6" fill="#2C5F2E" opacity="0.8"/>
-        <ellipse cx="24" cy="28" rx="4" ry="6" fill="#2C5F2E" opacity="0.8"/>
-        <ellipse cx="16" cy="20" rx="6" ry="4" fill="#2C5F2E" opacity="0.8"/>
-        <ellipse cx="32" cy="20" rx="6" ry="4" fill="#2C5F2E" opacity="0.8"/>
-        <ellipse cx="18" cy="14" rx="4" ry="5" fill="#4a8c4f" opacity="0.6"
-          transform="rotate(-45 18 14)"/>
-        <ellipse cx="30" cy="14" rx="4" ry="5" fill="#4a8c4f" opacity="0.6"
-          transform="rotate(45 30 14)"/>
-        <rect x="22" y="28" width="4" height="10" rx="2" fill="#8B5E3C"/>
-        <ellipse cx="24" cy="40" rx="6" ry="2" fill="#8B5E3C" opacity="0.3"/>
+        <circle cx="24" cy="22" r="5" fill="#C67C4E"/>
+        <ellipse cx="24" cy="13" rx="4.5" ry="6" fill="#1B4332" opacity="0.85"/>
+        <ellipse cx="24" cy="31" rx="4.5" ry="6" fill="#1B4332" opacity="0.85"/>
+        <ellipse cx="15" cy="22" rx="6" ry="4.5" fill="#40916C" opacity="0.85"/>
+        <ellipse cx="33" cy="22" rx="6" ry="4.5" fill="#40916C" opacity="0.85"/>
+        <ellipse cx="17" cy="15" rx="4" ry="5"
+          fill="#52B788" opacity="0.65" transform="rotate(-45 17 15)"/>
+        <ellipse cx="31" cy="15" rx="4" ry="5"
+          fill="#52B788" opacity="0.65" transform="rotate(45 31 15)"/>
+        <rect x="22" y="31" width="4" height="9" rx="2" fill="#C67C4E"/>
+        <ellipse cx="24" cy="41" rx="5" ry="1.5" fill="#C67C4E" opacity="0.25"/>
       </svg>
     )
   }
 
-  // Сетки / Setka / Панели сетка
-  if (s.includes('setka') || s.includes('setk') || s.includes('panel') && s.includes('zelen')) {
+  if (s.includes('setka') || s.includes('setk')) {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <rect x="6" y="6" width="36" height="36" rx="4"
-          stroke="#2C5F2E" strokeWidth="2" fill="none"/>
-        <line x1="6" y1="18" x2="42" y2="18" stroke="#2C5F2E" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="6" y1="30" x2="42" y2="30" stroke="#2C5F2E" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="18" y1="6" x2="18" y2="42" stroke="#2C5F2E" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="30" y1="6" x2="30" y2="42" stroke="#2C5F2E" strokeWidth="1.5" opacity="0.6"/>
-        <circle cx="18" cy="18" r="2.5" fill="#4a8c4f"/>
-        <circle cx="30" cy="18" r="2.5" fill="#4a8c4f"/>
-        <circle cx="18" cy="30" r="2.5" fill="#4a8c4f"/>
-        <circle cx="30" cy="30" r="2.5" fill="#4a8c4f"/>
-        <circle cx="24" cy="24" r="3" fill="#2C5F2E"/>
+        <rect x="7" y="7" width="34" height="34" rx="5"
+          stroke="#1B4332" strokeWidth="2" fill="none"/>
+        <line x1="7" y1="18.3" x2="41" y2="18.3"
+          stroke="#40916C" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="7" y1="29.6" x2="41" y2="29.6"
+          stroke="#40916C" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="18.3" y1="7" x2="18.3" y2="41"
+          stroke="#40916C" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="29.6" y1="7" x2="29.6" y2="41"
+          stroke="#40916C" strokeWidth="1.5" opacity="0.7"/>
+        <circle cx="18.3" cy="18.3" r="2.5" fill="#52B788"/>
+        <circle cx="29.6" cy="18.3" r="2.5" fill="#52B788"/>
+        <circle cx="18.3" cy="29.6" r="2.5" fill="#52B788"/>
+        <circle cx="29.6" cy="29.6" r="2.5" fill="#52B788"/>
+        <circle cx="24" cy="24" r="3.5" fill="#1B4332"/>
       </svg>
     )
   }
 
-  // Моховые панели / Mox
   if (s.includes('mox') || s.includes('mokh') || s.includes('moss')) {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <rect x="6" y="14" width="36" height="24" rx="6"
-          fill="#2C5F2E" opacity="0.15" stroke="#2C5F2E" strokeWidth="2"/>
-        <circle cx="14" cy="22" r="5" fill="#2C5F2E" opacity="0.7"/>
-        <circle cx="24" cy="19" r="6" fill="#2C5F2E" opacity="0.9"/>
-        <circle cx="34" cy="22" r="5" fill="#2C5F2E" opacity="0.7"/>
-        <circle cx="19" cy="30" r="5" fill="#4a8c4f" opacity="0.8"/>
-        <circle cx="30" cy="30" r="5" fill="#4a8c4f" opacity="0.8"/>
-        <circle cx="14" cy="32" r="3" fill="#2C5F2E" opacity="0.5"/>
-        <circle cx="36" cy="31" r="3" fill="#2C5F2E" opacity="0.5"/>
+        <rect x="6" y="16" width="36" height="22" rx="7"
+          fill="#1B4332" opacity="0.12" stroke="#1B4332" strokeWidth="2"/>
+        <circle cx="14" cy="23" r="5.5" fill="#1B4332" opacity="0.75"/>
+        <circle cx="24" cy="20" r="7"   fill="#1B4332" opacity="0.9"/>
+        <circle cx="34" cy="23" r="5.5" fill="#1B4332" opacity="0.75"/>
+        <circle cx="19" cy="31" r="5"   fill="#40916C" opacity="0.8"/>
+        <circle cx="30" cy="31" r="5"   fill="#40916C" opacity="0.8"/>
+        <circle cx="12" cy="33" r="3"   fill="#52B788" opacity="0.6"/>
+        <circle cx="36" cy="33" r="3"   fill="#52B788" opacity="0.6"/>
       </svg>
     )
   }
 
-  // Кашпо и горшки / Kashpo / Gorshki
   if (s.includes('kashpo') || s.includes('gorshk') || s.includes('tuv') || s.includes('premium')) {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <path d="M16 18 L14 38 Q14 40 16 40 L32 40 Q34 40 34 38 L32 18 Z"
-          fill="#8B5E3C" opacity="0.2" stroke="#8B5E3C" strokeWidth="2"/>
-        <rect x="13" y="14" width="22" height="6" rx="3"
-          fill="#8B5E3C" opacity="0.8"/>
-        <path d="M20 14 C20 10 22 8 24 8 C26 8 28 10 28 14"
-          stroke="#2C5F2E" strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <circle cx="24" cy="7" r="2" fill="#2C5F2E"/>
-        <ellipse cx="24" cy="10" rx="3" ry="4" fill="#2C5F2E" opacity="0.7"/>
+        <path d="M15 19 L13 38 Q13 40 16 40 L32 40 Q35 40 35 38 L33 19 Z"
+          fill="#C67C4E" opacity="0.2" stroke="#C67C4E" strokeWidth="2"/>
+        <rect x="12" y="15" width="24" height="6" rx="3"
+          fill="#C67C4E" opacity="0.85"/>
+        <path d="M20 15 C20 9 22 6 24 6 C26 6 28 9 28 15"
+          stroke="#1B4332" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+        <circle cx="24" cy="5" r="2.5" fill="#40916C"/>
+        <ellipse cx="24" cy="10" rx="4" ry="5" fill="#40916C" opacity="0.7"/>
       </svg>
     )
   }
 
-  // Декоративные деревья / Trees
-  if (s.includes('tree') || s.includes('daraxt') || s.includes('derevo') || s.includes('trees')) {
+  if (s.includes('tree') || s.includes('daraxt') || s.includes('derevo') || s === 'trees') {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <polygon points="24,6 36,26 12,26" fill="#2C5F2E" opacity="0.9"/>
-        <polygon points="24,16 38,34 10,34" fill="#2C5F2E" opacity="0.8"/>
-        <rect x="21" y="34" width="6" height="8" rx="2" fill="#8B5E3C"/>
-        <circle cx="18" cy="20" r="3" fill="#4a8c4f" opacity="0.6"/>
-        <circle cx="30" cy="22" r="2.5" fill="#4a8c4f" opacity="0.6"/>
+        <polygon points="24,5 37,25 11,25" fill="#1B4332" opacity="0.9"/>
+        <polygon points="24,15 39,34 9,34"  fill="#40916C" opacity="0.85"/>
+        <rect x="21" y="34" width="6" height="8" rx="2" fill="#C67C4E"/>
+        <circle cx="17" cy="19" r="2.5" fill="#52B788" opacity="0.7"/>
+        <circle cx="31" cy="21" r="2"   fill="#52B788" opacity="0.7"/>
       </svg>
     )
   }
 
-  // Декоративная зелень / Kompozitsiya / точка slug
-  if (s.includes('kompozit') || s.includes('zelen') || s.includes('green') || s === '.') {
+  if (s.includes('kompozit') || s.includes('zelen') || s === '.') {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <path d="M24 38 C24 38 10 26 10 16 C10 10 16 6 24 6"
-          stroke="#2C5F2E" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-        <path d="M24 38 C24 38 38 26 38 16 C38 10 32 6 24 6"
-          stroke="#4a8c4f" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-        <ellipse cx="16" cy="14" rx="7" ry="5" fill="#2C5F2E" opacity="0.7"
-          transform="rotate(-30 16 14)"/>
-        <ellipse cx="32" cy="14" rx="7" ry="5" fill="#4a8c4f" opacity="0.7"
-          transform="rotate(30 32 14)"/>
-        <ellipse cx="24" cy="10" rx="6" ry="4" fill="#2C5F2E" opacity="0.9"/>
+        <path d="M24 38 C24 38 9 25 9 15 C9 9 15 5 24 5"
+          stroke="#1B4332" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+        <path d="M24 38 C24 38 39 25 39 15 C39 9 33 5 24 5"
+          stroke="#40916C" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+        <ellipse cx="15" cy="13" rx="7" ry="5"
+          fill="#1B4332" opacity="0.75" transform="rotate(-30 15 13)"/>
+        <ellipse cx="33" cy="13" rx="7" ry="5"
+          fill="#40916C" opacity="0.75" transform="rotate(30 33 13)"/>
+        <ellipse cx="24" cy="9"  rx="6" ry="4" fill="#1B4332" opacity="0.9"/>
         <line x1="24" y1="38" x2="24" y2="44"
-          stroke="#8B5E3C" strokeWidth="2.5" strokeLinecap="round"/>
+          stroke="#C67C4E" strokeWidth="2.5" strokeLinecap="round"/>
       </svg>
     )
   }
 
-  // Подвесные растения / Visyachka
-  if (s.includes('visyach') || s.includes('osma') || s.includes('podves') || s.includes('hang')) {
+  if (s.includes('visyach') || s.includes('osma') || s.includes('podves')) {
     return (
       <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-        <line x1="24" y1="4" x2="24" y2="14"
-          stroke="#8B5E3C" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="14" y1="4" x2="24" y2="4"
-          stroke="#8B5E3C" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="34" y1="4" x2="24" y2="4"
-          stroke="#8B5E3C" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M14 14 Q24 10 34 14 Q38 22 34 28 Q24 34 14 28 Q10 22 14 14Z"
-          fill="#2C5F2E" opacity="0.85"/>
-        <path d="M18 18 Q24 14 30 18" stroke="#4a8c4f" strokeWidth="1.5"
-          fill="none" strokeLinecap="round"/>
-        <path d="M16 24 Q24 20 32 24" stroke="#4a8c4f" strokeWidth="1.5"
-          fill="none" strokeLinecap="round"/>
-        <path d="M18 30 Q24 27 30 30"
-          stroke="#4a8c4f" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <line x1="20" y1="34" x2="18" y2="42"
-          stroke="#2C5F2E" strokeWidth="1.5" strokeLinecap="round"/>
-        <line x1="24" y1="34" x2="24" y2="43"
-          stroke="#2C5F2E" strokeWidth="1.5" strokeLinecap="round"/>
-        <line x1="28" y1="34" x2="30" y2="42"
-          stroke="#2C5F2E" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="12" y1="5" x2="36" y2="5"
+          stroke="#C67C4E" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="24" y1="5" x2="24" y2="14"
+          stroke="#C67C4E" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M13 14 Q24 9 35 14 Q39 23 35 30 Q24 36 13 30 Q9 23 13 14Z"
+          fill="#1B4332" opacity="0.85"/>
+        <path d="M17 19 Q24 15 31 19"
+          stroke="#52B788" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M15 25 Q24 21 33 25"
+          stroke="#52B788" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <line x1="19" y1="35" x2="17" y2="43"
+          stroke="#40916C" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="24" y1="36" x2="24" y2="44"
+          stroke="#40916C" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="29" y1="35" x2="31" y2="43"
+          stroke="#40916C" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     )
   }
 
-  // Default fallback
+  // Default
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="20" r="10" fill="#2C5F2E" opacity="0.8"/>
-      <path d="M20 30 Q24 28 28 30 L26 42 Q24 44 22 42 Z"
-        fill="#8B5E3C" opacity="0.8"/>
-      <path d="M17 16 Q24 10 31 16" stroke="#4a8c4f" strokeWidth="1.5"
+      <ellipse cx="24" cy="22" rx="11" ry="13" fill="#1B4332" opacity="0.85"/>
+      <path d="M19 18 Q24 13 29 18" stroke="#52B788" strokeWidth="1.5"
         fill="none" strokeLinecap="round"/>
-      <path d="M15 20 Q24 14 33 20" stroke="#4a8c4f" strokeWidth="1.5"
+      <path d="M17 23 Q24 18 31 23" stroke="#52B788" strokeWidth="1.5"
         fill="none" strokeLinecap="round"/>
+      <rect x="22" y="33" width="4" height="8" rx="2" fill="#C67C4E"/>
     </svg>
   )
 }
@@ -188,42 +189,50 @@ export const CategoryCard = memo(function CategoryCard({
   const hasImage = category.image && category.image.trim() !== ''
 
   // ===== CIRCLE VARIANT =====
-  if (variant === 'circle') {
-    return (
-      <motion.button
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
-        onClick={() => navigate(`/catalog/${category.slug}`)}
-        className="flex flex-col items-center gap-2.5 min-w-[76px]"
-      >
-        <div className="
-          w-[76px] h-[76px]
-          bg-ivory rounded-full
-          flex items-center justify-center
-          overflow-hidden
-          border-2 border-stone/30
-          hover:border-sage/50
-          hover:shadow-card
-          transition-all duration-300
-        ">
-          {hasImage ? (
-            <img
-              src={category.image}
-              alt={name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <CategoryIcon slug={category.slug} size={40} />
-          )}
-        </div>
-        <span className="text-xs text-dark-gray font-medium text-center line-clamp-2">
-          {name}
-        </span>
-      </motion.button>
-    )
-  }
+if (variant === 'circle') {
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      onClick={() => navigate(`/catalog/${category.slug}`)}
+      className="flex flex-col items-center gap-2 min-w-[72px] max-w-[72px]"
+    >
+      {/* Круг */}
+      <div className="
+        w-[68px] h-[68px]
+        rounded-full
+        flex items-center justify-center
+        overflow-hidden
+        border-2 border-stone/40
+        transition-all duration-300
+        hover:border-sage/60
+        hover:shadow-soft
+        bg-ivory
+      ">
+        {hasImage ? (
+          <img
+            src={category.image}
+            alt={name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <CategoryIcon slug={category.slug} size={36} />
+        )}
+      </div>
+
+      {/* Название */}
+      <span className="
+        text-[11px] text-dark-gray font-medium
+        text-center leading-[1.3]
+        line-clamp-2 w-full
+      ">
+        {name}
+      </span>
+    </motion.button>
+  )
+}
 
   // ===== CARD VARIANT =====
   return (
