@@ -47,7 +47,7 @@ export function CategoryList({
             <CategoryCard
               category={category}
               index={index}
-              variant="card"
+              variant="circle"
             />
           </div>
         ))}
