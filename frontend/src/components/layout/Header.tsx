@@ -75,7 +75,13 @@ const handleContactAdmin = () => {
           WebApp.openTelegramLink(`https://t.me/${ADMIN_USERNAME}`)
         }
         if (buttonId === "call") {
-          WebApp.openLink("tel:+998993681100")
+          // Показываем номер телефона для копирования
+          // В Telegram Mini App нельзя напрямую инициировать звонок
+          WebApp.showAlert(
+            language === "uz"
+              ? "📞 Telefon raqam:\n\n+998 99 368 11 00\n\nRaqamni nusxalab, qo'ng'iroq qiling"
+              : "📞 Номер телефона:\n\n+998 99 368 11 00\n\nСкопируйте номер и позвоните"
+          )
         }
       }
     )
