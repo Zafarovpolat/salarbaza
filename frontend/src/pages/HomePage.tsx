@@ -122,28 +122,78 @@ export function HomePage() {
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
-        {/* Декоративные органические элементы */}
+        {/* Базовые риплы */}
+        <div className="absolute -right-[60px] -top-10 w-[350px] h-[350px] rounded-full bg-white/5 z-[1]" />
+        <div className="absolute right-10 top-[60px] w-[180px] h-[180px] rounded-full bg-white/[0.04] z-[1]" />
+
+        {/* Декоративные floating SVG элементы поверх */}
         <motion.div
           animate={{
-            scale: [1, 1.1, 1],
+            y: [0, -15, 0],
             rotate: [0, 5, 0],
           }}
           transition={{
-            duration: 8,
+            duration: 4,
             repeat: Infinity,
             ease: "easeInOut",
           }}
-          className="absolute -right-[80px] -top-20 w-[400px] h-[400px] z-[1]"
-          style={{
-            background: "radial-gradient(circle at 30% 40%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, transparent 70%)",
-            borderRadius: "63% 37% 54% 46% / 55% 48% 52% 45%",
-            filter: "blur(1px)",
-          }}
-        />
+          className="absolute right-[60px] top-[20px] z-[3]"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-mint/20 blur-xl rounded-full" />
+            <div className="relative w-16 h-16 bg-gradient-to-br from-mint/40 to-sage/30 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C12 2 8 6 8 10C8 12.2091 9.79086 14 12 14C14.2091 14 16 12.2091 16 10C16 6 12 2 12 2Z" fill="url(#leaf1)" />
+                <path d="M12 14C12 14 8 18 8 22H16C16 18 12 14 12 14Z" fill="url(#leaf2)" />
+                <defs>
+                  <linearGradient id="leaf1" x1="8" y1="2" x2="16" y2="14" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#B4E7D7" />
+                    <stop offset="1" stopColor="#6B9E87" />
+                  </linearGradient>
+                  <linearGradient id="leaf2" x1="8" y1="14" x2="16" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#88C3A9" />
+                    <stop offset="1" stopColor="#4A6B5A" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </motion.div>
+
         <motion.div
           animate={{
-            scale: [1, 1.15, 1],
+            y: [0, -12, 0],
             rotate: [0, -8, 0],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.5,
+          }}
+          className="absolute right-[150px] top-[100px] z-[3]"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-terracotta/15 blur-lg rounded-full" />
+            <div className="relative w-12 h-12 bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/25 shadow-md">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 3C12 3 16 7 16 11C16 13.2091 14.2091 15 12 15C9.79086 15 8 13.2091 8 11C8 7 12 3 12 3Z" fill="url(#leaf3)" opacity="0.9" />
+                <ellipse cx="12" cy="9" rx="3" ry="4" fill="white" fillOpacity="0.15" />
+                <defs>
+                  <linearGradient id="leaf3" x1="8" y1="3" x2="16" y2="15" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#F0F4F1" stopOpacity="0.9" />
+                    <stop offset="1" stopColor="#B4E7D7" stopOpacity="0.7" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          animate={{
+            y: [0, -10, 0],
+            scale: [1, 1.05, 1],
           }}
           transition={{
             duration: 6,
@@ -151,16 +201,37 @@ export function HomePage() {
             ease: "easeInOut",
             delay: 1,
           }}
-          className="absolute right-4 top-12 w-[220px] h-[220px] z-[1]"
-          style={{
-            background: "radial-gradient(circle at 60% 50%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 60%, transparent 80%)",
-            borderRadius: "47% 53% 61% 39% / 43% 37% 63% 57%",
-            filter: "blur(0.5px)",
-          }}
+          className="absolute right-[25px] top-[140px] z-[3]"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-warning/20 blur-md rounded-full" />
+            <div className="relative w-10 h-10 bg-gradient-to-br from-ivory/40 to-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/20 shadow-sm">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="8" fill="url(#circle)" />
+                <circle cx="12" cy="12" r="5" fill="white" fillOpacity="0.2" />
+                <circle cx="12" cy="12" r="2" fill="white" fillOpacity="0.4" />
+                <defs>
+                  <radialGradient id="circle" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12 12) rotate(90) scale(8)">
+                    <stop stopColor="#F0F4F1" stopOpacity="0.8" />
+                    <stop offset="1" stopColor="#B4E7D7" stopOpacity="0.5" />
+                  </radialGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Маленькие светящиеся точки */}
+        <motion.div
+          animate={{ opacity: [0.3, 0.8, 0.3], scale: [1, 1.2, 1] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute right-[100px] top-[60px] w-2 h-2 rounded-full bg-mint shadow-[0_0_10px_rgba(180,231,215,0.6)] z-[2]"
         />
-        {/* Маленькие акцентные точки */}
-        <div className="absolute right-[180px] top-[140px] w-3 h-3 rounded-full bg-mint/30 z-[1]" />
-        <div className="absolute right-[120px] top-[260px] w-2 h-2 rounded-full bg-white/20 z-[1]" />
+        <motion.div
+          animate={{ opacity: [0.4, 0.9, 0.4], scale: [1, 1.3, 1] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
+          className="absolute right-[180px] top-[140px] w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)] z-[2]"
+        />
 
         <div className="relative z-[2] p-7 md:p-10 text-white w-full">
           <motion.div
