@@ -123,83 +123,84 @@ export function HomePage() {
           }}
         />
         {/* Концентрические анимированные риплы с декором в центре */}
-        <div className="absolute right-8 top-8 w-[300px] h-[300px] z-[1]">
-          {/* Большой рипл */}
-          <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              opacity: [0.05, 0.08, 0.05],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute inset-0 rounded-full bg-white"
-          />
+        <div className="absolute right-[-60px] top-[-60px] w-[300px] h-[300px] z-[1]">
+  {/* Большой рипл */}
+  <motion.div
+    animate={{
+      scale: [1, 1.1, 1],
+      opacity: [0.05, 0.08, 0.05],
+    }}
+    transition={{
+      duration: 4,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }}
+    className="absolute inset-0 rounded-full bg-white"
+  />
 
-          {/* Средний рипл */}
-          <motion.div
-            animate={{
-              scale: [1, 1.15, 1],
-              opacity: [0.04, 0.07, 0.04],
-            }}
-            transition={{
-              duration: 5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.5,
-            }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] rounded-full bg-white"
-          />
+  {/* Средний рипл (Исправлено центрирование) */}
+  <motion.div
+    animate={{
+      scale: [1, 1.15, 1],
+      opacity: [0.04, 0.07, 0.04],
+    }}
+    transition={{
+      duration: 5,
+      repeat: Infinity,
+      ease: "easeInOut",
+      delay: 0.5,
+    }}
+    className="absolute inset-0 m-auto w-[200px] h-[200px] rounded-full bg-white"
+  />
 
-          {/* Маленький рипл */}
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.06, 0.1, 0.06],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120px] h-[120px] rounded-full bg-mint"
-          />
+  {/* Маленький рипл (Исправлено центрирование) */}
+  <motion.div
+    animate={{
+      scale: [1, 1.2, 1],
+      opacity: [0.06, 0.1, 0.06],
+    }}
+    transition={{
+      duration: 3,
+      repeat: Infinity,
+      ease: "easeInOut",
+      delay: 1,
+    }}
+    className="absolute inset-0 m-auto w-[120px] h-[120px] rounded-full bg-mint"
+  />
 
-          {/* Белый SVG декор в центре */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-            <motion.div
-              animate={{
-                rotate: [0, 360],
-                scale: [1, 1.05, 1],
-              }}
-              transition={{
-                duration: 20,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Центральный цветок/звезда */}
-                <circle cx="24" cy="24" r="4" fill="white" opacity="0.9" />
+  {/* Белый SVG декор в центре (Использован flex для надежного центрирования) */}
+  <div className="absolute inset-0 flex items-center justify-center z-10">
+    <motion.div
+      animate={{
+        rotate: [0, 360],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{
+        duration: 20,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+    >
+      {/* Размер увеличен с 48 до 64. viewBox оставлен прежним для правильного масштабирования */}
+      <svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Центральный цветок/звезда */}
+        <circle cx="24" cy="24" r="4" fill="white" opacity="0.9" />
 
-                {/* Лепестки */}
-                <path d="M24 8C24 8 20 14 20 18C20 20.2091 21.7909 22 24 22C26.2091 22 28 20.2091 28 18C28 14 24 8 24 8Z" fill="white" opacity="0.7" />
-                <path d="M40 24C40 24 34 20 30 20C27.7909 20 26 21.7909 26 24C26 26.2091 27.7909 28 30 28C34 28 40 24 40 24Z" fill="white" opacity="0.7" />
-                <path d="M24 40C24 40 28 34 28 30C28 27.7909 26.2091 26 24 26C21.7909 26 20 27.7909 20 30C20 34 24 40 24 40Z" fill="white" opacity="0.7" />
-                <path d="M8 24C8 24 14 28 18 28C20.2091 28 22 26.2091 22 24C22 21.7909 20.2091 20 18 20C14 20 8 24 8 24Z" fill="white" opacity="0.7" />
+        {/* Лепестки */}
+        <path d="M24 8C24 8 20 14 20 18C20 20.2091 21.7909 22 24 22C26.2091 22 28 20.2091 28 18C28 14 24 8 24 8Z" fill="white" opacity="0.7" />
+        <path d="M40 24C40 24 34 20 30 20C27.7909 20 26 21.7909 26 24C26 26.2091 27.7909 28 30 28C34 28 40 24 40 24Z" fill="white" opacity="0.7" />
+        <path d="M24 40C24 40 28 34 28 30C28 27.7909 26.2091 26 24 26C21.7909 26 20 27.7909 20 30C20 34 24 40 24 40Z" fill="white" opacity="0.7" />
+        <path d="M8 24C8 24 14 28 18 28C20.2091 28 22 26.2091 22 24C22 21.7909 20.2091 20 18 20C14 20 8 24 8 24Z" fill="white" opacity="0.7" />
 
-                {/* Диагональные лепестки */}
-                <path d="M32 32C32 32 28 28 26 28C24.8954 28 24 28.8954 24 30C24 31.1046 24.8954 32 26 32C28 32 32 32 32 32Z" fill="white" opacity="0.5" />
-                <path d="M16 16C16 16 20 20 22 20C23.1046 20 24 19.1046 24 18C24 16.8954 23.1046 16 22 16C20 16 16 16 16 16Z" fill="white" opacity="0.5" />
-                <path d="M32 16C32 16 28 20 26 20C24.8954 20 24 19.1046 24 18C24 16.8954 24.8954 16 26 16C28 16 32 16 32 16Z" fill="white" opacity="0.5" />
-                <path d="M16 32C16 32 20 28 22 28C23.1046 28 24 28.8954 24 30C24 31.1046 23.1046 32 22 32C20 32 16 32 16 32Z" fill="white" opacity="0.5" />
-              </svg>
-            </motion.div>
-          </div>
-        </div>
+        {/* Диагональные лепестки */}
+        <path d="M32 32C32 32 28 28 26 28C24.8954 28 24 28.8954 24 30C24 31.1046 24.8954 32 26 32C28 32 32 32 32 32Z" fill="white" opacity="0.5" />
+        <path d="M16 16C16 16 20 20 22 20C23.1046 20 24 19.1046 24 18C24 16.8954 23.1046 16 22 16C20 16 16 16 16 16Z" fill="white" opacity="0.5" />
+        <path d="M32 16C32 16 28 20 26 20C24.8954 20 24 19.1046 24 18C24 16.8954 24.8954 16 26 16C28 16 32 16 32 16Z" fill="white" opacity="0.5" />
+        <path d="M16 32C16 32 20 28 22 28C23.1046 28 24 28.8954 24 30C24 31.1046 23.1046 32 22 32C20 32 16 32 16 32Z" fill="white" opacity="0.5" />
+      </svg>
+    </motion.div>
+  </div>
+</div>
 
         <div className="relative z-[2] p-7 md:p-10 text-white w-full">
           <motion.div
