@@ -1,16 +1,16 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, ChevronLeft, ShoppingBag } from "lucide-react";
+import { Search, ChevronLeft, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLanguageStore } from "@/store/languageStore";
-import { useCartStore } from "@/store/cartStore";
+
+const PHONE = "+998993681100";
+const PHONE_DISPLAY = "+998 99 368 11 00";
 
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language, setLanguage } = useLanguageStore();
-  const cartItems = useCartStore((state) => state.items);
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const [scrolled, setScrolled] = useState(false);
 
   const isHome = location.pathname === "/";
@@ -51,6 +51,7 @@ export function Header() {
         ${scrolled ? "shadow-soft" : ""}
       `}
     >
+      {/* ── Левая часть ── */}
       <div className="flex items-center gap-2">
         {!isHome && (
           <motion.button
@@ -81,7 +82,9 @@ export function Header() {
         ) : null}
       </div>
 
+      {/* ── Правая часть ── */}
       <div className="flex items-center gap-2">
+        {/* Переключатель языка */}
         <div className="flex bg-sand rounded-full p-[3px] gap-0.5">
           <button
             onClick={() => setLanguage("ru")}
@@ -105,6 +108,7 @@ export function Header() {
           </button>
         </div>
 
+        {/* Поиск — только на главной */}
         {isHome && (
           <motion.button
             whileTap={{ scale: 0.9 }}
@@ -115,22 +119,22 @@ export function Header() {
           </motion.button>
         )}
 
-        <motion.button
+        {/* ── Кнопка звонка (вместо корзины) ── */}
+        <motion.a
+          href={`tel:${PHONE}`}
           whileTap={{ scale: 0.9 }}
-          onClick={() => navigate("/cart")}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-sand transition-colors duration-300 text-dark-gray relative"
+          title={PHONE_DISPLAY}
+          className="
+            w-10 h-10 flex items-center justify-center
+            rounded-full
+            bg-forest text-white
+            hover:bg-emerald
+            transition-colors duration-300
+            shadow-button-green
+          "
         >
-          <ShoppingBag className="w-[22px] h-[22px]" strokeWidth={1.5} />
-          {cartCount > 0 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute top-1 right-1 w-[18px] h-[18px] bg-terracotta text-white rounded-full text-[10px] font-bold flex items-center justify-center leading-none"
-            >
-              {cartCount > 99 ? "99+" : cartCount}
-            </motion.span>
-          )}
-        </motion.button>
+          <Phone className="w-[18px] h-[18px]" strokeWidth={1.8} />
+        </motion.a>
       </div>
     </header>
   );

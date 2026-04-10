@@ -122,8 +122,59 @@ export function HomePage() {
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
-        <div className="absolute -right-[60px] -top-10 w-[350px] h-[350px] rounded-full bg-white/5 z-[1]" />
-        <div className="absolute right-10 top-[60px] w-[180px] h-[180px] rounded-full bg-white/[0.04] z-[1]" />
+        <div className="absolute right-0 top-0 z-[1] opacity-[0.12] pointer-events-none">
+  <svg
+    width="320"
+    height="320"
+    viewBox="0 0 320 320"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Большая ветка по диагонали */}
+    <path
+      d="M280 20 C240 80 180 120 160 200 C150 240 155 280 160 320"
+      stroke="white"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      fill="none"
+    />
+    {/* Боковые ветви — левые */}
+    <path d="M220 65 C200 55 175 58 160 72" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
+    <path d="M193 95 C170 82 148 88 138 104" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
+    <path d="M178 125 C158 115 140 122 132 138" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
+    <path d="M168 158 C150 150 135 158 128 173" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
+    {/* Боковые ветви — правые */}
+    <path d="M248 45 C262 38 278 44 285 58" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
+    <path d="M228 78 C244 68 264 72 272 86" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
+    <path d="M206 110 C220 100 240 106 248 120" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
+
+    {/* Листья — маленькие эллипсы на кончиках */}
+    <ellipse cx="156" cy="74" rx="10" ry="6" fill="white" opacity="0.6" transform="rotate(-30 156 74)"/>
+    <ellipse cx="134" cy="106" rx="10" ry="6" fill="white" opacity="0.5" transform="rotate(-20 134 106)"/>
+    <ellipse cx="128" cy="140" rx="9" ry="5" fill="white" opacity="0.5" transform="rotate(-15 128 140)"/>
+    <ellipse cx="124" cy="175" rx="8" ry="5" fill="white" opacity="0.4" transform="rotate(-10 124 175)"/>
+    <ellipse cx="288" cy="60" rx="10" ry="6" fill="white" opacity="0.5" transform="rotate(20 288 60)"/>
+    <ellipse cx="275" cy="88" rx="10" ry="6" fill="white" opacity="0.5" transform="rotate(15 275 88)"/>
+    <ellipse cx="252" cy="122" rx="9" ry="5" fill="white" opacity="0.4" transform="rotate(10 252 122)"/>
+
+    {/* Маленький орнамент — точки-цветы */}
+    <circle cx="295" cy="25" r="2" fill="white" opacity="0.5"/>
+    <circle cx="305" cy="15" r="1.5" fill="white" opacity="0.3"/>
+    <circle cx="310" cy="30" r="1" fill="white" opacity="0.3"/>
+    <circle cx="300" cy="8"  r="1.5" fill="white" opacity="0.25"/>
+
+    {/* Второстепенная тонкая ветка справа */}
+    <path
+      d="M310 0 C295 40 305 80 290 120 C278 150 265 160 255 180"
+      stroke="white"
+      strokeWidth="0.8"
+      strokeLinecap="round"
+      fill="none"
+      opacity="0.6"
+    />
+    <ellipse cx="252" cy="182" rx="7" ry="4" fill="white" opacity="0.3" transform="rotate(15 252 182)"/>
+  </svg>
+</div>
 
         <div className="relative z-[2] p-7 md:p-10 text-white w-full">
           <motion.div
