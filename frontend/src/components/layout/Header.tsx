@@ -1,11 +1,11 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, ChevronLeft, Phone } from "lucide-react";
+import { Search, ChevronLeft, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLanguageStore } from "@/store/languageStore";
+import WebApp from "@twa-dev/sdk";
 
-const PHONE = "+998993681100";
-const PHONE_DISPLAY = "+998 99 368 11 00";
+const ADMIN_USERNAME = "DekorHouseAdmin"; // без @
 
 export function Header() {
   const navigate = useNavigate();
@@ -37,6 +37,14 @@ export function Header() {
   };
 
   const pageTitle = getPageTitle();
+
+  const handleContactAdmin = () => {
+    try {
+      WebApp.openTelegramLink(`https://t.me/${ADMIN_USERNAME}`);
+    } catch {
+      window.open(`https://t.me/${ADMIN_USERNAME}`, "_blank");
+    }
+  };
 
   return (
     <header
@@ -88,21 +96,19 @@ export function Header() {
         <div className="flex bg-sand rounded-full p-[3px] gap-0.5">
           <button
             onClick={() => setLanguage("ru")}
-            className={`px-3 py-1.5 border-none rounded-full font-sans text-xs font-semibold uppercase tracking-[0.05em] cursor-pointer transition-all duration-300 ${
-              language === "ru"
+            className={`px-3 py-1.5 border-none rounded-full font-sans text-xs font-semibold uppercase tracking-[0.05em] cursor-pointer transition-all duration-300 ${language === "ru"
                 ? "bg-forest text-white"
                 : "bg-transparent text-medium-gray hover:text-dark-gray"
-            }`}
+              }`}
           >
             Рус
           </button>
           <button
             onClick={() => setLanguage("uz")}
-            className={`px-3 py-1.5 border-none rounded-full font-sans text-xs font-semibold uppercase tracking-[0.05em] cursor-pointer transition-all duration-300 ${
-              language === "uz"
+            className={`px-3 py-1.5 border-none rounded-full font-sans text-xs font-semibold uppercase tracking-[0.05em] cursor-pointer transition-all duration-300 ${language === "uz"
                 ? "bg-forest text-white"
                 : "bg-transparent text-medium-gray hover:text-dark-gray"
-            }`}
+              }`}
           >
             O'zb
           </button>
@@ -119,22 +125,23 @@ export function Header() {
           </motion.button>
         )}
 
-        {/* ── Кнопка звонка (вместо корзины) ── */}
-        <motion.a
-          href={`tel:${PHONE}`}
+        {/* ── Кнопка написать админу ── */}
+        <motion.button
           whileTap={{ scale: 0.9 }}
-          title={PHONE_DISPLAY}
+          onClick={handleContactAdmin}
+          title="Написать администратору"
           className="
             w-10 h-10 flex items-center justify-center
             rounded-full
             bg-forest text-white
             hover:bg-emerald
-            transition-colors duration-300
+            active:scale-95
+            transition-all duration-300
             shadow-button-green
           "
         >
-          <Phone className="w-[18px] h-[18px]" strokeWidth={1.8} />
-        </motion.a>
+          <MessageCircle className="w-[18px] h-[18px]" strokeWidth={1.8} />
+        </motion.button>
       </div>
     </header>
   );
