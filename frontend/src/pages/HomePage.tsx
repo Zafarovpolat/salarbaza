@@ -122,57 +122,80 @@ export function HomePage() {
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
-        <div className="absolute right-0 top-0 z-[1] opacity-[0.12] pointer-events-none">
+        {/* ===== HERO DECORATION ===== */}
+<div className="absolute right-0 top-0 z-[1] pointer-events-none select-none">
   <svg
-    width="320"
-    height="320"
-    viewBox="0 0 320 320"
+    width="340"
+    height="380"
+    viewBox="0 0 340 380"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    {/* Большая ветка по диагонали */}
+    {/* ── Риплы (оставляем) ── */}
+    <circle cx="280" cy="60"  r="180" stroke="white" strokeWidth="0.6" opacity="0.06"/>
+    <circle cx="280" cy="60"  r="140" stroke="white" strokeWidth="0.6" opacity="0.05"/>
+    <circle cx="280" cy="60"  r="100" stroke="white" strokeWidth="0.6" opacity="0.04"/>
+
+    {/* ── Главный стебель ── */}
     <path
-      d="M280 20 C240 80 180 120 160 200 C150 240 155 280 160 320"
+      d="M290 -10 C275 40 255 70 240 110 C225 150 222 190 228 240"
       stroke="white"
-      strokeWidth="1.5"
+      strokeWidth="1.8"
       strokeLinecap="round"
       fill="none"
+      opacity="0.35"
     />
-    {/* Боковые ветви — левые */}
-    <path d="M220 65 C200 55 175 58 160 72" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
-    <path d="M193 95 C170 82 148 88 138 104" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
-    <path d="M178 125 C158 115 140 122 132 138" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
-    <path d="M168 158 C150 150 135 158 128 173" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
-    {/* Боковые ветви — правые */}
-    <path d="M248 45 C262 38 278 44 285 58" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
-    <path d="M228 78 C244 68 264 72 272 86" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
-    <path d="M206 110 C220 100 240 106 248 120" stroke="white" strokeWidth="1" strokeLinecap="round" fill="none"/>
 
-    {/* Листья — маленькие эллипсы на кончиках */}
-    <ellipse cx="156" cy="74" rx="10" ry="6" fill="white" opacity="0.6" transform="rotate(-30 156 74)"/>
-    <ellipse cx="134" cy="106" rx="10" ry="6" fill="white" opacity="0.5" transform="rotate(-20 134 106)"/>
-    <ellipse cx="128" cy="140" rx="9" ry="5" fill="white" opacity="0.5" transform="rotate(-15 128 140)"/>
-    <ellipse cx="124" cy="175" rx="8" ry="5" fill="white" opacity="0.4" transform="rotate(-10 124 175)"/>
-    <ellipse cx="288" cy="60" rx="10" ry="6" fill="white" opacity="0.5" transform="rotate(20 288 60)"/>
-    <ellipse cx="275" cy="88" rx="10" ry="6" fill="white" opacity="0.5" transform="rotate(15 275 88)"/>
-    <ellipse cx="252" cy="122" rx="9" ry="5" fill="white" opacity="0.4" transform="rotate(10 252 122)"/>
+    {/* ── Левые ветви ── */}
+    <path d="M272 32  C255 22 235 26 222 40"  stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.3"/>
+    <path d="M258 62  C238 50 218 56 208 72"  stroke="white" strokeWidth="1.1" strokeLinecap="round" opacity="0.28"/>
+    <path d="M246 94  C228 84 210 90 202 108" stroke="white" strokeWidth="1"   strokeLinecap="round" opacity="0.25"/>
+    <path d="M238 128 C222 118 206 126 200 143" stroke="white" strokeWidth="0.9" strokeLinecap="round" opacity="0.22"/>
 
-    {/* Маленький орнамент — точки-цветы */}
-    <circle cx="295" cy="25" r="2" fill="white" opacity="0.5"/>
-    <circle cx="305" cy="15" r="1.5" fill="white" opacity="0.3"/>
-    <circle cx="310" cy="30" r="1" fill="white" opacity="0.3"/>
-    <circle cx="300" cy="8"  r="1.5" fill="white" opacity="0.25"/>
+    {/* ── Правые ветви ── */}
+    <path d="M282 18  C298 10 316 16 322 32"  stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.28"/>
+    <path d="M268 50  C286 40 308 46 316 62"  stroke="white" strokeWidth="1.1" strokeLinecap="round" opacity="0.25"/>
+    <path d="M252 82  C270 72 292 78 300 94"  stroke="white" strokeWidth="1"   strokeLinecap="round" opacity="0.22"/>
 
-    {/* Второстепенная тонкая ветка справа */}
+    {/* ── Листья левые (эллипсы на кончиках) ── */}
+    <ellipse cx="219" cy="42"  rx="13" ry="7" fill="white" opacity="0.12" transform="rotate(-35 219 42)"/>
+    <ellipse cx="204" cy="74"  rx="12" ry="6" fill="white" opacity="0.10" transform="rotate(-28 204 74)"/>
+    <ellipse cx="198" cy="110" rx="11" ry="6" fill="white" opacity="0.09" transform="rotate(-20 198 110)"/>
+    <ellipse cx="196" cy="145" rx="10" ry="5" fill="white" opacity="0.08" transform="rotate(-14 196 145)"/>
+
+    {/* ── Листья правые ── */}
+    <ellipse cx="325" cy="34"  rx="12" ry="6" fill="white" opacity="0.10" transform="rotate(22 325 34)"/>
+    <ellipse cx="318" cy="65"  rx="12" ry="6" fill="white" opacity="0.09" transform="rotate(16 318 65)"/>
+    <ellipse cx="303" cy="97"  rx="11" ry="5" fill="white" opacity="0.08" transform="rotate(12 303 97)"/>
+
+    {/* ── Вторичная тонкая ветка (фоновая) ── */}
     <path
-      d="M310 0 C295 40 305 80 290 120 C278 150 265 160 255 180"
+      d="M320 -20 C308 20 315 60 304 100 C294 135 280 155 272 190"
       stroke="white"
       strokeWidth="0.8"
       strokeLinecap="round"
       fill="none"
-      opacity="0.6"
+      opacity="0.15"
     />
-    <ellipse cx="252" cy="182" rx="7" ry="4" fill="white" opacity="0.3" transform="rotate(15 252 182)"/>
+    <path d="M310 30  C322 24 334 28 338 40" stroke="white" strokeWidth="0.7" strokeLinecap="round" opacity="0.12"/>
+    <path d="M306 58  C318 52 332 56 336 68" stroke="white" strokeWidth="0.7" strokeLinecap="round" opacity="0.10"/>
+    <path d="M298 88  C308 82 322 86 326 98" stroke="white" strokeWidth="0.6" strokeLinecap="round" opacity="0.09"/>
+
+    {/* ── Точки-почки (botanica detail) ── */}
+    <circle cx="222" cy="40"  r="2.5" fill="white" opacity="0.25"/>
+    <circle cx="206" cy="72"  r="2"   fill="white" opacity="0.22"/>
+    <circle cx="200" cy="108" r="2"   fill="white" opacity="0.20"/>
+    <circle cx="197" cy="143" r="1.8" fill="white" opacity="0.18"/>
+    <circle cx="326" cy="33"  r="2.2" fill="white" opacity="0.22"/>
+    <circle cx="319" cy="64"  r="2"   fill="white" opacity="0.20"/>
+    <circle cx="304" cy="96"  r="1.8" fill="white" opacity="0.18"/>
+
+    {/* ── Мелкие точки россыпью (воздух) ── */}
+    <circle cx="308" cy="8"  r="1.2" fill="white" opacity="0.15"/>
+    <circle cx="326" cy="14" r="0.9" fill="white" opacity="0.12"/>
+    <circle cx="335" cy="5"  r="0.7" fill="white" opacity="0.10"/>
+    <circle cx="316" cy="22" r="0.8" fill="white" opacity="0.10"/>
+    <circle cx="338" cy="22" r="1"   fill="white" opacity="0.08"/>
   </svg>
 </div>
 
