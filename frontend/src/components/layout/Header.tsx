@@ -38,13 +38,52 @@ export function Header() {
 
   const pageTitle = getPageTitle();
 
-  const handleContactAdmin = () => {
-    try {
-      WebApp.openTelegramLink(`https://t.me/${ADMIN_USERNAME}`);
-    } catch {
-      window.open(`https://t.me/${ADMIN_USERNAME}`, "_blank");
-    }
-  };
+const handleContactAdmin = () => {
+  try {
+    WebApp.showPopup(
+      {
+        title: language === "uz" ? "Bog'lanish" : "Связаться с нами",
+        message:
+          language === "uz"
+            ? "Qanday murojaat qilmoqchisiz?"
+            : "Как вы хотите связаться?",
+        buttons: [
+          {
+            id: "chat",
+            type: "default",
+            text:
+              language === "uz"
+                ? "💬 Admin bilan yozishmak"
+                : "💬 Написать администратору",
+          },
+          {
+            id: "call",
+            type: "default",
+            text:
+              language === "uz"
+                ? "📞 Qo'ng'iroq qilish"
+                : "📞 Позвонить",
+          },
+          {
+            id: "cancel",
+            type: "cancel",
+          },
+        ],
+      },
+      (buttonId) => {
+        if (buttonId === "chat") {
+          WebApp.openTelegramLink(`https://t.me/${ADMIN_USERNAME}`)
+        }
+        if (buttonId === "call") {
+          WebApp.openLink("tel:+998993681100")
+        }
+      }
+    )
+  } catch {
+    // Fallback для браузера (вне Telegram)
+    window.open(`https://t.me/${ADMIN_USERNAME}`, "_blank")
+  }
+}
 
   return (
     <header
