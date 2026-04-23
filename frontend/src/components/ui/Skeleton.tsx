@@ -57,11 +57,12 @@ export function ProductCardSkeleton() {
   )
 }
 
-// Category Card Skeleton
+// Category Card Skeleton (scroll variant — square 140×140 + label)
 export function CategoryCardSkeleton() {
   return (
-    <div className="flex-none w-[160px]">
-      <Skeleton className="aspect-[3/4] w-full rounded-3xl" />
+    <div className="flex-none w-[148px] flex flex-col items-center gap-2.5">
+      <Skeleton className="w-[140px] h-[140px] rounded-[22px]" />
+      <Skeleton height={12} className="w-24" />
     </div>
   )
 }

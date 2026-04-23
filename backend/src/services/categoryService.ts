@@ -27,14 +27,33 @@ export async function getAllCategories() {
           tiers: { orderBy: { minQuantity: 'asc' } },
         },
       },
+      // ✅ Последний добавленный активный товар — чтобы использовать его фото
+      // как картинку категории, если у категории нет собственного поля image.
+      products: {
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: {
+          images: {
+            orderBy: [{ isMain: 'desc' }, { sortOrder: 'asc' }],
+            take: 1,
+            select: { url: true },
+          },
+        },
+      },
     },
   })
 
-  return categories.map((cat) => ({
-    ...cat,
-    productCount: cat._count.products,
-    _count: undefined,
-  }))
+  return categories.map((cat) => {
+    const latestProductImage = cat.products?.[0]?.images?.[0]?.url || null
+    return {
+      ...cat,
+      productCount: cat._count.products,
+      latestProductImage,
+      _count: undefined,
+      products: undefined,
+    }
+  })
 }
 
 export async function getCategoryBySlug(slug: string) {
@@ -50,6 +69,19 @@ export async function getCategoryBySlug(slug: string) {
           tiers: { orderBy: { minQuantity: 'asc' } },
         },
       },
+      // ✅ Последний добавленный активный товар для fallback-картинки категории
+      products: {
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: {
+          images: {
+            orderBy: [{ isMain: 'desc' }, { sortOrder: 'asc' }],
+            take: 1,
+            select: { url: true },
+          },
+        },
+      },
     },
   })
 
@@ -57,10 +89,14 @@ export async function getCategoryBySlug(slug: string) {
     throw new AppError('Category not found', 404)
   }
 
+  const latestProductImage = category.products?.[0]?.images?.[0]?.url || null
+
   return {
     ...category,
     productCount: category._count.products,
+    latestProductImage,
     _count: undefined,
+    products: undefined,
   }
 }
 

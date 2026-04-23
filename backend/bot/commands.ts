@@ -5,11 +5,23 @@ import { prisma } from '../src/config/database'
 
 // Приветствие (шаг 1) — двуязычное, без выбора языка
 const WELCOME_TEXT = `
-🌿 Assalomu alaykum, Decor Market botiga xush kelibsiz!
-Здравствуйте, добро пожаловать в бот Decor Market!
+🌿 *Добро пожаловать в Dekor Market!*
+🇺🇿 Первый в Узбекистане магазин декора для дома и офиса.
 
-Bu yerda siz dekor mahsulotlarimizni ko'rib chiqishingiz va onlayn do'konimizga o'tishingiz mumkin.
-Здесь вы можете посмотреть наши декоративные товары и перейти в интернет-магазин.
+🛍 В нашем каталоге — искусственные растения, премиальные кашпо, декоративные деревья, мох-панели, композиции и всё для уюта вашего пространства.
+
+📞 Контакты: +998 99 368-11-00
+💬 Админ: @DekorHouseAdmin
+
+━━━━━━━━━━━━━━━━━━━━
+
+🌿 *Dekor Market botiga xush kelibsiz!*
+🇺🇿 O'zbekistondagi birinchi uy va ofis uchun dekor do'koni.
+
+🛍 Katalogimizda — sun'iy o'simliklar, premium kashpolar, dekorativ daraxtlar, mox panellar, kompozitsiyalar va qulaylik uchun barcha narsalar.
+
+📞 Aloqa: +998 99 368-11-00
+💬 Admin: @DekorHouseAdmin
 `.trim()
 
 // Вопрос о языке (шаг 2)
@@ -45,12 +57,15 @@ export async function handleStart(
     const isHttps = config.frontendUrl.startsWith('https://')
     if (isHttps) {
       await bot.sendMessage(chatId, WELCOME_TEXT, {
+        parse_mode: 'Markdown',
         reply_markup: {
-          inline_keyboard: [[{ text: '🛒 Ochish', web_app: { url: webAppUrl } }]],
+          inline_keyboard: [[{ text: '🛒 Ochish / Открыть', web_app: { url: webAppUrl } }]],
         },
       })
     } else {
-      await bot.sendMessage(chatId, `${WELCOME_TEXT}\n\n🔗 ${webAppUrl}`)
+      await bot.sendMessage(chatId, `${WELCOME_TEXT}\n\n🔗 ${webAppUrl}`, {
+        parse_mode: 'Markdown',
+      })
     }
     return
   }
@@ -66,7 +81,7 @@ export async function handleStart(
       // Если пользователь уже выбирал язык — сразу показываем магазин
       if (user?.language) {
         const lang = user.language as 'uz' | 'ru'
-        await bot.sendMessage(chatId, WELCOME_TEXT)
+        await bot.sendMessage(chatId, WELCOME_TEXT, { parse_mode: 'Markdown' })
         await bot.sendMessage(
           chatId,
           lang === 'uz'
@@ -82,7 +97,7 @@ export async function handleStart(
   }
 
   // ── Стандартный flow: приветствие → выбор языка ────────────────────────
-  await bot.sendMessage(chatId, WELCOME_TEXT)
+  await bot.sendMessage(chatId, WELCOME_TEXT, { parse_mode: 'Markdown' })
   await bot.sendMessage(chatId, LANG_QUESTION, {
     reply_markup: getLanguageKeyboard(),
   })
