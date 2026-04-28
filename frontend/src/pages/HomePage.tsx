@@ -23,6 +23,7 @@ import { formatPrice } from "@/utils/formatPrice";
 import { useFavoritesStore } from "@/store/favoritesStore";
 import { useCartStore } from "@/store/cartStore";
 import toast from "react-hot-toast";
+import dekorHouseLogo from "@/assets/dekor-house-logo.png";
 
 // ✅ FIX: кэш продуктов — не грузим заново при каждом переходе на главную
 let cachedFeatured: Product[] | null = null;
@@ -168,37 +169,22 @@ export function HomePage() {
     className="absolute inset-0 m-auto w-[120px] h-[120px] rounded-full bg-mint"
   />
 
-  {/* Белый SVG декор в центре (Использован flex для надежного центрирования) */}
+  {/* Белое лого Dekor House в центре */}
   <div className="absolute inset-0 flex items-center justify-center z-10">
-    <motion.div
+    <motion.img
+      src={dekorHouseLogo}
+      alt="Dekor House"
       animate={{
-        rotate: [0, 360],
-        scale: [1, 1.05, 1],
+        scale: [1, 1.04, 1],
       }}
       transition={{
-        duration: 20,
+        duration: 4,
         repeat: Infinity,
-        ease: "linear",
+        ease: "easeInOut",
       }}
-    >
-      {/* Размер увеличен с 48 до 64. viewBox оставлен прежним для правильного масштабирования */}
-      <svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Центральный цветок/звезда */}
-        <circle cx="24" cy="24" r="4" fill="white" opacity="0.9" />
-
-        {/* Лепестки */}
-        <path d="M24 8C24 8 20 14 20 18C20 20.2091 21.7909 22 24 22C26.2091 22 28 20.2091 28 18C28 14 24 8 24 8Z" fill="white" opacity="0.7" />
-        <path d="M40 24C40 24 34 20 30 20C27.7909 20 26 21.7909 26 24C26 26.2091 27.7909 28 30 28C34 28 40 24 40 24Z" fill="white" opacity="0.7" />
-        <path d="M24 40C24 40 28 34 28 30C28 27.7909 26.2091 26 24 26C21.7909 26 20 27.7909 20 30C20 34 24 40 24 40Z" fill="white" opacity="0.7" />
-        <path d="M8 24C8 24 14 28 18 28C20.2091 28 22 26.2091 22 24C22 21.7909 20.2091 20 18 20C14 20 8 24 8 24Z" fill="white" opacity="0.7" />
-
-        {/* Диагональные лепестки */}
-        <path d="M32 32C32 32 28 28 26 28C24.8954 28 24 28.8954 24 30C24 31.1046 24.8954 32 26 32C28 32 32 32 32 32Z" fill="white" opacity="0.5" />
-        <path d="M16 16C16 16 20 20 22 20C23.1046 20 24 19.1046 24 18C24 16.8954 23.1046 16 22 16C20 16 16 16 16 16Z" fill="white" opacity="0.5" />
-        <path d="M32 16C32 16 28 20 26 20C24.8954 20 24 19.1046 24 18C24 16.8954 24.8954 16 26 16C28 16 32 16 32 16Z" fill="white" opacity="0.5" />
-        <path d="M16 32C16 32 20 28 22 28C23.1046 28 24 28.8954 24 30C24 31.1046 23.1046 32 22 32C20 32 16 32 16 32Z" fill="white" opacity="0.5" />
-      </svg>
-    </motion.div>
+      className="w-[140px] h-[140px] object-contain select-none pointer-events-none"
+      draggable={false}
+    />
   </div>
 </div>
 
