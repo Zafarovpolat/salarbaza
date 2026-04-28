@@ -125,7 +125,7 @@ const handleContactAdmin = () => {
               onClick={() => navigate("/")}
               className="font-display text-[22px] font-semibold text-forest tracking-[-0.01em] cursor-pointer select-none"
             >
-              Decor<span className="text-sage font-normal"> Market</span>
+              Dekor<span className="text-sage font-normal"> House</span>
             </span>
           </motion.div>
         ) : pageTitle ? (
@@ -182,7 +182,6 @@ const handleContactAdmin = () => {
             hover:bg-emerald
             active:scale-95
             transition-all duration-300
-            shadow-button-green
           "
         >
           <MessageCircle className="w-[18px] h-[18px]" strokeWidth={1.8} />

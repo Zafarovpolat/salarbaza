@@ -42,7 +42,7 @@ export function AdminLoginPage() {
                         <Lock className="w-7 h-7 sm:w-8 sm:h-8 text-green-600" />
                     </div>
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Админ-панель</h1>
-                    <p className="text-gray-500 mt-1 text-sm">DecorMarket</p>
+                    <p className="text-gray-500 mt-1 text-sm">Dekor House</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
