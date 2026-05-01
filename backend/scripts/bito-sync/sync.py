@@ -330,7 +330,7 @@ def sync_products(
         )
         existing_colors = [dict(r) for r in cur.fetchall()]
         cur.execute('SELECT id, "bitoId" FROM bito_warehouses')
-        wh_index = {r[1]: r[0] for r in cur.fetchall()}
+        wh_index = {r["bitoId"]: r["id"] for r in cur.fetchall()}
     if wh_map:
         # Override with the mapping returned by sync_warehouses (covers dry-run)
         wh_index = {**wh_index, **wh_map}
