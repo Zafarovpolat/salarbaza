@@ -62,6 +62,8 @@ model Category {
   isActive            Boolean                 @default(true)
   wholesaleTemplateId String?
   wholesaleTemplate   WholesalePriceTemplate? @relation("CategoryWholesaleTemplate", fields: [wholesaleTemplateId], references: [id])
+  bitoCategoryId      String?                 @unique
+  bitoParentId        String?
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
   products            Product[]
@@ -91,17 +93,21 @@ model Product {
   isFeatured     Boolean  @default(false)
   isNew          Boolean  @default(false)
   viewCount      Int      @default(0)
+  bitoProductId  String?  @unique
+  bitoSku        String?
+  bitoNumber     String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  category   Category?          @relation(fields: [categoryId], references: [id])
-  images     ProductImage[]
-  colors     ProductColor[]
-  variants   ProductVariant[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-  favorites  Favorite[]
-  promotions PromotionProduct[]
+  category        Category?               @relation(fields: [categoryId], references: [id])
+  images          ProductImage[]
+  colors          ProductColor[]
+  variants        ProductVariant[]
+  warehouseStocks ProductWarehouseStock[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  favorites       Favorite[]
+  promotions      PromotionProduct[]
 
   @@index([categoryId])
   @@index([price])
@@ -157,9 +163,110 @@ model ProductColor {
   image         String?
   inStock       Boolean @default(true)
   priceModifier Int     @default(0)
+  bitoProductId String? @unique
+  bitoSku       String?
+  stockQuantity Int     @default(0)
   product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("product_colors")
+}
+
+// ==================== BITO INTEGRATION ====================
+
+model BitoWarehouse {
+  id        String                  @id @default(cuid())
+  bitoId    String                  @unique
+  name      String
+  code      String?
+  isMain    Boolean                 @default(false)
+  isDefault Boolean                 @default(false)
+  isActive  Boolean                 @default(true)
+  sortOrder Int                     @default(0)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  stocks    ProductWarehouseStock[]
+
+  @@map("bito_warehouses")
+}
+
+model ProductWarehouseStock {
+  id            String        @id @default(cuid())
+  productId     String
+  colorId       String?
+  warehouseId   String
+  bitoProductId String
+  amount        Int           @default(0)
+  booked        Int           @default(0)
+  inTransit     Int           @default(0)
+  inTrash       Int           @default(0)
+  updatedAt     DateTime      @updatedAt
+
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  warehouse BitoWarehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([bitoProductId, warehouseId])
+  @@index([productId])
+  @@index([warehouseId])
+  @@map("product_warehouse_stocks")
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  bitoId          String   @unique
+  type            String?
+  name            String
+  phone           String?
+  extraPhones     Json?
+  cardNumber      String?
+  bitoCategoryId  String?
+  responsibleId   String?
+  totalSale       Int      @default(0)
+  avgSale         Int      @default(0)
+  point           Int      @default(0)
+  balance         Int      @default(0)
+  balanceCurrency String?
+  isActive        Boolean  @default(true)
+  rawData         Json?
+  bitoCreatedAt   DateTime?
+  bitoUpdatedAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([phone])
+  @@index([name])
+  @@map("bito_customers")
+}
+
+model Employee {
+  id            String   @id @default(cuid())
+  bitoId        String   @unique
+  fullName      String
+  phone         String?
+  number        String?
+  positionId    String?
+  positionName  String?
+  roleId        String?
+  roleName      String?
+  isActive      Boolean  @default(true)
+  rawData       Json?
+  bitoCreatedAt DateTime?
+  bitoUpdatedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("bito_employees")
+}
+
+model BitoSyncRun {
+  id          String   @id @default(cuid())
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+  status      String
+  dryRun      Boolean  @default(false)
+  stats       Json?
+  errorLog    String?
+
+  @@map("bito_sync_runs")
 }
 
 // ==================== CART ====================

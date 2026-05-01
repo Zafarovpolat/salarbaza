@@ -5,6 +5,7 @@ import cartRoutes from './cartRoutes'
 import orderRoutes from './orderRoutes'
 import userRoutes from './userRoutes'
 import adminRoutes from './adminRoutes'
+import bitoAdminRoutes from './bitoAdminRoutes'  // 🆕 Bito-импорт: клиенты + сотрудники
 import promotionRoutes from './promotionRoutes'  // 🆕 Акции (клиентские)
 import testRoutes from './testRoutes'
 
@@ -33,6 +34,7 @@ router.use('/products', productRoutes)
 router.use('/cart', cartRoutes)
 router.use('/orders', orderRoutes)
 router.use('/admin', adminRoutes)
+router.use('/admin/bito', bitoAdminRoutes)  // 🆕 /api/admin/bito/customers, /api/admin/bito/employees
 router.use('/user', userRoutes)
 router.use('/promotions', promotionRoutes)  // 🆕 Клиентские роуты акций
 router.use('/test', testRoutes)
