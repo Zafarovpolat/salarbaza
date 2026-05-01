@@ -344,4 +344,95 @@ export const adminService = {
     if (!data.success) throw new Error(data.message)
     return data.data
   },
+
+  // =============================================
+  // 🆕 BITO CUSTOMERS (импорт из Bito ERP, read-only)
+  // =============================================
+
+  async getBitoCustomers(params?: {
+    page?: number
+    limit?: number
+    search?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+    isActive?: 'all' | 'yes' | 'no'
+    hasBalance?: 'all' | 'debt' | 'credit' | 'zero'
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.search) queryParams.append('search', params.search)
+    if (params?.sortBy) queryParams.append('sortBy', params.sortBy)
+    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+    if (params?.isActive) queryParams.append('isActive', params.isActive)
+    if (params?.hasBalance) queryParams.append('hasBalance', params.hasBalance)
+
+    const queryString = queryParams.toString()
+    const url = `${API_URL}/admin/bito/customers${queryString ? `?${queryString}` : ''}`
+
+    const res = await fetch(url, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
+  async getBitoCustomersStats() {
+    const res = await fetch(`${API_URL}/admin/bito/customers/stats`, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
+  async getBitoCustomer(id: string) {
+    const res = await fetch(`${API_URL}/admin/bito/customers/${id}`, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
+  async exportBitoCustomers() {
+    const res = await fetch(`${API_URL}/admin/bito/customers-export`, { headers: getHeaders() })
+    return res.blob()
+  },
+
+  // =============================================
+  // 🆕 BITO EMPLOYEES (импорт из Bito ERP, read-only)
+  // =============================================
+
+  async getBitoEmployees(params?: {
+    page?: number
+    limit?: number
+    search?: string
+    sortBy?: string
+    sortOrder?: 'asc' | 'desc'
+    isActive?: 'all' | 'yes' | 'no'
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.search) queryParams.append('search', params.search)
+    if (params?.sortBy) queryParams.append('sortBy', params.sortBy)
+    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+    if (params?.isActive) queryParams.append('isActive', params.isActive)
+
+    const queryString = queryParams.toString()
+    const url = `${API_URL}/admin/bito/employees${queryString ? `?${queryString}` : ''}`
+
+    const res = await fetch(url, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
+  async getBitoEmployee(id: string) {
+    const res = await fetch(`${API_URL}/admin/bito/employees/${id}`, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
+  async exportBitoEmployees() {
+    const res = await fetch(`${API_URL}/admin/bito/employees-export`, { headers: getHeaders() })
+    return res.blob()
+  },
 }

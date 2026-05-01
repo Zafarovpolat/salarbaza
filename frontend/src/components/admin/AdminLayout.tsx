@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Package, FolderTree,
   ShoppingCart, LogOut, Home, Menu, X, Percent, Tag, Tags,
+  Briefcase, UserCircle2,
 } from 'lucide-react'
 
 interface AdminLayoutProps {
@@ -19,6 +20,8 @@ const menuItems = [
   { path: '/admin/wholesale',  label: 'Оптовые цены',   icon: Percent },
   { path: '/admin/orders',     label: 'Заказы',         icon: ShoppingCart },
   { path: '/admin/customers',  label: 'Клиенты',        icon: Users },
+  { path: '/admin/bito-customers', label: 'Bito клиенты',   icon: UserCircle2 },  // 🆕 импорт из Bito ERP
+  { path: '/admin/bito-employees', label: 'Bito сотрудники', icon: Briefcase },    // 🆕 импорт из Bito ERP
 ]
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
