@@ -125,6 +125,28 @@ const AdminBulkTagsPage = lazy(() =>
   }))
 );
 
+// 🆕 Bito-импорт: клиенты + сотрудники из Bito ERP (read-only)
+const AdminBitoCustomersPage = lazy(() =>
+  import("./pages/admin/AdminBitoCustomersPage").then((m) => ({
+    default: m.AdminBitoCustomersPage,
+  }))
+);
+const AdminBitoCustomerDetailPage = lazy(() =>
+  import("./pages/admin/AdminBitoCustomerDetailPage").then((m) => ({
+    default: m.AdminBitoCustomerDetailPage,
+  }))
+);
+const AdminBitoEmployeesPage = lazy(() =>
+  import("./pages/admin/AdminBitoEmployeesPage").then((m) => ({
+    default: m.AdminBitoEmployeesPage,
+  }))
+);
+const AdminBitoEmployeeDetailPage = lazy(() =>
+  import("./pages/admin/AdminBitoEmployeeDetailPage").then((m) => ({
+    default: m.AdminBitoEmployeeDetailPage,
+  }))
+);
+
 // ✅ Легкий спиннер для lazy-страниц (не полноэкранный)
 function PageLoader() {
   return (
@@ -241,6 +263,23 @@ function AdminRoutes() {
           element={<AdminPromotionEditPage />}
         />
         <Route path="/admin/bulk-tags" element={<AdminBulkTagsPage />} />
+        {/* 🆕 Bito-импорт */}
+        <Route
+          path="/admin/bito-customers"
+          element={<AdminBitoCustomersPage />}
+        />
+        <Route
+          path="/admin/bito-customers/:id"
+          element={<AdminBitoCustomerDetailPage />}
+        />
+        <Route
+          path="/admin/bito-employees"
+          element={<AdminBitoEmployeesPage />}
+        />
+        <Route
+          path="/admin/bito-employees/:id"
+          element={<AdminBitoEmployeeDetailPage />}
+        />
       </Routes>
     </Suspense>
   );
