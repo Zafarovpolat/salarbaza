@@ -48,3 +48,35 @@ services:
         value: https://dekorhouse-api.onrender.com/api
       - key: VITE_BOT_USERNAME
         value: DecorMarketUz_Bot
+
+  # ----------------------------------------------------------------------
+  # Bito stock+price polling cron.
+  #
+  # Pulls fresh stock/price/per-warehouse data from Bito every 5 minutes and
+  # updates Supabase (read-only on Bito's side). Bito does not expose
+  # webhooks, so this is the closest we can get to real-time without paying
+  # for a permanent worker. Typical run completes in ~20s.
+  #
+  # Render Cron Jobs require the Starter plan ($7/mo). If you stay on the
+  # free plan, use the equivalent GitHub Actions workflow at
+  # .github/workflows/bito-sync-stock.yml — it runs on the same schedule,
+  # against the same script, for free.
+  # ----------------------------------------------------------------------
+  - type: cron
+    name: bito-sync-stock
+    runtime: python
+    region: frankfurt
+    plan: starter
+    rootDir: backend/scripts/bito-sync
+    schedule: "*/5 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python sync_stock.py
+    envVars:
+      - key: SUPABASE_DSN
+        sync: false
+      - key: BITO_BASE_URL
+        value: https://api.bito.uz/integration-api/integration/api/v2
+      - key: BITO_API_KEY
+        sync: false
+      - key: BITO_PRICE_ID
+        value: "6706187e485b322ea8c90155"

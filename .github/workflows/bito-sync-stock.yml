@@ -1,0 +1,58 @@
+name: Bito stock + price sync
+
+# Polls Bito ERP and updates products.stockQuantity / price / inStock and
+# product_warehouse_stocks in Supabase. Bito does not expose webhooks, so
+# this scheduled job is the closest we can get to real-time without paying
+# for a permanent worker.
+#
+# Typical run completes in ~20 seconds. GitHub Actions cron has a minimum
+# resolution of 5 minutes (and may delay during peak hours). For tighter
+# real-time guarantees, switch to the Render Cron Job defined in
+# render.yaml (requires Starter plan).
+#
+# Required GitHub repo secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_DSN          - Postgres connection string (read+write)
+#   BITO_API_KEY          - "<login>:<token>" pair from Bito Integration API
+# Optional (have safe defaults):
+#   BITO_BASE_URL         - Bito API base URL (default in workflow)
+#   BITO_PRICE_ID         - Bito price catalog id  (default in workflow)
+
+on:
+  schedule:
+    # Every 5 minutes. GitHub may delay scheduled jobs by a few minutes
+    # under high load. Free plan limit is 1 job/5min; that's our floor.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:        # allow manual trigger from the Actions UI
+
+permissions:
+  contents: read
+
+concurrency:
+  # If a previous run is still going (unlikely but possible during slow
+  # Bito responses), skip the new one rather than queueing forever.
+  group: bito-sync-stock
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: backend/scripts/bito-sync/requirements.txt
+
+      - name: Install Python deps
+        run: pip install -r backend/scripts/bito-sync/requirements.txt
+
+      - name: Run sync_stock.py
+        env:
+          SUPABASE_DSN: ${{ secrets.SUPABASE_DSN }}
+          BITO_API_KEY: ${{ secrets.BITO_API_KEY }}
+          BITO_BASE_URL: ${{ secrets.BITO_BASE_URL || 'https://api.bito.uz/integration-api/integration/api/v2' }}
+          BITO_PRICE_ID: ${{ secrets.BITO_PRICE_ID || '6706187e485b322ea8c90155' }}
+        run: python backend/scripts/bito-sync/sync_stock.py
