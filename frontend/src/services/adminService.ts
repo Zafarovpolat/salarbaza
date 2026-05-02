@@ -7,6 +7,16 @@ const getHeaders = () => ({
   'X-Admin-Password': localStorage.getItem('adminPassword') || '',
 })
 
+export interface BitoSyncRun {
+  id: string
+  startedAt: string
+  finishedAt: string | null
+  status: string
+  dryRun: boolean
+  stats: Record<string, unknown> | null
+  errorLog: string | null
+}
+
 export const adminService = {
   // Stats
   async getStats() {
@@ -16,11 +26,24 @@ export const adminService = {
     return data.data
   },
 
+  // Bito sync status
+  async getBitoSyncRuns(limit = 20) {
+    const res = await fetch(`${API_URL}/admin/bito/sync-runs?limit=${limit}`, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data as {
+      last: BitoSyncRun | null
+      lastOk: BitoSyncRun | null
+      runs: BitoSyncRun[]
+    }
+  },
+
   // Products
-  async getProducts(params?: { categoryId?: string; search?: string }) {
+  async getProducts(params?: { categoryId?: string; search?: string; stockStatus?: 'all' | 'in' | 'out' | 'low' }) {
     const queryParams = new URLSearchParams()
     if (params?.categoryId) queryParams.append('categoryId', params.categoryId)
     if (params?.search) queryParams.append('search', params.search)
+    if (params?.stockStatus && params.stockStatus !== 'all') queryParams.append('stockStatus', params.stockStatus)
 
     const queryString = queryParams.toString()
     const url = `${API_URL}/admin/products${queryString ? `?${queryString}` : ''}`

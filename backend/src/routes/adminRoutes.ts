@@ -142,7 +142,7 @@ router.get('/stats', async (req, res) => {
 // ==================== PRODUCTS ====================
 router.get('/products', async (req, res) => {
   try {
-    const { categoryId, search } = req.query
+    const { categoryId, search, stockStatus } = req.query
 
     const where: any = {}
 
@@ -158,6 +158,14 @@ router.get('/products', async (req, res) => {
       ]
     }
 
+    if (stockStatus === 'in') {
+      where.stockQuantity = { gt: 0 }
+    } else if (stockStatus === 'out') {
+      where.stockQuantity = { lte: 0 }
+    } else if (stockStatus === 'low') {
+      where.stockQuantity = { gt: 0, lt: 5 }
+    }
+
     const products = await prisma.product.findMany({
       where,
       include: {
@@ -171,15 +179,76 @@ router.get('/products', async (req, res) => {
         images: true,
         colors: true,
         variants: { orderBy: { sortOrder: 'asc' } },
+        warehouseStocks: {
+          include: { warehouse: { select: { id: true, name: true, sortOrder: true } } },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    res.json({ success: true, data: products })
+    // Aggregate warehouseStocks by warehouseId (Variant A grouping causes duplicates)
+    const data = products.map((p) => ({
+      ...p,
+      warehouseStocks: aggregateWarehouseStocks(p.warehouseStocks),
+    }))
+
+    res.json({ success: true, data })
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' })
   }
 })
+
+// Aggregate raw ProductWarehouseStock rows by warehouseId so the same warehouse
+// is shown once even when a Supabase product groups multiple Bito products
+// (Variant A: one product + N color rows, each linked to its own bitoProductId).
+function aggregateWarehouseStocks(
+  rows: Array<{
+    warehouseId: string
+    amount: number
+    booked: number
+    inTransit: number
+    inTrash: number
+    warehouse: { id: string; name: string; sortOrder: number }
+  }>
+) {
+  const byWh = new Map<
+    string,
+    {
+      warehouseId: string
+      warehouseName: string
+      sortOrder: number
+      amount: number
+      booked: number
+      inTransit: number
+      inTrash: number
+    }
+  >()
+
+  for (const row of rows) {
+    const existing = byWh.get(row.warehouseId)
+    if (existing) {
+      existing.amount += row.amount
+      existing.booked += row.booked
+      existing.inTransit += row.inTransit
+      existing.inTrash += row.inTrash
+    } else {
+      byWh.set(row.warehouseId, {
+        warehouseId: row.warehouseId,
+        warehouseName: row.warehouse.name,
+        sortOrder: row.warehouse.sortOrder,
+        amount: row.amount,
+        booked: row.booked,
+        inTransit: row.inTransit,
+        inTrash: row.inTrash,
+      })
+    }
+  }
+
+  return Array.from(byWh.values()).sort((a, b) => {
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder
+    return a.warehouseName.localeCompare(b.warehouseName)
+  })
+}
 
 router.get('/products/:id', async (req, res) => {
   try {
@@ -198,6 +267,9 @@ router.get('/products/:id', async (req, res) => {
         images: true,
         colors: true,
         variants: { orderBy: { sortOrder: 'asc' } },
+        warehouseStocks: {
+          include: { warehouse: { select: { id: true, name: true, sortOrder: true } } },
+        },
       },
     })
 
@@ -205,7 +277,12 @@ router.get('/products/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' })
     }
 
-    res.json({ success: true, data: product })
+    const data = {
+      ...product,
+      warehouseStocks: aggregateWarehouseStocks(product.warehouseStocks),
+    }
+
+    res.json({ success: true, data })
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' })
   }
