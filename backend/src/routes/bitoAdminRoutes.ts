@@ -402,4 +402,34 @@ router.get('/employees-export', async (req, res) => {
   }
 })
 
+// ==================== SYNC RUNS ====================
+// Recent Bito sync history. The admin can use this to verify the cron is
+// firing and diagnose failures (no manual trigger here — the sync itself is
+// invoked by GitHub Actions / Render Cron Job).
+router.get('/sync-runs', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt((req.query.limit as string) || '20'), 100)
+
+    const runs = await prisma.bitoSyncRun.findMany({
+      orderBy: { startedAt: 'desc' },
+      take: limit,
+    })
+
+    const last = runs[0]
+    const lastOk = runs.find((r) => r.status === 'ok') || null
+
+    res.json({
+      success: true,
+      data: {
+        last,
+        lastOk,
+        runs,
+      },
+    })
+  } catch (error: any) {
+    console.error('Bito sync-runs error:', error)
+    res.status(500).json({ success: false, message: error.message || 'Server error' })
+  }
+})
+
 export default router

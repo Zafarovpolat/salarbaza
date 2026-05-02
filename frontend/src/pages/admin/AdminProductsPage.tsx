@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, Search, Ruler, Package } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Ruler, Package, RefreshCw } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
-import { adminService } from '@/services/adminService'
+import { adminService, type BitoSyncRun } from '@/services/adminService'
 import toast from 'react-hot-toast'
 
 interface ProductVariant {
@@ -63,8 +63,20 @@ export function AdminProductsPage() {
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [stockStatus, setStockStatus] = useState<StockStatus>('all')
+    const [lastSync, setLastSync] = useState<BitoSyncRun | null>(null)
 
     useEffect(() => { loadProducts() }, [stockStatus])
+    useEffect(() => {
+        const tick = () => {
+            adminService
+                .getBitoSyncRuns(1)
+                .then((d) => setLastSync(d.last))
+                .catch(() => {})
+        }
+        tick()
+        const i = setInterval(tick, 30000)
+        return () => clearInterval(i)
+    }, [])
 
     const loadProducts = async () => {
         setLoading(true)
@@ -106,11 +118,39 @@ export function AdminProductsPage() {
         return formatPrice(product.price)
     }
 
+    const syncBadge = (() => {
+        if (!lastSync) return null
+        const minutes = Math.round((Date.now() - new Date(lastSync.startedAt).getTime()) / 60000)
+        const isOk = lastSync.status === 'ok'
+        const tone = !isOk
+            ? 'bg-red-100 text-red-800'
+            : minutes > 15
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-green-100 text-green-800'
+        const label = !isOk
+            ? `Синк Bito: ошибка ${minutes} мин назад`
+            : minutes <= 1
+                ? 'Bito: синк только что'
+                : `Bito: синк ${minutes} мин назад`
+        return (
+            <span
+                title={lastSync.errorLog || JSON.stringify(lastSync.stats || {}, null, 2)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${tone}`}
+            >
+                <RefreshCw className="w-3.5 h-3.5" />
+                {label}
+            </span>
+        )
+    })()
+
     return (
         <AdminLayout>
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Товары</h1>
+                <div className="flex items-center gap-3 flex-wrap">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Товары</h1>
+                    {syncBadge}
+                </div>
                 <Link to="/admin/products/new"
                     className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl hover:bg-green-700 transition-colors text-sm font-medium">
                     <Plus className="w-5 h-5" /><span>Добавить</span>

@@ -7,6 +7,16 @@ const getHeaders = () => ({
   'X-Admin-Password': localStorage.getItem('adminPassword') || '',
 })
 
+export interface BitoSyncRun {
+  id: string
+  startedAt: string
+  finishedAt: string | null
+  status: string
+  dryRun: boolean
+  stats: Record<string, unknown> | null
+  errorLog: string | null
+}
+
 export const adminService = {
   // Stats
   async getStats() {
@@ -14,6 +24,18 @@ export const adminService = {
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
+  },
+
+  // Bito sync status
+  async getBitoSyncRuns(limit = 20) {
+    const res = await fetch(`${API_URL}/admin/bito/sync-runs?limit=${limit}`, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data as {
+      last: BitoSyncRun | null
+      lastOk: BitoSyncRun | null
+      runs: BitoSyncRun[]
+    }
   },
 
   // Products
