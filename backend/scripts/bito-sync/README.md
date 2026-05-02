@@ -82,3 +82,43 @@ pg_dump --host=... --port=5432 --username=... \
 Every applied run inserts a row into `bito_sync_runs` with the full log and
 stats JSON, so you can `SELECT … FROM bito_sync_runs ORDER BY "startedAt" DESC`
 for history.
+
+## Incremental cron sync (`sync_stock.py`)
+
+For near-real-time stock visibility, `sync_stock.py` is a lightweight
+companion script that **only** updates already-linked products:
+
+- `products.stockQuantity` (sum of `_warehouses[*].amount`)
+- `products.inStock` (boolean from total > 0)
+- `products.price` (UZS narxi)
+- `product_warehouse_stocks` (UPSERT amount/booked/inTransit/inTrash)
+- `product_colors.stockQuantity` / `inStock`
+
+It does **not** create new products / categories / customers — for that, run
+the full `sync.py --apply` (slower, ~30 min for first run).
+
+Typical run completes in ~20 seconds against the live Supabase pooler.
+
+### Scheduling
+
+Two equivalent options ship in this repo, pick one:
+
+| Option | Cost | File | Min. interval |
+|--------|------|------|---------------|
+| **GitHub Actions** | Free | `.github/workflows/bito-sync-stock.yml` | 5 min |
+| **Render Cron Job** | $7/mo | `render.yaml` (`bito-sync-stock`) | 1 min |
+
+Required secrets (whichever you choose):
+- `SUPABASE_DSN` — Postgres connection string
+- `BITO_API_KEY` — `dekor-house:<token>`
+
+`BITO_BASE_URL` and `BITO_PRICE_ID` have safe defaults baked into the
+workflow / `render.yaml`.
+
+### Manual run
+
+```bash
+export BITO_API_KEY="dekor-house:<token>"
+export SUPABASE_DSN="postgresql://..."
+python3 sync_stock.py
+```
