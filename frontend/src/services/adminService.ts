@@ -17,10 +17,11 @@ export const adminService = {
   },
 
   // Products
-  async getProducts(params?: { categoryId?: string; search?: string }) {
+  async getProducts(params?: { categoryId?: string; search?: string; stockStatus?: 'all' | 'in' | 'out' | 'low' }) {
     const queryParams = new URLSearchParams()
     if (params?.categoryId) queryParams.append('categoryId', params.categoryId)
     if (params?.search) queryParams.append('search', params.search)
+    if (params?.stockStatus && params.stockStatus !== 'all') queryParams.append('stockStatus', params.stockStatus)
 
     const queryString = queryParams.toString()
     const url = `${API_URL}/admin/products${queryString ? `?${queryString}` : ''}`

@@ -106,6 +106,19 @@ export function AdminProductEditPage() {
   const [variants, setVariants] = useState<VariantForm[]>([])
   const [showVariants, setShowVariants] = useState(false)
 
+  // Read-only stock breakdown per Bito warehouse (auto-synced).
+  const [warehouseStocks, setWarehouseStocks] = useState<Array<{
+    warehouseId: string
+    warehouseName: string
+    sortOrder: number
+    amount: number
+    booked: number
+    inTransit: number
+    inTrash: number
+  }>>([])
+  const [bitoProductId, setBitoProductId] = useState<string | null>(null)
+  const [bitoUpdatedAt, setBitoUpdatedAt] = useState<string | null>(null)
+
   useEffect(() => {
     loadCategories()
     if (!isNew) loadProduct()
@@ -164,6 +177,9 @@ export function AdminProductEditPage() {
         isSpecialOffer: product.isSpecialOffer || false,  // 🆕
       })
       setImages(product.images || [])
+      setWarehouseStocks(product.warehouseStocks || [])
+      setBitoProductId(product.bitoProductId || null)
+      setBitoUpdatedAt(product.updatedAt || null)
 
       if (product.variants && product.variants.length > 0) {
         setVariants(
@@ -482,9 +498,68 @@ export function AdminProductEditPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Остаток</label>
                 <input type="number" name="stockQuantity" value={form.stockQuantity} onChange={handleChange}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none" min="0" />
+                {bitoProductId && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">Auto-syncs from Bito (полный сброс при следующем sync)</p>
+                )}
               </div>
             </div>
           </div>
+
+          {/* Warehouse breakdown (read-only, auto-synced from Bito) */}
+          {warehouseStocks.length > 0 && (
+            <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="font-semibold text-gray-900">Остатки по складам Bito</h2>
+                <span className="text-xs text-gray-400">
+                  {bitoUpdatedAt ? `обновлено ${new Date(bitoUpdatedAt).toLocaleString('ru-RU')}` : 'из Bito'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">Источник: Bito ERP. Доступно = свободно к продаже. Поля ниже только для просмотра — обновляются автоматически при синхронизации.</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-600">Склад</th>
+                      <th className="px-3 py-2 text-right font-semibold text-gray-600">Доступно</th>
+                      <th className="px-3 py-2 text-right font-semibold text-gray-600">Резерв</th>
+                      <th className="px-3 py-2 text-right font-semibold text-gray-600">В пути</th>
+                      <th className="px-3 py-2 text-right font-semibold text-gray-600">Брак</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {warehouseStocks.map(w => (
+                      <tr key={w.warehouseId} className={w.amount === 0 ? 'text-gray-400' : ''}>
+                        <td className="px-3 py-2 font-medium text-gray-700">{w.warehouseName}</td>
+                        <td className={`px-3 py-2 text-right tabular-nums ${w.amount > 0 ? 'text-green-700 font-semibold' : ''}`}>
+                          {new Intl.NumberFormat('ru-RU').format(w.amount)}
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">{new Intl.NumberFormat('ru-RU').format(w.booked)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{new Intl.NumberFormat('ru-RU').format(w.inTransit)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{new Intl.NumberFormat('ru-RU').format(w.inTrash)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-50 font-semibold">
+                    <tr>
+                      <td className="px-3 py-2 text-gray-700">Итого</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-green-700">
+                        {new Intl.NumberFormat('ru-RU').format(warehouseStocks.reduce((s, w) => s + w.amount, 0))}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {new Intl.NumberFormat('ru-RU').format(warehouseStocks.reduce((s, w) => s + w.booked, 0))}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {new Intl.NumberFormat('ru-RU').format(warehouseStocks.reduce((s, w) => s + w.inTransit, 0))}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {new Intl.NumberFormat('ru-RU').format(warehouseStocks.reduce((s, w) => s + w.inTrash, 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Variants */}
           <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">

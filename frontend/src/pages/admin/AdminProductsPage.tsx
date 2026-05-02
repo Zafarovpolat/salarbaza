@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, Search, Ruler } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Ruler, Package } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { adminService } from '@/services/adminService'
 import toast from 'react-hot-toast'
@@ -12,6 +12,16 @@ interface ProductVariant {
     size: string
     price: number
     inStock: boolean
+}
+
+interface WarehouseStock {
+    warehouseId: string
+    warehouseName: string
+    sortOrder: number
+    amount: number
+    booked: number
+    inTransit: number
+    inTrash: number
 }
 
 interface Product {
@@ -24,18 +34,42 @@ interface Product {
     category: { nameRu: string }
     images: { url: string }[]
     variants?: ProductVariant[]
+    warehouseStocks?: WarehouseStock[]
+}
+
+type StockStatus = 'all' | 'in' | 'out' | 'low'
+
+function stockTier(qty: number): { color: string; bg: string; label: string } {
+    if (qty <= 0) return { color: 'text-red-700', bg: 'bg-red-100', label: 'Нет' }
+    if (qty < 5) return { color: 'text-orange-700', bg: 'bg-orange-100', label: 'Мало' }
+    if (qty < 20) return { color: 'text-yellow-800', bg: 'bg-yellow-100', label: 'Низк.' }
+    return { color: 'text-green-700', bg: 'bg-green-100', label: 'OK' }
+}
+
+function formatNumber(n: number): string {
+    return new Intl.NumberFormat('ru-RU').format(n)
+}
+
+function warehouseSummary(stocks?: WarehouseStock[]): string {
+    if (!stocks || stocks.length === 0) return ''
+    return stocks
+        .filter(s => s.amount > 0)
+        .map(s => `${s.warehouseName}: ${formatNumber(s.amount)}`)
+        .join(' • ')
 }
 
 export function AdminProductsPage() {
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
+    const [stockStatus, setStockStatus] = useState<StockStatus>('all')
 
-    useEffect(() => { loadProducts() }, [])
+    useEffect(() => { loadProducts() }, [stockStatus])
 
     const loadProducts = async () => {
+        setLoading(true)
         try {
-            const data = await adminService.getProducts()
+            const data = await adminService.getProducts({ stockStatus })
             setProducts(data)
         } catch (error) {
             toast.error('Ошибка загрузки товаров')
@@ -83,12 +117,30 @@ export function AdminProductsPage() {
                 </Link>
             </div>
 
-            {/* Search */}
-            <div className="bg-white rounded-xl p-3 mb-4 shadow-sm">
+            {/* Search + stock filter */}
+            <div className="bg-white rounded-xl p-3 mb-4 shadow-sm space-y-2">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск..."
                         className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:border-green-500 outline-none" />
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-gray-500">Остаток:</span>
+                    {([
+                        { value: 'all', label: 'Все' },
+                        { value: 'in', label: 'В наличии' },
+                        { value: 'low', label: 'Заканчивается (<5)' },
+                        { value: 'out', label: 'Нет' },
+                    ] as { value: StockStatus; label: string }[]).map(o => (
+                        <button
+                            key={o.value}
+                            type="button"
+                            onClick={() => setStockStatus(o.value)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${stockStatus === o.value ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                            {o.label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -135,6 +187,18 @@ export function AdminProductsPage() {
                                                 {product.variants.map(v => v.size).join(' / ')}
                                             </p>
                                         )}
+                                        {(() => {
+                                            const t = stockTier(product.stockQuantity)
+                                            return (
+                                                <p className={`text-xs mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${t.bg} ${t.color}`}>
+                                                    <Package className="w-3 h-3" />
+                                                    {formatNumber(product.stockQuantity)} шт · {t.label}
+                                                </p>
+                                            )
+                                        })()}
+                                        {product.warehouseStocks && product.warehouseStocks.length > 0 && (
+                                            <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{warehouseSummary(product.warehouseStocks)}</p>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Link to={`/admin/products/${product.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
@@ -162,15 +226,16 @@ export function AdminProductsPage() {
                             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Категория</th>
                             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Цена</th>
                             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Размеры</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Остаток</th>
                             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Статус</th>
                             <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">Действия</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {loading ? (
-                            <tr><td colSpan={8} className="px-4 py-12 text-center text-gray-500">Загрузка...</td></tr>
+                            <tr><td colSpan={9} className="px-4 py-12 text-center text-gray-500">Загрузка...</td></tr>
                         ) : filteredProducts.length === 0 ? (
-                            <tr><td colSpan={8} className="px-4 py-12 text-center text-gray-500">Товары не найдены</td></tr>
+                            <tr><td colSpan={9} className="px-4 py-12 text-center text-gray-500">Товары не найдены</td></tr>
                         ) : filteredProducts.map((product) => (
                             <tr key={product.id} className="hover:bg-gray-50">
                                 <td className="px-4 py-3">
@@ -196,6 +261,22 @@ export function AdminProductsPage() {
                                     ) : (
                                         <span className="text-xs text-gray-400">—</span>
                                     )}
+                                </td>
+                                <td className="px-4 py-3">
+                                    {(() => {
+                                        const t = stockTier(product.stockQuantity)
+                                        return (
+                                            <div className="flex flex-col gap-1">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${t.bg} ${t.color} w-fit`} title={warehouseSummary(product.warehouseStocks)}>
+                                                    <Package className="w-3 h-3" />
+                                                    {formatNumber(product.stockQuantity)}
+                                                </span>
+                                                {product.warehouseStocks && product.warehouseStocks.length > 0 && (
+                                                    <span className="text-[10px] text-gray-500 line-clamp-1 max-w-[180px]" title={warehouseSummary(product.warehouseStocks)}>{warehouseSummary(product.warehouseStocks)}</span>
+                                                )}
+                                            </div>
+                                        )
+                                    })()}
                                 </td>
                                 <td className="px-4 py-3">
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
