@@ -64,10 +64,14 @@ model Category {
   wholesaleTemplate   WholesalePriceTemplate? @relation("CategoryWholesaleTemplate", fields: [wholesaleTemplateId], references: [id])
   bitoCategoryId      String?                 @unique
   bitoParentId        String?
+  parentId            String?
+  parent              Category?               @relation("CategoryParent", fields: [parentId], references: [id])
+  children            Category[]              @relation("CategoryParent")
   createdAt           DateTime                @default(now())
   updatedAt           DateTime                @updatedAt
   products            Product[]
 
+  @@index([parentId])
   @@map("categories")
 }
 

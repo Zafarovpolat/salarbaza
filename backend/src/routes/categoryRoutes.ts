@@ -7,26 +7,38 @@ import { logger } from '../utils/logger'
 const router = Router()
 
 // ===== ВСЕ КАТЕГОРИИ ===== (кэш 120 сек)
+// ?root=true — только корневые (parentId IS NULL), по умолчанию все
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const cacheKey = 'categories_all'
+    const rootOnly = req.query.root === 'true'
+    const cacheKey = rootOnly ? 'categories_root' : 'categories_all'
     const cached = getCached(cacheKey)
     if (cached) {
-      logger.info('📂 GET /categories — из кэша')
+      logger.info(`📂 GET /categories — из кэша (root=${rootOnly})`)
       return res.json(cached)
     }
 
-    logger.info('📂 GET /categories — запрос к БД')
+    logger.info(`📂 GET /categories — запрос к БД (root=${rootOnly})`)
+
+    const where: any = { isActive: true }
+    if (rootOnly) {
+      where.parentId = null
+    }
 
     const categories = await prisma.category.findMany({
-      where: { isActive: true },
+      where,
       include: {
         wholesaleTemplate: {
           include: {
             tiers: { orderBy: { minQuantity: 'asc' } },
           },
         },
-        _count: { select: { products: { where: { isActive: true } } } },
+        _count: {
+          select: {
+            products: { where: { isActive: true } },
+            children: { where: { isActive: true } },
+          },
+        },
       },
       orderBy: { sortOrder: 'asc' },
     })
@@ -34,6 +46,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const data = categories.map(cat => ({
       ...cat,
       productCount: cat._count.products,
+      subcategoryCount: cat._count.children,
       _count: undefined,
     }))
 
@@ -62,7 +75,24 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
             tiers: { orderBy: { minQuantity: 'asc' } },
           },
         },
-        _count: { select: { products: { where: { isActive: true } } } },
+        children: {
+          where: { isActive: true },
+          include: {
+            _count: {
+              select: {
+                products: { where: { isActive: true } },
+                children: { where: { isActive: true } },
+              },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        _count: {
+          select: {
+            products: { where: { isActive: true } },
+            children: { where: { isActive: true } },
+          },
+        },
       },
     })
 
@@ -73,8 +103,60 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
     const data = {
       ...category,
       productCount: category._count.products,
+      subcategoryCount: category._count.children,
+      children: category.children.map(child => ({
+        ...child,
+        productCount: child._count.products,
+        subcategoryCount: child._count.children,
+        _count: undefined,
+      })),
       _count: undefined,
     }
+
+    const response = { success: true, data }
+    setCache(cacheKey, response, 60)
+    res.json(response)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// ===== ПОДКАТЕГОРИИ ===== (кэш 60 сек)
+router.get('/:slug/subcategories', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { slug } = req.params
+    const cacheKey = `category_${slug}_subcategories`
+    const cached = getCached(cacheKey)
+    if (cached) return res.json(cached)
+
+    const parent = await prisma.category.findUnique({
+      where: { slug },
+      select: { id: true, isActive: true },
+    })
+
+    if (!parent || !parent.isActive) {
+      throw new AppError('Category not found', 404)
+    }
+
+    const subcategories = await prisma.category.findMany({
+      where: { parentId: parent.id, isActive: true },
+      include: {
+        _count: {
+          select: {
+            products: { where: { isActive: true } },
+            children: { where: { isActive: true } },
+          },
+        },
+      },
+      orderBy: { sortOrder: 'asc' },
+    })
+
+    const data = subcategories.map(cat => ({
+      ...cat,
+      productCount: cat._count.products,
+      subcategoryCount: cat._count.children,
+      _count: undefined,
+    }))
 
     const response = { success: true, data }
     setCache(cacheKey, response, 60)
@@ -114,7 +196,6 @@ router.get('/:slug/products', async (req: Request, res: Response, next: NextFunc
 
     const where = { categoryId: category.id, isActive: true }
 
-    // ✅ FIX: используем include вместо select — избегаем TS ошибок
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
