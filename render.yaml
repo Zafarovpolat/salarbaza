@@ -52,7 +52,7 @@ services:
   # ----------------------------------------------------------------------
   # Bito stock+price polling cron.
   #
-  # Pulls fresh stock/price/per-warehouse data from Bito every 5 minutes and
+  # Pulls fresh stock/price/per-warehouse data from Bito every 30 minutes and
   # updates Supabase (read-only on Bito's side). Bito does not expose
   # webhooks, so this is the closest we can get to real-time without paying
   # for a permanent worker. Typical run completes in ~20s.
@@ -68,7 +68,7 @@ services:
     region: frankfurt
     plan: starter
     rootDir: backend/scripts/bito-sync
-    schedule: "*/5 * * * *"
+    schedule: "*/30 * * * *"
     buildCommand: pip install -r requirements.txt
     startCommand: python sync_stock.py
     envVars:
