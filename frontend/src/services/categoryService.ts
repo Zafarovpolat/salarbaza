@@ -12,4 +12,9 @@ export const categoryService = {
         const response = await get<{ success: boolean; data: Category }>(`/categories/${slug}`)
         return response.data
     },
+
+    async getSubcategories(slug: string): Promise<Category[]> {
+        const response = await get<{ success: boolean; data: Category[] }>(`/categories/${slug}/subcategories`)
+        return response.data
+    },
 }

@@ -3,7 +3,7 @@
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 
-export async function getAllCategories() {
+export async function getAllCategories(rootOnly: boolean = false) {
 
   try {
     const count = await prisma.category.count()
@@ -14,12 +14,20 @@ export async function getAllCategories() {
     console.error(`❌ DB CONNECTION ERROR: ${dbError.message}`)
   }
 
+  const where: any = { isActive: true }
+  if (rootOnly) {
+    where.parentId = null
+  }
+
   const categories = await prisma.category.findMany({
-    where: { isActive: true },
+    where,
     orderBy: { sortOrder: 'asc' },
     include: {
       _count: {
-        select: { products: { where: { isActive: true } } },
+        select: {
+          products: { where: { isActive: true } },
+          children: { where: { isActive: true } },
+        },
       },
       // ✅ НОВОЕ: загружаем оптовый шаблон с тирами
       wholesaleTemplate: {
@@ -49,6 +57,7 @@ export async function getAllCategories() {
     return {
       ...cat,
       productCount: cat._count.products,
+      subcategoryCount: cat._count.children,
       latestProductImage,
       _count: undefined,
       products: undefined,
@@ -61,12 +70,40 @@ export async function getCategoryBySlug(slug: string) {
     where: { slug },
     include: {
       _count: {
-        select: { products: { where: { isActive: true } } },
+        select: {
+          products: { where: { isActive: true } },
+          children: { where: { isActive: true } },
+        },
       },
       // ✅ НОВОЕ: загружаем оптовый шаблон
       wholesaleTemplate: {
         include: {
           tiers: { orderBy: { minQuantity: 'asc' } },
+        },
+      },
+      // ✅ Подкатегории
+      children: {
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          _count: {
+            select: {
+              products: { where: { isActive: true } },
+              children: { where: { isActive: true } },
+            },
+          },
+          products: {
+            where: { isActive: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              images: {
+                orderBy: [{ isMain: 'desc' }, { sortOrder: 'asc' }],
+                take: 1,
+                select: { url: true },
+              },
+            },
+          },
         },
       },
       // ✅ Последний добавленный активный товар для fallback-картинки категории
@@ -94,7 +131,19 @@ export async function getCategoryBySlug(slug: string) {
   return {
     ...category,
     productCount: category._count.products,
+    subcategoryCount: category._count.children,
     latestProductImage,
+    children: category.children.map((child) => {
+      const childImage = child.products?.[0]?.images?.[0]?.url || null
+      return {
+        ...child,
+        productCount: child._count.products,
+        subcategoryCount: child._count.children,
+        latestProductImage: childImage,
+        _count: undefined,
+        products: undefined,
+      }
+    }),
     _count: undefined,
     products: undefined,
   }
