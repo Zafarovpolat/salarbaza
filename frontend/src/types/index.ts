@@ -103,8 +103,12 @@ export interface Category {
   sortOrder: number
   isActive: boolean
   productCount?: number
+  /** Количество активных подкатегорий. */
+  subcategoryCount?: number
   /** URL главного фото последнего добавленного активного товара этой категории. */
   latestProductImage?: string | null
+  parentId?: string | null
+  children?: Category[]
   wholesaleTemplateId?: string
   wholesaleTemplate?: WholesalePriceTemplate
 }
