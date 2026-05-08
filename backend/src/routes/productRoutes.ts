@@ -155,8 +155,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const where: Prisma.ProductWhereInput = { isActive: true }
 
     if (category) {
-      const cat = await prisma.category.findUnique({ where: { slug: category as string } })
-      if (cat) where.categoryId = cat.id
+      const cat = await prisma.category.findUnique({
+        where: { slug: category as string },
+        include: { children: { where: { isActive: true }, select: { id: true } } },
+      })
+      if (cat) {
+        const childIds = cat.children.map(c => c.id)
+        if (childIds.length > 0) {
+          where.categoryId = { in: [cat.id, ...childIds] }
+        } else {
+          where.categoryId = cat.id
+        }
+      }
     }
 
     if (minPrice) where.price = { ...(where.price as object), gte: parseInt(minPrice as string) }
