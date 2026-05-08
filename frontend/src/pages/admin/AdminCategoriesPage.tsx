@@ -7,10 +7,12 @@ import {
   Save,
   X,
   ChevronRight,
+  ChevronDown,
   Package,
   Percent,
   Upload,
   Loader2,
+  FolderTree,
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { adminService } from "@/services/adminService";
@@ -25,10 +27,12 @@ interface Category {
   descriptionRu?: string;
   descriptionUz?: string;
   image?: string;
+  parentId?: string | null;
+  parent?: { id: string; nameRu: string; nameUz: string; slug: string } | null;
   wholesaleTemplateId?: string;
   sortOrder: number;
   isActive: boolean;
-  _count?: { products: number };
+  _count?: { products: number; children: number };
   wholesaleTemplate?: { id: string; name: string } | null;
 }
 
@@ -49,6 +53,7 @@ interface CategoryForm {
   sortOrder: number;
   isActive: boolean;
   wholesaleTemplateId: string;
+  parentId: string;
 }
 
 const initialForm: CategoryForm = {
@@ -61,6 +66,7 @@ const initialForm: CategoryForm = {
   sortOrder: 0,
   isActive: true,
   wholesaleTemplateId: "",
+  parentId: "",
 };
 
 export function AdminCategoriesPage() {
@@ -76,6 +82,9 @@ export function AdminCategoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     loadCategories();
@@ -102,6 +111,28 @@ export function AdminCategoriesPage() {
     }
   };
 
+  const rootCategories = categories.filter((c) => !c.parentId);
+  const childrenMap = new Map<string, Category[]>();
+  for (const cat of categories) {
+    if (cat.parentId) {
+      const siblings = childrenMap.get(cat.parentId) || [];
+      siblings.push(cat);
+      childrenMap.set(cat.parentId, siblings);
+    }
+  }
+
+  const toggleExpand = (id: string) => {
+    setExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const handleEdit = (e: React.MouseEvent, category: Category) => {
     e.stopPropagation();
     setEditingId(category.id);
@@ -115,13 +146,14 @@ export function AdminCategoriesPage() {
       sortOrder: category.sortOrder,
       isActive: category.isActive,
       wholesaleTemplateId: category.wholesaleTemplateId || "",
+      parentId: category.parentId || "",
     });
     setShowForm(true);
   };
 
-  const handleNew = () => {
+  const handleNew = (presetParentId?: string) => {
     setEditingId(null);
-    setForm(initialForm);
+    setForm({ ...initialForm, parentId: presetParentId || "" });
     setShowForm(true);
   };
 
@@ -172,6 +204,7 @@ export function AdminCategoriesPage() {
       const dataToSend = {
         ...form,
         wholesaleTemplateId: form.wholesaleTemplateId || null,
+        parentId: form.parentId || null,
       };
 
       if (editingId) {
@@ -195,13 +228,17 @@ export function AdminCategoriesPage() {
     id: string,
     name: string,
     productsCount: number,
+    childrenCount: number,
   ) => {
     e.stopPropagation();
 
-    const message =
-      productsCount > 0
-        ? `Удалить категорию "${name}"?\n\n⚠️ ${productsCount} товаров останутся без категории.`
-        : `Удалить категорию "${name}"?`;
+    let message = `Удалить категорию "${name}"?`;
+    if (childrenCount > 0) {
+      message += `\n\n⚠️ ${childrenCount} подкатегорий будут перемещены в корень.`;
+    }
+    if (productsCount > 0) {
+      message += `\n\n⚠️ ${productsCount} товаров останутся без категории.`;
+    }
 
     if (!confirm(message)) return;
 
@@ -218,7 +255,13 @@ export function AdminCategoriesPage() {
     navigate(`/admin/categories/${categoryId}/products`);
   };
 
-  // Получить выбранный шаблон для превью
+  const getAvailableParents = (): Category[] => {
+    if (!editingId) {
+      return rootCategories;
+    }
+    return rootCategories.filter((c) => c.id !== editingId);
+  };
+
   const selectedTemplate = wholesaleTemplates.find(
     (t) => t.id === form.wholesaleTemplateId,
   );
@@ -230,7 +273,7 @@ export function AdminCategoriesPage() {
           Категории
         </h1>
         <button
-          onClick={handleNew}
+          onClick={() => handleNew()}
           className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl hover:bg-green-700 transition-colors text-sm font-medium"
         >
           <Plus className="w-5 h-5" />
@@ -255,6 +298,32 @@ export function AdminCategoriesPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              {/* Parent category selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <span className="flex items-center gap-1">
+                    <FolderTree className="w-4 h-4" />
+                    Родительская категория
+                  </span>
+                </label>
+                <select
+                  name="parentId"
+                  value={form.parentId}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:border-green-500 outline-none bg-white"
+                >
+                  <option value="">Корневая категория (без родителя)</option>
+                  {getAvailableParents().map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.nameRu}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Выберите родительскую категорию для создания подкатегории
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Slug *
@@ -379,7 +448,6 @@ export function AdminCategoriesPage() {
                 )}
               </div>
 
-              {/* ✅ Шаблон оптовых скидок */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <span className="flex items-center gap-1">
@@ -407,7 +475,6 @@ export function AdminCategoriesPage() {
                 </p>
               </div>
 
-              {/* Превью выбранного шаблона */}
               {selectedTemplate && (
                 <div className="bg-green-50 rounded-lg p-3">
                   <p className="text-sm font-medium text-green-800 mb-2">
@@ -461,82 +528,207 @@ export function AdminCategoriesPage() {
         </div>
       )}
 
-      {/* Categories List */}
+      {/* Categories List — hierarchical */}
       <div className="space-y-3">
         {loading ? (
           <div className="bg-white rounded-xl p-8 text-center text-gray-500">
             Загрузка...
           </div>
-        ) : categories.length === 0 ? (
+        ) : rootCategories.length === 0 ? (
           <div className="bg-white rounded-xl p-8 text-center text-gray-500">
             Категории не найдены
           </div>
         ) : (
-          categories.map((category) => (
-            <div
-              key={category.id}
-              onClick={() => handleCategoryClick(category.id)}
-              className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all active:scale-[0.99]"
-            >
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-medium text-gray-900">
-                      {category.nameRu}
-                    </h3>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        category.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {category.isActive ? "Активна" : "Скрыта"}
-                    </span>
-                    {category.wholesaleTemplate && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 flex items-center gap-1">
-                        <Percent className="w-3 h-3" />
-                        {category.wholesaleTemplate.name}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-gray-500">{category.slug}</p>
-                    <span className="text-gray-300">•</span>
-                    <div className="flex items-center gap-1 text-sm text-blue-600">
-                      <Package className="w-3.5 h-3.5" />
-                      <span>{category._count?.products || 0} товаров</span>
+          rootCategories.map((category) => {
+            const children = childrenMap.get(category.id) || [];
+            const hasChildren = children.length > 0;
+            const isExpanded = expandedParents.has(category.id);
+
+            return (
+              <div key={category.id}>
+                {/* Parent category row */}
+                <div
+                  onClick={() => handleCategoryClick(category.id)}
+                  className="bg-white rounded-xl p-4 shadow-sm cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all active:scale-[0.99]"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {hasChildren && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(category.id);
+                            }}
+                            className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-gray-500" />
+                            )}
+                          </button>
+                        )}
+                        <h3 className="font-medium text-gray-900">
+                          {category.nameRu}
+                        </h3>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            category.isActive
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {category.isActive ? "Активна" : "Скрыта"}
+                        </span>
+                        {category.wholesaleTemplate && (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 flex items-center gap-1">
+                            <Percent className="w-3 h-3" />
+                            {category.wholesaleTemplate.name}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm text-gray-500">{category.slug}</p>
+                        <span className="text-gray-300">•</span>
+                        <div className="flex items-center gap-1 text-sm text-blue-600">
+                          <Package className="w-3.5 h-3.5" />
+                          <span>
+                            {category._count?.products || 0} товаров
+                          </span>
+                        </div>
+                        {hasChildren && (
+                          <>
+                            <span className="text-gray-300">•</span>
+                            <div className="flex items-center gap-1 text-sm text-indigo-600">
+                              <FolderTree className="w-3.5 h-3.5" />
+                              <span>
+                                {category._count?.children || children.length}{" "}
+                                подкат.
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 ml-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNew(category.id);
+                        }}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                        title="Добавить подкатегорию"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleEdit(e, category)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                        title="Редактировать категорию"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) =>
+                          handleDelete(
+                            e,
+                            category.id,
+                            category.nameRu,
+                            category._count?.products || 0,
+                            category._count?.children || children.length,
+                          )
+                        }
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Удалить категорию"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <ChevronRight className="w-5 h-5 text-gray-400 ml-1" />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 ml-2">
-                  <button
-                    onClick={(e) => handleEdit(e, category)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                    title="Редактировать категорию"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) =>
-                      handleDelete(
-                        e,
-                        category.id,
-                        category.nameRu,
-                        category._count?.products || 0,
-                      )
-                    }
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                    title="Удалить категорию"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <ChevronRight className="w-5 h-5 text-gray-400 ml-1" />
-                </div>
+                {/* Subcategories (children) */}
+                {hasChildren && isExpanded && (
+                  <div className="ml-6 mt-2 space-y-2 border-l-2 border-indigo-100 pl-4">
+                    {children.map((child) => (
+                      <div
+                        key={child.id}
+                        onClick={() => handleCategoryClick(child.id)}
+                        className="bg-white rounded-xl p-3 shadow-sm cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all active:scale-[0.99] border border-gray-100"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <FolderTree className="w-3.5 h-3.5 text-indigo-400" />
+                              <h3 className="font-medium text-gray-800 text-sm">
+                                {child.nameRu}
+                              </h3>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  child.isActive
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
+                              >
+                                {child.isActive ? "Активна" : "Скрыта"}
+                              </span>
+                              {child.wholesaleTemplate && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 flex items-center gap-1">
+                                  <Percent className="w-3 h-3" />
+                                  {child.wholesaleTemplate.name}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-gray-500">
+                                {child.slug}
+                              </p>
+                              <span className="text-gray-300">•</span>
+                              <div className="flex items-center gap-1 text-xs text-blue-600">
+                                <Package className="w-3 h-3" />
+                                <span>
+                                  {child._count?.products || 0} товаров
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 ml-2">
+                            <button
+                              onClick={(e) => handleEdit(e, child)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
+                              title="Редактировать подкатегорию"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) =>
+                                handleDelete(
+                                  e,
+                                  child.id,
+                                  child.nameRu,
+                                  child._count?.products || 0,
+                                  child._count?.children || 0,
+                                )
+                              }
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                              title="Удалить подкатегорию"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            <ChevronRight className="w-4 h-4 text-gray-400 ml-1" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </AdminLayout>
