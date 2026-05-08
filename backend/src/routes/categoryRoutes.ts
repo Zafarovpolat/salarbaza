@@ -20,9 +20,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
     logger.info(`📂 GET /categories — запрос к БД (root=${rootOnly})`)
 
-    const where: any = { isActive: true }
-    if (rootOnly) {
-      where.parentId = null
+    const where: any = { isActive: true, parentId: null }
+    if (!rootOnly) {
+      delete where.parentId
     }
 
     const categories = await prisma.category.findMany({
@@ -178,7 +178,7 @@ router.get('/:slug/products', async (req: Request, res: Response, next: NextFunc
 
     const category = await prisma.category.findUnique({
       where: { slug },
-      select: { id: true },
+      include: { children: { where: { isActive: true }, select: { id: true } } },
     })
 
     if (!category) {
@@ -194,7 +194,13 @@ router.get('/:slug/products', async (req: Request, res: Response, next: NextFunc
     if (sortBy === 'price_desc') orderBy = { price: 'desc' }
     if (sortBy === 'popular') orderBy = { viewCount: 'desc' }
 
-    const where = { categoryId: category.id, isActive: true }
+    const childIds = category.children.map(c => c.id)
+    const where: any = { isActive: true }
+    if (childIds.length > 0) {
+      where.categoryId = { in: [category.id, ...childIds] }
+    } else {
+      where.categoryId = category.id
+    }
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({

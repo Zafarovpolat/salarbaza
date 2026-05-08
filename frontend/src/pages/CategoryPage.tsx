@@ -7,7 +7,6 @@ import { useCategory } from "@/hooks/useCategories";
 import { useProducts } from "@/hooks/useProducts";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { ProductGrid } from "@/components/product/ProductGrid";
-import { CategoryList } from "@/components/category/CategoryList";
 import { Container } from "@/components/layout/Container";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { getCategoryName } from "@/utils/helpers";
@@ -21,11 +20,6 @@ export function CategoryPage() {
 
   const { category, isLoading: categoryLoading } = useCategory(slug || "");
 
-  const hasSubcategories =
-    !categoryLoading &&
-    ((category?.subcategoryCount ?? 0) > 0 ||
-      (category?.children && category.children.length > 0));
-
   return (
     <div className="pb-6">
       {/* Header */}
@@ -34,24 +28,13 @@ export function CategoryPage() {
         categoryLoading={categoryLoading}
         slug={slug}
         language={language}
-        hasSubcategories={!!hasSubcategories}
       />
 
-      {/* Content: subcategories or products */}
+      {/* Content: products (including from subcategories) */}
       {categoryLoading ? (
         <section className="py-6">
           <Container>
             <ProductGrid products={[]} isLoading={true} />
-          </Container>
-        </section>
-      ) : hasSubcategories ? (
-        <section className="py-6">
-          <Container>
-            <CategoryList
-              categories={category?.children || []}
-              isLoading={false}
-              variant="grid"
-            />
           </Container>
         </section>
       ) : (
@@ -66,13 +49,11 @@ function CategoryHeader({
   categoryLoading,
   slug,
   language,
-  hasSubcategories,
 }: {
   category: import("@/types").Category | null;
   categoryLoading: boolean;
   slug?: string;
   language: "uz" | "ru";
-  hasSubcategories: boolean;
 }) {
   const categoryName = category ? getCategoryName(category, language) : "";
 
@@ -130,9 +111,7 @@ function CategoryHeader({
                   {categoryName}
                 </h1>
                 <p className="text-medium-gray text-sm">
-                  {hasSubcategories
-                    ? `${category?.children?.length || 0} ${language === "uz" ? "ta bo'lim" : "подкатегорий"}`
-                    : `${category?.productCount || 0} ${language === "uz" ? "ta mahsulot" : "товаров"}`}
+                  {`${category?.productCount || 0} ${language === "uz" ? "ta mahsulot" : "товаров"}`}
                 </p>
               </div>
 
