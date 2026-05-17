@@ -341,13 +341,37 @@ def sync_products(
 
     groups = group_products(bito_products)
 
+    # Phase 0: if a Bito product's _id is already stored in Supabase via
+    # products."bitoProductId", that direct link is the strongest signal and
+    # wins over any name/code based matching. This prevents
+    # UniqueViolation on products_bitoProductId_key when Bito grows new color
+    # variants for what was previously a single-color Supabase product
+    # (e.g. Supabase "Dh-127 mix" was linked to Bito "DH-127 MIX"; Bito later
+    # adds "DH-127 brown" / "DH-127 dark green" / "DH-127 light green" — the
+    # group root "dh-127" would otherwise match a sibling Supabase row and the
+    # subsequent UPDATE would clash on the bitoProductId unique constraint).
+    supa_by_bito_pid: Dict[str, Dict[str, Any]] = {
+        p["bitoProductId"]: p for p in supa_products if p.get("bitoProductId")
+    }
+    used_supa_ids: Set[str] = set()
+    one_to_one: Dict[str, Dict[str, Any]] = {}  # bito_id -> supabase_product
+    for bp in bito_products:
+        supa = supa_by_bito_pid.get(bp["_id"])
+        if supa and supa["id"] not in used_supa_ids:
+            one_to_one[bp["_id"]] = supa
+            used_supa_ids.add(supa["id"])
+    phase0_count = len(one_to_one)
+
     # Phase A: try to match each Bito GROUP by its root code (variant A).
     # If Supabase has a product whose code matches the root (no color suffix),
     # the whole group becomes that Supabase product with N color rows.
-    used_supa_ids: Set[str] = set()
     group_match: Dict[str, Dict[str, Any]] = {}  # root_norm -> supabase_product
     for root_norm, items in groups.items():
         if not root_norm:
+            continue
+        # Skip groups where every item is already individually linked via
+        # bitoProductId — they're handled as 1:1 updates in phase 1.
+        if all(p["_id"] in one_to_one for _, p in items):
             continue
         hit = matcher.find(root_norm)
         if hit and hit["id"] not in used_supa_ids:
@@ -357,11 +381,12 @@ def sync_products(
     # Phase B: for Bito products NOT in a matched group, try 1:1 match by full
     # name. Used when Supabase has each color as a separate product
     # (MIAMI-64(black/gold), MIAMI-64(brown/gold), ...).
-    one_to_one: Dict[str, Dict[str, Any]] = {}  # bito_id -> supabase_product
     for root_norm, items in groups.items():
         if root_norm in group_match:
             continue  # whole group handled at root level
         for color, bp in items:
+            if bp["_id"] in one_to_one:
+                continue  # already linked via bitoProductId (phase 0)
             candidates: List[str] = [bp.get("name", "")]
             if bp.get("number"):
                 candidates.append(bp["number"])
@@ -372,8 +397,9 @@ def sync_products(
                 one_to_one[bp["_id"]] = hit
                 used_supa_ids.add(hit["id"])
 
-    log.append(f"[products] phase A: root group matches = {len(group_match)}")
-    log.append(f"[products] phase B: 1:1 matches      = {len(one_to_one)}")
+    log.append(f"[products] phase 0: bitoProductId pre-links = {phase0_count}")
+    log.append(f"[products] phase A: root group matches      = {len(group_match)}")
+    log.append(f"[products] phase B: 1:1 name matches        = {len(one_to_one) - phase0_count}")
 
     plan = {
         "groups_total": len(groups),
