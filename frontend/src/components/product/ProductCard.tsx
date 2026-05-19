@@ -28,7 +28,11 @@ export const ProductCard = memo(function ProductCard({
   const { haptic } = useTelegram()
 
   const hasVariants = product.variants && product.variants.length > 0
-  const inCart = isInCart(product.id)
+  // When the backend exploded a multi-color product into per-color cards, each card
+  // already carries exactly one colour. Single-color products either have no colours
+  // at all or come through with a single-element array — use it for cart/favourites.
+  const selectedColor = product.colors && product.colors.length === 1 ? product.colors[0] : undefined
+  const inCart = isInCart(product.id, selectedColor?.id)
   const isProductFavorite = isFavorite(product.id)
   const name = getProductName(product, language)
   const mainImage = product.images?.find(img => img.isMain)?.url || product.images?.[0]?.url
@@ -44,8 +48,10 @@ export const ProductCard = memo(function ProductCard({
     return { minPrice: product.price, maxPrice: product.price, isRange: false }
   })()
 
-  // ✅ Безопасный URL — кодируем slug
-  const productUrl = safeProductUrl(product.slug)
+  // ✅ Безопасный URL — кодируем slug. Если карточка соответствует конкретному цвету,
+  // передаём id через `?color=...` чтобы страница товара открылась с выбранным цветом.
+  const colorQuery = product.selectedColorId ? `?color=${encodeURIComponent(product.selectedColorId)}` : ''
+  const productUrl = `${safeProductUrl(product.slug)}${colorQuery}`
 
   const handleClick = () => {
     navigate(productUrl)
@@ -58,7 +64,7 @@ export const ProductCard = memo(function ProductCard({
       return
     }
     if (!inCart) {
-      addItem(product, 1)
+      addItem(product, 1, selectedColor)
       haptic.impact('light')
       toast.success(
         language === 'uz' ? "Savatga qo'shildi" : 'Добавлено в корзину',
