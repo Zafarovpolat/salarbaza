@@ -3,6 +3,14 @@
 // ===== Product Types =====
 export interface Product {
   id: string
+  /** Unique identifier for a catalog *card*. Same as `id` for single-color products,
+   *  but multi-color products explode into one card per in-stock color, each with
+   *  a unique `cardId = "<productId>:<colorId>"`. Used for React keys / dedup. */
+  cardId?: string
+  /** When a card represents a specific colour of a multi-color product, this is
+   *  the colour's id. Frontend passes it through to `?color=` so the detail page
+   *  can preselect the right colour. */
+  selectedColorId?: string
   code: string
   slug: string
   nameRu: string

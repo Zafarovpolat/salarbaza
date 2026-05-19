@@ -36,6 +36,99 @@ const productDetailInclude = {
   },
 }
 
+// ===== Public catalog post-processing =====
+// 1) Hide products that are completely out of stock — handled at DB layer via `inStock: true`
+// 2) For products with multiple colors, expose each in-stock color as its own card.
+//    Each card carries the same id/slug so detail page, cart & favourites keep working,
+//    plus a unique `cardId` for React keys and a `selectedColorId` so the frontend
+//    can route to the right color on the detail page.
+function explodeByColor<T extends {
+  id: string
+  nameRu: string
+  nameUz: string
+  price: number
+  oldPrice: number | null
+  inStock: boolean
+  stockQuantity: number
+  images: Array<{ id: string; url: string; isMain: boolean; sortOrder: number; alt: string | null }>
+  colors: Array<{
+    id: string
+    nameRu: string
+    nameUz: string
+    image: string | null
+    hexCode: string | null
+    inStock: boolean
+    stockQuantity: number
+    priceModifier: number
+  }>
+}>(products: T[]): Array<T & { cardId: string; selectedColorId?: string }> {
+  const out: Array<T & { cardId: string; selectedColorId?: string }> = []
+  for (const p of products) {
+    const colors = p.colors || []
+    // No colors -> single card, identical to today.
+    if (colors.length === 0) {
+      out.push({ ...p, cardId: p.id })
+      continue
+    }
+    // Only one color and it's in stock -> still single card; pull color image
+    // forward if present so the catalog tile actually shows the colour.
+    if (colors.length === 1) {
+      const c = colors[0]
+      if (!c.inStock) continue // hide whole product if its only color is OOS
+      const images = c.image
+        ? [
+            {
+              id: `color-${c.id}`,
+              url: c.image,
+              alt: c.nameRu,
+              sortOrder: -1,
+              isMain: true,
+            } as T['images'][number],
+            ...p.images.filter(img => img.url !== c.image),
+          ]
+        : p.images
+      out.push({
+        ...p,
+        cardId: `${p.id}:${c.id}`,
+        selectedColorId: c.id,
+        images,
+      })
+      continue
+    }
+    // Multiple colors -> one card per in-stock color.
+    const inStockColors = colors.filter(c => c.inStock)
+    if (inStockColors.length === 0) continue // hide product if every color is OOS
+    for (const c of inStockColors) {
+      const colorImage = c.image
+        ? [
+            {
+              id: `color-${c.id}`,
+              url: c.image,
+              alt: c.nameRu,
+              sortOrder: -1,
+              isMain: true,
+            } as T['images'][number],
+          ]
+        : []
+      const restImages = p.images.filter(img => img.url !== c.image)
+      out.push({
+        ...p,
+        cardId: `${p.id}:${c.id}`,
+        selectedColorId: c.id,
+        nameRu: `${p.nameRu} \u2014 ${c.nameRu}`,
+        nameUz: `${p.nameUz} \u2014 ${c.nameUz}`,
+        price: p.price + (c.priceModifier || 0),
+        oldPrice: p.oldPrice !== null ? p.oldPrice + (c.priceModifier || 0) : null,
+        inStock: c.inStock,
+        stockQuantity: c.stockQuantity,
+        images: [...colorImage, ...restImages],
+        colors: [c] as T['colors'],
+      })
+    }
+  }
+  return out
+}
+
 // ===== FEATURED ===== (кэш 60 сек)
 router.get('/featured', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -45,13 +138,13 @@ router.get('/featured', async (req: Request, res: Response, next: NextFunction) 
     if (cached) return res.json(cached)
 
     const products = await prisma.product.findMany({
-      where: { isActive: true, isFeatured: true },
+      where: { isActive: true, isFeatured: true, inStock: true },
       include: productListInclude,
       orderBy: { viewCount: 'desc' },
       take: limit,
     })
 
-    const response = { success: true, data: products }
+    const response = { success: true, data: explodeByColor(products as any) }
     setCache(cacheKey, response, 60)
     res.json(response)
   } catch (error) {
@@ -68,13 +161,13 @@ router.get('/new', async (req: Request, res: Response, next: NextFunction) => {
     if (cached) return res.json(cached)
 
     const products = await prisma.product.findMany({
-      where: { isActive: true, isNew: true },
+      where: { isActive: true, isNew: true, inStock: true },
       include: productListInclude,
       orderBy: { createdAt: 'desc' },
       take: limit,
     })
 
-    const response = { success: true, data: products }
+    const response = { success: true, data: explodeByColor(products as any) }
     setCache(cacheKey, response, 60)
     res.json(response)
   } catch (error) {
@@ -91,13 +184,13 @@ router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
     if (cached) return res.json(cached)
 
     const products = await prisma.product.findMany({
-      where: { isActive: true, oldPrice: { not: null } },
+      where: { isActive: true, inStock: true, oldPrice: { not: null } },
       include: productListInclude,
       orderBy: { viewCount: 'desc' },
       take: limit,
     })
 
-    const response = { success: true, data: products }
+    const response = { success: true, data: explodeByColor(products as any) }
     setCache(cacheKey, response, 60)
     res.json(response)
   } catch (error) {
@@ -118,6 +211,7 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
     const products = await prisma.product.findMany({
       where: {
         isActive: true,
+        inStock: true,
         OR: [
           { nameRu: { contains: q as string, mode: 'insensitive' } },
           { nameUz: { contains: q as string, mode: 'insensitive' } },
@@ -128,7 +222,7 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
       take: parseInt(limit as string),
     })
 
-    const response = { success: true, data: products }
+    const response = { success: true, data: explodeByColor(products as any) }
     setCache(cacheKey, response, 30)
     res.json(response)
   } catch (error) {
@@ -152,7 +246,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const limitNum = parseInt(limit as string)
     const skip = (pageNum - 1) * limitNum
 
-    const where: Prisma.ProductWhereInput = { isActive: true }
+    const where: Prisma.ProductWhereInput = { isActive: true, inStock: true }
 
     if (category) {
       const cat = await prisma.category.findUnique({
@@ -171,7 +265,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
     if (minPrice) where.price = { ...(where.price as object), gte: parseInt(minPrice as string) }
     if (maxPrice) where.price = { ...(where.price as object), lte: parseInt(maxPrice as string) }
-    if (inStock === 'true') where.inStock = true
+    // `inStock` filter from the client is now redundant — every product in the list is in stock by default.
+    // Kept for backwards compatibility but a value of `false` would never match.
+    void inStock
 
     let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' }
     if (sortBy === 'price_asc') orderBy = { price: 'asc' }
@@ -189,9 +285,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       prisma.product.count({ where }),
     ])
 
+    const cards = explodeByColor(products as any)
+
     const response = {
       success: true,
-      data: products,
+      data: cards,
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     }
 
@@ -222,6 +320,7 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
     const recommendations = await prisma.product.findMany({
       where: {
         isActive: true,
+        inStock: true,
         id: { not: id },
         OR: [
           { categoryId: currentProduct.categoryId },
@@ -242,7 +341,7 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
       take: limit,
     })
 
-    const response = { success: true, data: recommendations }
+    const response = { success: true, data: explodeByColor(recommendations as any) }
     setCache(cacheKey, response, 60)
     res.json(response)
   } catch (error) {
