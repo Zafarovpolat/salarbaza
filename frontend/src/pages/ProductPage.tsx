@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Share2, ChevronLeft, ChevronRight, Tag } from 'lucide-react'
 import { useLanguageStore } from '@/store/languageStore'
@@ -24,6 +24,11 @@ import toast from 'react-hot-toast'
 export function ProductPage() {
   const { slug: rawSlug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  /** When the user clicks a per-color card in the catalog, that card carries a
+   *  `?color=<id>` so the detail page can preselect the matching colour instead
+   *  of defaulting to the first one. */
+  const requestedColorId = searchParams.get('color') || undefined
   const { language, t } = useLanguageStore()
   const { haptic } = useTelegram()
   const { addItem, isInCart } = useCartStore()
@@ -51,8 +56,12 @@ export function ProductPage() {
   }, [slug])
 
   useEffect(() => {
-    if (product?.colors?.length) setSelectedColor(product.colors[0])
-  }, [product])
+    if (!product?.colors?.length) return
+    const match = requestedColorId
+      ? product.colors.find(c => c.id === requestedColorId)
+      : undefined
+    setSelectedColor(match || product.colors[0])
+  }, [product, requestedColorId])
 
   useEffect(() => {
     if (product?.variants?.length) {
