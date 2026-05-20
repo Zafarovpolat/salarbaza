@@ -39,9 +39,14 @@ const productDetailInclude = {
 // ===== Public catalog post-processing =====
 // 1) Hide products that are completely out of stock — handled at DB layer via `inStock: true`
 // 2) For products with multiple colors, expose each in-stock color as its own card.
-//    Each card carries the same id/slug so detail page, cart & favourites keep working,
-//    plus a unique `cardId` for React keys and a `selectedColorId` so the frontend
-//    can route to the right color on the detail page.
+//    Each card carries the same id/slug so the detail page, cart & favourites keep
+//    working, plus a unique `cardId` for React keys and a `selectedColorId` so the
+//    frontend can route to the right color on the detail page.
+//
+// The product *name* is kept exactly as it is in the DB (i.e. the Bito-side code
+// like `B-28 yellow` or `C-6-2`) — we do NOT append a localised colour suffix.
+// The product *images* are also kept as-is (the curated edited Supabase photos);
+// we do not pull Bito's per-color thumbnails to the front of the gallery.
 function explodeByColor<T extends {
   id: string
   nameRu: string
@@ -70,28 +75,15 @@ function explodeByColor<T extends {
       out.push({ ...p, cardId: p.id })
       continue
     }
-    // Only one color and it's in stock -> still single card; pull color image
-    // forward if present so the catalog tile actually shows the colour.
+    // Only one color and it's in stock -> still single card. Name and images
+    // come straight from the product row.
     if (colors.length === 1) {
       const c = colors[0]
       if (!c.inStock) continue // hide whole product if its only color is OOS
-      const images = c.image
-        ? [
-            {
-              id: `color-${c.id}`,
-              url: c.image,
-              alt: c.nameRu,
-              sortOrder: -1,
-              isMain: true,
-            } as T['images'][number],
-            ...p.images.filter(img => img.url !== c.image),
-          ]
-        : p.images
       out.push({
         ...p,
         cardId: `${p.id}:${c.id}`,
         selectedColorId: c.id,
-        images,
       })
       continue
     }
@@ -99,29 +91,16 @@ function explodeByColor<T extends {
     const inStockColors = colors.filter(c => c.inStock)
     if (inStockColors.length === 0) continue // hide product if every color is OOS
     for (const c of inStockColors) {
-      const colorImage = c.image
-        ? [
-            {
-              id: `color-${c.id}`,
-              url: c.image,
-              alt: c.nameRu,
-              sortOrder: -1,
-              isMain: true,
-            } as T['images'][number],
-          ]
-        : []
-      const restImages = p.images.filter(img => img.url !== c.image)
       out.push({
         ...p,
         cardId: `${p.id}:${c.id}`,
         selectedColorId: c.id,
-        nameRu: `${p.nameRu} \u2014 ${c.nameRu}`,
-        nameUz: `${p.nameUz} \u2014 ${c.nameUz}`,
+        // Name stays exactly as in DB (Bito code). Images stay exactly as
+        // uploaded to Supabase — no override with c.image.
         price: p.price + (c.priceModifier || 0),
         oldPrice: p.oldPrice !== null ? p.oldPrice + (c.priceModifier || 0) : null,
         inStock: c.inStock,
         stockQuantity: c.stockQuantity,
-        images: [...colorImage, ...restImages],
         colors: [c] as T['colors'],
       })
     }
