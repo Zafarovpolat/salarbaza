@@ -8,7 +8,7 @@ const router = Router()
 
 // ✅ FIX: используем include вместо select — никаких TS ошибок
 const productListInclude = {
-  images: { where: { isMain: true }, take: 1 },
+  images: { orderBy: { sortOrder: 'asc' as const } },
   colors: true,
   variants: { orderBy: { sortOrder: 'asc' as const } },
   category: {
@@ -43,10 +43,13 @@ const productDetailInclude = {
 //    working, plus a unique `cardId` for React keys and a `selectedColorId` so the
 //    frontend can route to the right color on the detail page.
 //
-// The product *name* is kept exactly as it is in the DB (i.e. the Bito-side code
-// like `B-28 yellow` or `C-6-2`) — we do NOT append a localised colour suffix.
-// The product *images* are also kept as-is (the curated edited Supabase photos);
-// we do not pull Bito's per-color thumbnails to the front of the gallery.
+// For multi-color products each card gets:
+//   - its own image(s): matched by checking if the image URL contains the
+//     color's bitoSku (e.g. "6502-C-6-2-blue" inside
+//     "https://zafarovpolat.github.io/bito-cat/edited/6502-C-6-2-blue-1.png")
+//   - a distinguishable name: product nameRu/nameUz + " — ColorName"
+//
+// If no bitoSku match is found, falls back to the product's main/first image.
 function explodeByColor<T extends {
   id: string
   nameRu: string
@@ -65,6 +68,7 @@ function explodeByColor<T extends {
     inStock: boolean
     stockQuantity: number
     priceModifier: number
+    bitoSku?: string | null
   }>
 }>(products: T[]): Array<T & { cardId: string; selectedColorId?: string }> {
   const out: Array<T & { cardId: string; selectedColorId?: string }> = []
@@ -90,13 +94,42 @@ function explodeByColor<T extends {
     // Multiple colors -> one card per in-stock color.
     const inStockColors = colors.filter(c => c.inStock)
     if (inStockColors.length === 0) continue // hide product if every color is OOS
+
+    // Pre-compute: default/fallback image (main or first)
+    const fallbackImage = p.images.find(img => img.isMain) || p.images[0] || null
+
     for (const c of inStockColors) {
+      // --- Image matching: find images whose URL contains this color's bitoSku ---
+      let colorImages: T['images'] = []
+      if (c.bitoSku) {
+        const skuLower = c.bitoSku.toLowerCase()
+        colorImages = p.images.filter(img =>
+          img.url.toLowerCase().includes(skuLower)
+        )
+      }
+      // Fallback: if no sku-matched images, use the product's main image
+      if (colorImages.length === 0 && fallbackImage) {
+        colorImages = [fallbackImage]
+      }
+      // Mark first matched image as isMain for the frontend
+      if (colorImages.length > 0) {
+        colorImages = colorImages.map((img, idx) => ({
+          ...img,
+          isMain: idx === 0,
+        }))
+      }
+
+      // --- Name: append color for disambiguation ---
+      const nameRu = `${p.nameRu} — ${c.nameRu}`
+      const nameUz = `${p.nameUz} — ${c.nameUz}`
+
       out.push({
         ...p,
         cardId: `${p.id}:${c.id}`,
         selectedColorId: c.id,
-        // Name stays exactly as in DB (Bito code). Images stay exactly as
-        // uploaded to Supabase — no override with c.image.
+        nameRu,
+        nameUz,
+        images: colorImages as T['images'],
         price: p.price + (c.priceModifier || 0),
         oldPrice: p.oldPrice !== null ? p.oldPrice + (c.priceModifier || 0) : null,
         inStock: c.inStock,
