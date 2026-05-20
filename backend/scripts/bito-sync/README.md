@@ -4,30 +4,46 @@ Pulls warehouses / categories / products / per-warehouse stock / customers /
 employees from **Bito ERP** (the source of truth for inventory and pricing) into
 the existing **Supabase** Postgres database used by the Telegram Mini App.
 
+One script, two modes:
+
+| Mode            | Runs every | Creates new rows?  | Phases                                                            |
+| --------------- | ---------- | ------------------ | ----------------------------------------------------------------- |
+| `incremental`   | 1 hour     | No (UPDATE only)   | warehouses, categories (refresh), products, stock, prices         |
+| `full`          | 1 day      | Yes                | all of incremental + new products + customers + employees         |
+
+Both modes are **diff-aware**: a UPDATE/UPSERT is only emitted when at least
+one value actually changed, so a no-op run makes near-zero load on the
+Supabase pooler.
+
 ## What gets synced
 
-| Bito source                               | Supabase target                                    |
-| ----------------------------------------- | -------------------------------------------------- |
-| `warehouse/get-all`                       | `bito_warehouses`                                  |
-| `category/get-paging`                     | `categories` (smart RU/UZ from Uzbek source name)  |
-| `product/get-paging` (1 812 items)        | `products` + `product_colors` (variant A grouping) |
-| `_warehouses.*.amount` per product        | `product_warehouse_stocks` + `products.stockQuantity` (sum) |
-| `price/items/get-paging`, price `narxi`   | `products.price` (UZS, integer)                    |
-| `customer/get-paging`                     | `bito_customers`                                   |
-| `employee/get-paging`                     | `bito_employees`                                   |
+| Bito source                               | Supabase target                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `warehouse/get-all`                       | `bito_warehouses`                                                               |
+| `category/get-paging`                     | `categories` (smart RU/UZ from Uzbek source name) — names refreshed every run   |
+| `product/get-paging`                      | `products` (1 Bito SKU = 1 Supabase product, after split-by-color migration)    |
+| `_warehouses.*.amount` per product        | `product_warehouse_stocks` + `products.stockQuantity` (sum)                     |
+| `price/items/get-paging`, price `narxi`   | `products.price` (UZS, integer)                                                 |
+| product.category._id                      | `products.categoryId` ← **updated every run**, so Bito category moves stick     |
+| `customer/get-paging`                     | `bito_customers` (full mode only)                                               |
+| `employee/get-paging`                     | `bito_employees` (full mode only)                                               |
 
-Curated Supabase fields (`nameRu`/`nameUz`/`descriptionRu`/`descriptionUz`/
-`slug`/`product_images`) are **never overwritten** for products that already
-exist in Supabase. New products created from Bito get a generated code and
-slug; their RU/UZ display name defaults to the code (Bito has no localized
-names).
+### Curated fields — never overwritten
 
-### Variant A grouping
+For products that already exist in Supabase, the sync **never** touches:
+`nameRu`, `nameUz`, `descriptionRu`, `descriptionUz`, `slug`, `product_images`,
+`isFeatured`, `isNew`, `viewCount`, `isActive`. New products created from Bito
+get a generated code/slug and their RU/UZ display name defaults to the code
+(Bito has no localized names).
 
-Bito keeps each color as a separate product (e.g. `B-1 white`, `B-1 pink`).
-The script groups these by **root code** and creates a single Supabase product
-with N color rows in `product_colors`. Each `product_colors` row links back to
-its individual Bito product via `bitoProductId`.
+### Matching priority (per Bito product)
+
+1. `products.bitoProductId == bito._id` — strongest, used always.
+2. `products.bitoSku == bito.sku`       — re-link if `bitoProductId` is null.
+3. Fuzzy name match                     — full mode only, fallback for first-time link.
+
+Anything still unmatched is **skipped** in incremental mode and **created** in
+full mode.
 
 ## Running
 
@@ -47,29 +63,63 @@ export BITO_PRICE_ID="6706187e485b322ea8c90155"   # narxi (UZS)
 export SUPABASE_DSN="postgresql://postgres.<ref>:<pwd>@<host>:5432/postgres?sslmode=require"
 ```
 
-### 3. Dry-run (no writes)
+### 3. Dry-run (no writes) — always do this first against prod
 
 ```bash
-python3 sync.py --report-out /tmp/bito-dry-run.json
+python3 sync.py --mode=incremental --report-out /tmp/incr-dry.json
+python3 sync.py --mode=full        --report-out /tmp/full-dry.json
 ```
 
-### 4. Apply (writes inside one transaction)
+The dry-run prints what would change but doesn't open a write transaction.
+
+### 4. Apply
 
 ```bash
-python3 sync.py --apply --report-out /tmp/bito-apply.json
+python3 sync.py --mode=incremental --apply
+python3 sync.py --mode=full        --apply
 ```
 
 ### Selective phases
 
 ```bash
-python3 sync.py --skip-customers --skip-employees      # only catalog
-python3 sync.py --skip-products --skip-stock           # only orgs + customers
-python3 sync.py --skip-prices                          # don't touch price
+python3 sync.py --mode=full --skip-customers --skip-employees   # catalog only
+python3 sync.py --mode=incremental --skip-stock                 # only price + categoryId
+python3 sync.py --mode=incremental --skip-prices                # only stock + categoryId
 ```
+
+## Scheduling
+
+The sync runs on cron in **two places**, on the same schedule, in parallel. The
+script is idempotent so running both is safe — Render is the primary, GH
+Actions is the free fallback.
+
+| Where           | Cost      | Incremental cron     | Full cron               |
+| --------------- | --------- | -------------------- | ----------------------- |
+| GitHub Actions  | Free      | `0 * * * *`          | `0 4 * * *`             |
+| Render Cron     | $7/mo     | `0 * * * *`          | `0 4 * * *`             |
+
+Workflow files:
+- `.github/workflows/bito-sync-incremental.yml` — hourly incremental
+- `.github/workflows/bito-sync-full.yml`        — daily full
+- `render.yaml`                                 — both Render Cron Jobs
+
+Required GitHub repo / Render secrets:
+- `SUPABASE_DSN` — Postgres connection string
+- `BITO_API_KEY` — `dekor-house:<token>`
+
+`BITO_BASE_URL` and `BITO_PRICE_ID` have safe defaults.
+
+### Manual trigger
+
+- GitHub: Actions tab → "Bito sync (full)" or "(incremental)" → Run workflow.
+  The `apply` input lets you do a dry-run from the UI.
+- Render: dashboard → Cron job → "Trigger Job" button.
+- Locally: `python3 sync.py --mode=full --apply` (with env vars set).
 
 ## Backups
 
-Always take a `pg_dump` of `public` before running with `--apply`:
+Before the very first apply (or any time the catalog has drifted significantly
+from Bito), take a `pg_dump` of `public`:
 
 ```bash
 pg_dump --host=... --port=5432 --username=... \
@@ -80,45 +130,24 @@ pg_dump --host=... --port=5432 --username=... \
 ## Auditing
 
 Every applied run inserts a row into `bito_sync_runs` with the full log and
-stats JSON, so you can `SELECT … FROM bito_sync_runs ORDER BY "startedAt" DESC`
-for history.
+stats JSON:
 
-## Incremental cron sync (`sync_stock.py`)
-
-For near-real-time stock visibility, `sync_stock.py` is a lightweight
-companion script that **only** updates already-linked products:
-
-- `products.stockQuantity` (sum of `_warehouses[*].amount`)
-- `products.inStock` (boolean from total > 0)
-- `products.price` (UZS narxi)
-- `product_warehouse_stocks` (UPSERT amount/booked/inTransit/inTrash)
-- `product_colors.stockQuantity` / `inStock`
-
-It does **not** create new products / categories / customers — for that, run
-the full `sync.py --apply` (slower, ~30 min for first run).
-
-Typical run completes in ~20 seconds against the live Supabase pooler.
-
-### Scheduling
-
-Two equivalent options ship in this repo, pick one:
-
-| Option | Cost | File | Min. interval |
-|--------|------|------|---------------|
-| **GitHub Actions** | Free | `.github/workflows/bito-sync-stock.yml` | 5 min |
-| **Render Cron Job** | $7/mo | `render.yaml` (`bito-sync-stock`) | 1 min |
-
-Required secrets (whichever you choose):
-- `SUPABASE_DSN` — Postgres connection string
-- `BITO_API_KEY` — `dekor-house:<token>`
-
-`BITO_BASE_URL` and `BITO_PRICE_ID` have safe defaults baked into the
-workflow / `render.yaml`.
-
-### Manual run
-
-```bash
-export BITO_API_KEY="dekor-house:<token>"
-export SUPABASE_DSN="postgresql://..."
-python3 sync_stock.py
+```sql
+SELECT "startedAt", "finishedAt", status, stats->'mode' AS mode,
+       stats->'products'->'plan' AS products_plan
+FROM bito_sync_runs
+ORDER BY "startedAt" DESC
+LIMIT 20;
 ```
+
+## Safety
+
+- `statement_timeout = 30s` is set per session so a stuck query can never
+  block real user traffic on the Supabase pooler.
+- All writes happen inside a single transaction (`BEGIN … COMMIT`). On any
+  error the transaction rolls back and a `status=error` row is recorded.
+- The script exits **0** (not 1) if the Supabase project is paused / pooler
+  returns "Tenant or user not found" — this prevents cron from spamming
+  failure emails while the user is restoring the project.
+- Batched `execute_values` writes mean a 1927-row sync emits 1-3 UPDATEs,
+  not 1927 individual statements.
