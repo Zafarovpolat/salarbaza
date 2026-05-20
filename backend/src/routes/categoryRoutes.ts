@@ -33,9 +33,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             tiers: { orderBy: { minQuantity: 'asc' } },
           },
         },
+        children: {
+          where: { isActive: true },
+          select: { id: true },
+        },
         _count: {
           select: {
-            products: { where: { isActive: true } },
+            products: { where: { isActive: true, inStock: true } },
             children: { where: { isActive: true } },
           },
         },
@@ -43,12 +47,33 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       orderBy: { sortOrder: 'asc' },
     })
 
-    const data = categories.map(cat => ({
-      ...cat,
-      productCount: cat._count.products,
-      subcategoryCount: cat._count.children,
-      _count: undefined,
-    }))
+    // Sum products of all child categories so the count reflects what the
+    // catalog actually shows when the user opens this category.
+    const childIds = categories.flatMap(c => c.children.map(ch => ch.id))
+    const childCounts = childIds.length
+      ? await prisma.product.groupBy({
+          by: ['categoryId'],
+          where: { isActive: true, inStock: true, categoryId: { in: childIds } },
+          _count: { _all: true },
+        })
+      : []
+    const childCountByCat = new Map<string, number>(
+      childCounts.map(g => [g.categoryId!, g._count._all]),
+    )
+
+    const data = categories.map(cat => {
+      const fromChildren = cat.children.reduce(
+        (sum, ch) => sum + (childCountByCat.get(ch.id) || 0),
+        0,
+      )
+      const { children: _children, _count, ...rest } = cat
+      void _children
+      return {
+        ...rest,
+        productCount: _count.products + fromChildren,
+        subcategoryCount: _count.children,
+      }
+    })
 
     const response = { success: true, data }
     setCache(cacheKey, response, 120)
@@ -80,7 +105,7 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
           include: {
             _count: {
               select: {
-                products: { where: { isActive: true } },
+                products: { where: { isActive: true, inStock: true } },
                 children: { where: { isActive: true } },
               },
             },
@@ -89,7 +114,7 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
         },
         _count: {
           select: {
-            products: { where: { isActive: true } },
+            products: { where: { isActive: true, inStock: true } },
             children: { where: { isActive: true } },
           },
         },
@@ -100,9 +125,14 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
       throw new AppError('Category not found', 404)
     }
 
+    const childrenProductsCount = category.children.reduce(
+      (sum, ch) => sum + ch._count.products,
+      0,
+    )
+
     const data = {
       ...category,
-      productCount: category._count.products,
+      productCount: category._count.products + childrenProductsCount,
       subcategoryCount: category._count.children,
       children: category.children.map(child => ({
         ...child,
@@ -143,7 +173,7 @@ router.get('/:slug/subcategories', async (req: Request, res: Response, next: Nex
       include: {
         _count: {
           select: {
-            products: { where: { isActive: true } },
+            products: { where: { isActive: true, inStock: true } },
             children: { where: { isActive: true } },
           },
         },
