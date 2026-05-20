@@ -24,9 +24,9 @@ export function useInfiniteScroll({
             if (!hasMore) return
             if (isLoading) return
 
-            // ✅ Минимум 1 сек между вызовами
+            // ✅ Минимум 300мс между вызовами
             const now = Date.now()
-            if (now - lastCallTime.current < 1000) return
+            if (now - lastCallTime.current < 300) return
             lastCallTime.current = now
 
             onLoadMore()
