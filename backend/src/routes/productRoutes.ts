@@ -50,8 +50,45 @@ const productDetailInclude = {
 //   - a distinguishable name: product nameRu/nameUz + " — ColorName"
 //
 // If no bitoSku match is found, falls back to the product's main/first image.
+/**
+ * Extract the English color suffix from a bitoSku.
+ * bitoSku format: "{bitoNumber}-{root}-{color}" e.g. "6502-B-19-blue", "8295-C-5-dark-pink"
+ * We strip the leading numeric prefix and the product root (code) to get the color part.
+ *
+ * productCode may have a dedup suffix (e.g. "C-6-2" when "C-6" was taken), so we try:
+ *   1. Match with full productCode
+ *   2. Match with productCode minus trailing dedup suffix (-2, -3, etc.)
+ *   3. Generic fallback: split after letter(s)-number(s) pattern
+ */
+function extractColorFromSku(bitoSku: string, productCode: string): string | null {
+  if (!bitoSku) return null
+  // Remove leading numeric Bito number prefix: "6502-B-19-blue" -> "B-19-blue"
+  const withoutPrefix = bitoSku.replace(/^\d+-/, '')
+
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  // Try 1: match with full productCode (e.g. code="B-19", sku without prefix="B-19-blue")
+  const match1 = withoutPrefix.match(new RegExp(`^${escape(productCode)}-(.+)$`, 'i'))
+  if (match1) return match1[1]
+
+  // Try 2: productCode might have dedup suffix. E.g. code="C-6-2" but sku="C-6-white"
+  // Strip trailing -\d+ from code and try again
+  const codeBase = productCode.replace(/-\d+$/, '')
+  if (codeBase !== productCode) {
+    const match2 = withoutPrefix.match(new RegExp(`^${escape(codeBase)}-(.+)$`, 'i'))
+    if (match2) return match2[1]
+  }
+
+  // Try 3: generic fallback — letter(s)-number(s)[-number(s)]-color
+  const fallback = withoutPrefix.match(/^[A-Za-z]+-\d+(?:-\d+)?-(.+)$/)
+  if (fallback) return fallback[1]
+
+  return null
+}
+
 function explodeByColor<T extends {
   id: string
+  code: string
   nameRu: string
   nameUz: string
   price: number
@@ -102,6 +139,8 @@ function explodeByColor<T extends {
       // --- Image matching: find images whose URL contains this color's bitoSku ---
       let colorImages: T['images'] = []
       if (c.bitoSku) {
+        // Strip leading numeric prefix from sku for matching against image URLs
+        // bitoSku "6502-B-19-blue" -> match "6502-B-19-blue" in URL
         const skuLower = c.bitoSku.toLowerCase()
         colorImages = p.images.filter(img =>
           img.url.toLowerCase().includes(skuLower)
@@ -119,9 +158,31 @@ function explodeByColor<T extends {
         }))
       }
 
-      // --- Name: append color for disambiguation ---
-      const nameRu = `${p.nameRu} — ${c.nameRu}`
-      const nameUz = `${p.nameUz} — ${c.nameUz}`
+      // --- Name: use original Bito name from bitoSku (e.g. "B-35-white" -> "B-35 white") ---
+      // The bitoSku contains the canonical Bito name: "{number}-{series}-{color}"
+      // We strip the leading number to get e.g. "B-35-white", then replace the LAST
+      // occurrence of the series separator with a space for readability.
+      let cardName: string
+      if (c.bitoSku) {
+        // Strip leading numeric prefix: "6694-B-35-white" -> "B-35-white"
+        const skuName = c.bitoSku.replace(/^\d+-/, '')
+        // Replace hyphens in color part with spaces for readability:
+        // "B-35-white" -> "B-35 white", "C-5-dark-pink" -> "C-5 dark-pink"
+        // Strategy: extract color suffix, then format as "{root} {color}"
+        const colorSuffix = extractColorFromSku(c.bitoSku, p.code)
+        if (colorSuffix) {
+          // Get the root from skuName (everything before the color)
+          const rootPart = skuName.slice(0, skuName.length - colorSuffix.length - 1)
+          cardName = `${rootPart} ${colorSuffix}`
+        } else {
+          // Can't parse — just use the sku without prefix, replacing first hyphen-group
+          cardName = skuName
+        }
+      } else {
+        cardName = `${p.code} ${c.nameRu}`
+      }
+      const nameRu = cardName
+      const nameUz = cardName
 
       out.push({
         ...p,
