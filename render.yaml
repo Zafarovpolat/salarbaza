@@ -50,27 +50,54 @@ services:
         value: DecorMarketUz_Bot
 
   # ----------------------------------------------------------------------
-  # Bito stock+price polling cron.
+  # Bito -> Supabase sync (incremental, hourly).
   #
-  # Pulls fresh stock/price/per-warehouse data from Bito every 30 minutes and
-  # updates Supabase (read-only on Bito's side). Bito does not expose
-  # webhooks, so this is the closest we can get to real-time without paying
-  # for a permanent worker. Typical run completes in ~20s.
+  # Pulls fresh stock / price / per-warehouse data and category moves from
+  # Bito ERP and updates already-linked Supabase products. Diff-aware, so
+  # a no-op run makes near-zero load on the Supabase pooler. Bito does not
+  # expose webhooks (verified: all POST endpoints 404), so a scheduled poll
+  # is the closest we can get to real-time.
   #
-  # Render Cron Jobs require the Starter plan ($7/mo). If you stay on the
-  # free plan, use the equivalent GitHub Actions workflow at
-  # .github/workflows/bito-sync-stock.yml — it runs on the same schedule,
-  # against the same script, for free.
+  # Mirrored on GitHub Actions (.github/workflows/bito-sync-incremental.yml)
+  # for redundancy — the script is idempotent so running both is safe.
+  #
+  # Render Cron Jobs require the Starter plan ($7/mo).
   # ----------------------------------------------------------------------
   - type: cron
-    name: bito-sync-stock
+    name: bito-sync-incremental
     runtime: python
     region: frankfurt
     plan: starter
     rootDir: backend/scripts/bito-sync
-    schedule: "*/30 * * * *"
+    schedule: "0 * * * *"   # hourly, on the hour
     buildCommand: pip install -r requirements.txt
-    startCommand: python sync_stock.py
+    startCommand: python sync.py --mode=incremental --apply
+    envVars:
+      - key: SUPABASE_DSN
+        sync: false
+      - key: BITO_BASE_URL
+        value: https://api.bito.uz/integration-api/integration/api/v2
+      - key: BITO_API_KEY
+        sync: false
+      - key: BITO_PRICE_ID
+        value: "6706187e485b322ea8c90155"
+
+  # ----------------------------------------------------------------------
+  # Bito -> Supabase sync (full, daily).
+  #
+  # Runs once per day at 04:00 UTC (09:00 Tashkent). Same as incremental,
+  # plus: creates new products for Bito items without a match, creates new
+  # categories, syncs customers + employees.
+  # ----------------------------------------------------------------------
+  - type: cron
+    name: bito-sync-full
+    runtime: python
+    region: frankfurt
+    plan: starter
+    rootDir: backend/scripts/bito-sync
+    schedule: "0 4 * * *"   # daily at 04:00 UTC = 09:00 Tashkent
+    buildCommand: pip install -r requirements.txt
+    startCommand: python sync.py --mode=full --apply
     envVars:
       - key: SUPABASE_DSN
         sync: false
