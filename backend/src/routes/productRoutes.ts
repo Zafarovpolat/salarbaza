@@ -159,19 +159,23 @@ function explodeByColor<T extends {
       }
 
       // --- Name: use original Bito name from bitoSku (e.g. "B-35 white") ---
+      // bitoSku can be either:
+      //   a) "{number}-{root}-{color}" e.g. "6694-B-35-white" -> card "B-35 white"
+      //   b) just a number e.g. "8250" (no root/color info) -> fallback to code + color name
       let cardName: string
-      if (c.bitoSku) {
-        // Strip leading numeric prefix: "6694-B-35-white" -> "B-35-white"
+      if (c.bitoSku && /[a-zA-Z]/.test(c.bitoSku)) {
+        // bitoSku contains letters — parse it for root + color
         const skuName = c.bitoSku.replace(/^\d+-/, '')
         const colorSuffix = extractColorFromSku(c.bitoSku, p.code)
         if (colorSuffix) {
-          // rootPart = everything before the color in skuName
           const rootPart = skuName.slice(0, skuName.length - colorSuffix.length - 1)
           cardName = `${rootPart} ${colorSuffix}`
         } else {
-          cardName = skuName
+          // Has letters but couldn't parse — use as-is (e.g. "Olive-mini")
+          cardName = skuName.replace(/-/g, ' ')
         }
       } else {
+        // bitoSku is purely numeric or null — use product code + color name
         cardName = `${p.code} ${c.nameRu}`
       }
       const nameRu = cardName

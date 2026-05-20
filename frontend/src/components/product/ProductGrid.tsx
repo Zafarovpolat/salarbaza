@@ -29,7 +29,7 @@ export function ProductGrid({
         <ProductCard
           key={product.cardId || product.id}
           product={product}
-          index={index}
+          index={index % 20}
         />
       ))}
     </div>
