@@ -13,7 +13,7 @@ const app = express()
 // CORS
 app.use(cors({
     origin: [
-        'https://decormarket-web.onrender.com',
+        'https://dekorhouse-web.onrender.com',
         'http://localhost:3000',
         'http://localhost:5173'
     ],
@@ -42,7 +42,7 @@ app.get('/health', (req, res) => {
     res.status(200).json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        service: 'decormarket-api'
+        service: 'dekorhouse-api'
     })
 })
 
