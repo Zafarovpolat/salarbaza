@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: dekorhouse-api
+    name: decormarket-api
     runtime: node
     region: frankfurt
     plan: free
@@ -22,12 +22,12 @@ services:
       - key: ADMIN_PASSWORD
         value: "[REMOVED]"
       - key: FRONTEND_URL
-        value: https://dekorhouse-web.onrender.com
+        value: https://decormarket-web.onrender.com
       - key: JWT_SECRET
         generateValue: true
 
   - type: web
-    name: dekorhouse-web
+    name: decormarket-web
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
@@ -45,7 +45,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://dekorhouse-api.onrender.com/api
+        value: https://decormarket-api.onrender.com/api
       - key: VITE_BOT_USERNAME
         value: DecorMarketUz_Bot
 

@@ -1,6 +1,6 @@
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
-export const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'DekorHouseBot'
+export const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'DecorMarketUz_Bot'
 
 export const DELIVERY_FEE = 25000 // 25,000 sum
 

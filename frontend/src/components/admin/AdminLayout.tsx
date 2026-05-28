@@ -54,9 +54,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           >
             <Menu className="w-6 h-6 text-dark-gray" />
           </button>
-          {/* ✅ Dekor House */}
+          {/* ✅ Decor Market */}
           <span className="font-display text-lg font-semibold text-forest">
-            Dekor<span className="text-sage font-normal"> House</span>
+            Decor<span className="text-sage font-normal"> Market</span>
           </span>
           <div className="w-10" />
         </div>
@@ -81,9 +81,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         {/* Sidebar Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone/30">
           <div>
-            {/* ✅ Dekor House */}
+            {/* ✅ Decor Market */}
             <span className="font-display text-xl font-semibold text-forest">
-              Dekor<span className="text-sage font-normal"> House</span>
+              Decor<span className="text-sage font-normal"> Market</span>
             </span>
             <p className="text-xs text-medium-gray mt-0.5">Админ-панель</p>
           </div>

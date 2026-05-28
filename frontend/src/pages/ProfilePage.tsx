@@ -87,11 +87,11 @@ export function ProfilePage() {
       label: language === "uz" ? "Yordam" : "Помощь",
       onClick: () => setIsHelpModalOpen(true),
     },
-    // ✅ CHANGED: @DekorHouseAdmin
+    // ✅ CHANGED: @DecorMarketAdmin
     {
       icon: MessageCircle,
       label: language === "uz" ? "Bog'lanish" : "Связаться",
-      onClick: () => window.open("https://t.me/DekorHouseAdmin", "_blank"),
+      onClick: () => window.open("https://t.me/DecorMarketAdmin", "_blank"),
     },
   ];
 
@@ -157,9 +157,9 @@ export function ProfilePage() {
       <section className="py-4">
         <Container>
           <div className="text-center">
-            {/* ✅ CHANGED: Dekor House */}
+            {/* ✅ CHANGED: Decor Market */}
             <span className="font-display text-lg text-forest font-semibold">
-              Dekor<span className="text-sage font-normal"> House</span>
+              Decor<span className="text-sage font-normal"> Market</span>
             </span>
             <p className="text-xs text-taupe mt-1">v1.0.0</p>
           </div>
@@ -253,10 +253,10 @@ export function ProfilePage() {
               <p>
                 Telegram:{" "}
                 <a
-                  href="https://t.me/DekorHouseAdmin"
+                  href="https://t.me/DecorMarketAdmin"
                   className="text-forest font-semibold"
                 >
-                  @DekorHouseAdmin
+                  @DecorMarketAdmin
                 </a>
               </p>
               <p>
