@@ -11,7 +11,7 @@ const WELCOME_TEXT = `
 🛍 В нашем каталоге — искусственные растения, премиальные кашпо, декоративные деревья, мох-панели, композиции и всё для уюта вашего пространства.
 
 📞 Контакты: +998 99 368-11-00
-💬 Админ: @DecorMarketAdmin
+💬 Админ: @DekorHouseAdmin
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -21,7 +21,7 @@ const WELCOME_TEXT = `
 🛍 Katalogimizda — sun'iy o'simliklar, premium kashpolar, dekorativ daraxtlar, mox panellar, kompozitsiyalar va qulaylik uchun barcha narsalar.
 
 📞 Aloqa: +998 99 368-11-00
-💬 Admin: @DecorMarketAdmin
+💬 Admin: @DekorHouseAdmin
 `.trim()
 
 // Вопрос о языке (шаг 2)
@@ -119,7 +119,7 @@ export async function handleHelp(
 4. Buyurtmani rasmiylang / Оформите заказ
 
 📞 *Bog'lanish / Контакты:*
-Telegram: @DecorMarketAdmin
+Telegram: @DekorHouseAdmin
 Telefon: +998 (99) 368-11-00
 
 🕐 *Ish vaqti / Режим работы:*
