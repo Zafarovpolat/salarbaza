@@ -125,7 +125,7 @@ const handleContactAdmin = () => {
               onClick={() => navigate("/")}
               className="font-display text-[22px] font-semibold text-forest tracking-[-0.01em] cursor-pointer select-none"
             >
-              Dekor<span className="text-sage font-normal"> House</span>
+              Decor<span className="text-sage font-normal"> Market</span>
             </span>
           </motion.div>
         ) : pageTitle ? (
