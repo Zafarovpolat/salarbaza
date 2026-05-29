@@ -64,8 +64,8 @@ function CategoryHeader({
     const directAppUrl = `https://t.me/${BOT_USERNAME}/app?startapp=category_${slug}`;
     const shareText =
       language === "uz"
-        ? `${categoryName} — Dekor House do'konida ko'ring!`
-        : `${categoryName} — смотрите в Dekor House!`;
+        ? `${categoryName} — Decor Market do'konida ko'ring!`
+        : `${categoryName} — смотрите в Decor Market!`;
 
     try {
       const tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent(directAppUrl)}&text=${encodeURIComponent(shareText)}`;

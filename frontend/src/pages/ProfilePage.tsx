@@ -157,9 +157,9 @@ export function ProfilePage() {
       <section className="py-4">
         <Container>
           <div className="text-center">
-            {/* ✅ CHANGED: Dekor House */}
+            {/* ✅ CHANGED: Decor Market */}
             <span className="font-display text-lg text-forest font-semibold">
-              Dekor<span className="text-sage font-normal"> House</span>
+              Decor<span className="text-sage font-normal"> Market</span>
             </span>
             <p className="text-xs text-taupe mt-1">v1.0.0</p>
           </div>
