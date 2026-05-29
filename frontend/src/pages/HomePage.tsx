@@ -169,11 +169,11 @@ export function HomePage() {
     className="absolute inset-0 m-auto w-[120px] h-[120px] rounded-full bg-mint"
   />
 
-  {/* Белое лого Dekor House в центре */}
+  {/* Белое лого Decor Market в центре */}
   <div className="absolute inset-0 flex items-center justify-center z-10">
     <motion.img
       src={dekorHouseLogo}
-      alt="Dekor House"
+      alt="Decor Market"
       animate={{
         scale: [1, 1.04, 1],
       }}
