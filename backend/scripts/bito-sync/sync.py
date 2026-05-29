@@ -277,19 +277,15 @@ def sync_categories(
             row = existing_by_bito.get(bid)
             if row:
                 bito_to_supa[bid] = row["id"]
-                # Diff-only update
-                if (
-                    row.get("nameRu") != ru
-                    or row.get("nameUz") != uz
-                    or (row.get("bitoParentId") or None) != parent_bid
-                ):
+                # Only sync parent link; NEVER overwrite curated nameRu/nameUz
+                if (row.get("bitoParentId") or None) != parent_bid:
                     updates += 1
                     if not dry_run:
                         cur.execute(
                             """UPDATE categories
-                               SET "nameRu"=%s, "nameUz"=%s, "bitoParentId"=%s, "updatedAt"=%s
+                               SET "bitoParentId"=%s, "updatedAt"=%s
                                WHERE "bitoCategoryId"=%s""",
-                            (ru, uz, parent_bid, now, bid),
+                            (parent_bid, now, bid),
                         )
             elif create_new:
                 slug = smart_slug(name_uz_source, bid)
