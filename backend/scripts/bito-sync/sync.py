@@ -627,7 +627,7 @@ def sync_products(
                     """,
                     rows,
                     template="(%s, %s, %s, %s, %s::int, %s::int, %s::int, %s::int, %s::timestamptz)",
-                    page_size=500,
+                    page_size=200,
                 )
 
     log.append(
@@ -825,8 +825,8 @@ def main() -> int:
     parser.add_argument("--skip-prices", action="store_true")
     parser.add_argument("--skip-customers", action="store_true")
     parser.add_argument("--skip-employees", action="store_true")
-    parser.add_argument("--statement-timeout", type=int, default=30000,
-                        help="Postgres statement_timeout in ms (default 30s)")
+    parser.add_argument("--statement-timeout", type=int, default=60000,
+                        help="Postgres statement_timeout in ms (default 60s)")
     parser.add_argument("--report-out", default=None,
                         help="Path to write JSON report (default: stdout summary only)")
     args = parser.parse_args()
