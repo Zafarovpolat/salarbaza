@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Product, ProductFilters } from '@/types'
 import { productService } from '@/services/productService'
+import { useScrollStore } from '@/store/scrollStore'
 
 interface UseProductsOptions {
     categorySlug?: string
     filters?: ProductFilters
     initialPage?: number
     limit?: number
+    /** A unique key for caching this list (e.g. "category:my-slug"). */
+    cacheKey?: string
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
-    const { categorySlug, filters, initialPage = 1, limit = 20 } = options
+    const { categorySlug, filters, initialPage = 1, limit = 20, cacheKey } = options
 
     const [products, setProducts] = useState<Product[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -23,6 +26,11 @@ export function useProducts(options: UseProductsOptions = {}) {
     const isRateLimited = useRef(false)
     const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const isFetching = useRef(false)
+
+    // ✅ Track whether we restored from cache to avoid refetch
+    const restoredFromCache = useRef(false)
+
+    const scrollStore = useScrollStore()
 
     const fetchProducts = useCallback(async (pageNum: number, append = false) => {
         // ✅ Не делать запрос если уже идёт или rate limited
@@ -93,11 +101,31 @@ export function useProducts(options: UseProductsOptions = {}) {
         isFetching.current = false
         if (retryTimer.current) clearTimeout(retryTimer.current)
 
+        // ✅ Try to restore from cache
+        if (cacheKey) {
+            const cached = scrollStore.get(cacheKey)
+            if (cached) {
+                setProducts(cached.products)
+                setPage(cached.page)
+                setHasMore(cached.hasMore)
+                setTotal(cached.total)
+                setIsLoading(false)
+                restoredFromCache.current = true
+
+                // Restore scroll position after render
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, cached.scrollY)
+                })
+                return
+            }
+        }
+
+        restoredFromCache.current = false
         setPage(1)
         setProducts([])
         setHasMore(true)
         fetchProducts(1, false)
-    }, [fetchProducts])
+    }, [fetchProducts]) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         return () => {
@@ -116,13 +144,28 @@ export function useProducts(options: UseProductsOptions = {}) {
         isRateLimited.current = false
         isFetching.current = false
         if (retryTimer.current) clearTimeout(retryTimer.current)
+        restoredFromCache.current = false
+        if (cacheKey) scrollStore.clear(cacheKey)
         setPage(1)
         setProducts([])
         setHasMore(true)
         fetchProducts(1, false)
-    }, [fetchProducts])
+    }, [fetchProducts, cacheKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    return { products, isLoading, error, hasMore, total, loadMore, refresh }
+    /** Save current state to cache — call before navigating away */
+    const saveToCache = useCallback(() => {
+        if (cacheKey && products.length > 0) {
+            scrollStore.save(cacheKey, {
+                products,
+                page,
+                hasMore,
+                total,
+                scrollY: window.scrollY,
+            })
+        }
+    }, [cacheKey, products, page, hasMore, total]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    return { products, isLoading, error, hasMore, total, loadMore, refresh, saveToCache }
 }
 
 export function useProduct(slug: string) {

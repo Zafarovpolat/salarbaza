@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Share2 } from "lucide-react";
@@ -134,14 +135,25 @@ function CategoryHeader({
 }
 
 function CategoryProducts({ slug }: { slug?: string }) {
-  const { products, isLoading, hasMore, loadMore, total } = useProducts({
+  const cacheKey = slug ? `category:${slug}` : undefined;
+
+  const { products, isLoading, hasMore, loadMore, saveToCache } = useProducts({
     categorySlug: slug,
+    cacheKey,
   });
+
   const { loadMoreRef } = useInfiniteScroll({
     onLoadMore: loadMore,
     hasMore,
     isLoading,
   });
+
+  // ✅ Save scroll position + products to cache when navigating away
+  useEffect(() => {
+    return () => {
+      saveToCache();
+    };
+  }, [saveToCache]);
 
   return (
     <section className="py-6">
