@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useLanguageStore } from "@/store/languageStore";
 import WebApp from "@twa-dev/sdk";
 
-const ADMIN_USERNAME = "DekorHouseAdmin"; // без @
+const ADMIN_USERNAME = "DecorMarketAdmin"; // без @
 
 export function Header() {
   const navigate = useNavigate();
