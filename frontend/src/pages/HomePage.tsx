@@ -23,7 +23,7 @@ import { formatPrice } from "@/utils/formatPrice";
 import { useFavoritesStore } from "@/store/favoritesStore";
 import { useCartStore } from "@/store/cartStore";
 import toast from "react-hot-toast";
-import dekorHouseLogo from "@/assets/decor-market-logo.png";
+import dekorHouseLogo from "@/assets/dekor-house-logo.png";
 
 // ✅ FIX: кэш продуктов — не грузим заново при каждом переходе на главную
 let cachedFeatured: Product[] | null = null;
