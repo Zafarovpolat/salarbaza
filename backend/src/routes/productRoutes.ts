@@ -2,22 +2,26 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 import { Prisma } from '@prisma/client'
-import { getCached, setCache } from '../utils/cache'
+import { trySendCached, cacheAndSend } from '../utils/cache'
 
 const router = Router()
 
-// ✅ FIX: используем include вместо select — никаких TS ошибок
+// ✅ Lightweight include for product list — only fields the card/explodeByColor need
 const productListInclude = {
-  images: { orderBy: { sortOrder: 'asc' as const } },
-  colors: true,
-  variants: { orderBy: { sortOrder: 'asc' as const } },
-  category: {
+  images: {
+    orderBy: { sortOrder: 'asc' as const },
+    select: { id: true, url: true, isMain: true, sortOrder: true, alt: true },
+  },
+  colors: {
     select: {
-      id: true,
-      slug: true,
-      nameRu: true,
-      nameUz: true,
+      id: true, nameRu: true, nameUz: true, hexCode: true,
+      inStock: true, stockQuantity: true, priceModifier: true,
+      bitoSku: true, image: true,
     },
+  },
+  variants: {
+    orderBy: { sortOrder: 'asc' as const },
+    select: { id: true, price: true, sortOrder: true },
   },
 }
 
@@ -199,13 +203,12 @@ function explodeByColor<T extends {
   return out
 }
 
-// ===== FEATURED ===== (кэш 60 сек)
+// ===== FEATURED ===== (кэш 120 сек)
 router.get('/featured', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10
     const cacheKey = `featured_${limit}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const products = await prisma.product.findMany({
       where: { isActive: true, isFeatured: true, inStock: true },
@@ -215,20 +218,18 @@ router.get('/featured', async (req: Request, res: Response, next: NextFunction) 
     })
 
     const response = { success: true, data: explodeByColor(products as any) }
-    setCache(cacheKey, response, 60)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 120, res)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== NEW ===== (кэш 60 сек)
+// ===== NEW ===== (кэш 120 сек)
 router.get('/new', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10
     const cacheKey = `new_${limit}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const products = await prisma.product.findMany({
       where: { isActive: true, isNew: true, inStock: true },
@@ -238,20 +239,18 @@ router.get('/new', async (req: Request, res: Response, next: NextFunction) => {
     })
 
     const response = { success: true, data: explodeByColor(products as any) }
-    setCache(cacheKey, response, 60)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 120, res)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== SALE ===== (кэш 60 сек)
+// ===== SALE ===== (кэш 120 сек)
 router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10
     const cacheKey = `sale_${limit}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const products = await prisma.product.findMany({
       where: { isActive: true, inStock: true, oldPrice: { not: null } },
@@ -261,22 +260,20 @@ router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
     })
 
     const response = { success: true, data: explodeByColor(products as any) }
-    setCache(cacheKey, response, 60)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 120, res)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== SEARCH ===== (кэш 30 сек)
+// ===== SEARCH ===== (кэш 60 сек)
 router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { q, limit = '20' } = req.query
     if (!q) return res.json({ success: true, data: [] })
 
     const cacheKey = `search_${q}_${limit}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const products = await prisma.product.findMany({
       where: {
@@ -293,14 +290,13 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
     })
 
     const response = { success: true, data: explodeByColor(products as any) }
-    setCache(cacheKey, response, 30)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 60, res)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== СПИСОК ===== (кэш 30 сек)
+// ===== СПИСОК ===== (кэш 60 сек)
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const {
@@ -309,8 +305,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     } = req.query
 
     const cacheKey = `products_${page}_${limit}_${category || ''}_${minPrice || ''}_${maxPrice || ''}_${sortBy}_${inStock || ''}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const pageNum = parseInt(page as string)
     const limitNum = parseInt(limit as string)
@@ -363,22 +358,20 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     }
 
-    setCache(cacheKey, response, 30)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 60, res)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== RECOMMENDATIONS ===== (кэш 60 сек)
+// ===== RECOMMENDATIONS ===== (кэш 120 сек)
 router.get('/:id/recommendations', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params
     const limit = parseInt(req.query.limit as string) || 8
 
     const cacheKey = `recs_${id}_${limit}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const currentProduct = await prisma.product.findUnique({
       where: { id },
@@ -412,8 +405,7 @@ router.get('/:id/recommendations', async (req: Request, res: Response, next: Nex
     })
 
     const response = { success: true, data: explodeByColor(recommendations as any) }
-    setCache(cacheKey, response, 60)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 120, res)
   } catch (error) {
     next(error)
   }
@@ -424,8 +416,7 @@ router.get('/by-id/:id', async (req: Request, res: Response, next: NextFunction)
   try {
     const { id } = req.params
     const cacheKey = `product_id_${id}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const product = await prisma.product.findUnique({
       where: { id },
@@ -438,8 +429,7 @@ router.get('/by-id/:id', async (req: Request, res: Response, next: NextFunction)
     prisma.product.update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
 
     const response = { success: true, data: product }
-    setCache(cacheKey, response, 30)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 60, res)
   } catch (error) {
     next(error)
   }
@@ -450,8 +440,7 @@ router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) 
   try {
     let { slug } = req.params
     const cacheKey = `product_${slug}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const originalSlug = slug
     const normalizedSlug = slug.replace(/\//g, '-')
@@ -486,8 +475,7 @@ router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) 
     prisma.product.update({ where: { id: product.id }, data: { viewCount: { increment: 1 } } }).catch(() => {})
 
     const response = { success: true, data: product }
-    setCache(cacheKey, response, 30)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 60, res)
   } catch (error) {
     next(error)
   }

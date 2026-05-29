@@ -1,24 +1,17 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
-import { getCached, setCache } from '../utils/cache'
-import { logger } from '../utils/logger'
+import { trySendCached, cacheAndSend } from '../utils/cache'
 
 const router = Router()
 
-// ===== ВСЕ КАТЕГОРИИ ===== (кэш 120 сек)
+// ===== ВСЕ КАТЕГОРИИ ===== (кэш 180 сек)
 // ?root=true — только корневые (parentId IS NULL), по умолчанию все
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const rootOnly = req.query.root === 'true'
     const cacheKey = rootOnly ? 'categories_root' : 'categories_all'
-    const cached = getCached(cacheKey)
-    if (cached) {
-      logger.info(`📂 GET /categories — из кэша (root=${rootOnly})`)
-      return res.json(cached)
-    }
-
-    logger.info(`📂 GET /categories — запрос к БД (root=${rootOnly})`)
+    if (trySendCached(cacheKey, res)) return
 
     const where: any = { isActive: true, parentId: null }
     if (!rootOnly) {
@@ -76,9 +69,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     })
 
     const response = { success: true, data }
-    setCache(cacheKey, response, 120)
-    logger.info(`📂 GET /categories — найдено ${data.length} категорий`)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 180, res)
   } catch (error) {
     next(error)
   }
@@ -89,8 +80,7 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
   try {
     const { slug } = req.params
     const cacheKey = `category_${slug}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const category = await prisma.category.findUnique({
       where: { slug },
@@ -144,8 +134,7 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
     }
 
     const response = { success: true, data }
-    setCache(cacheKey, response, 60)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 120, res)
   } catch (error) {
     next(error)
   }
@@ -156,8 +145,7 @@ router.get('/:slug/subcategories', async (req: Request, res: Response, next: Nex
   try {
     const { slug } = req.params
     const cacheKey = `category_${slug}_subcategories`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const parent = await prisma.category.findUnique({
       where: { slug },
@@ -189,22 +177,20 @@ router.get('/:slug/subcategories', async (req: Request, res: Response, next: Nex
     }))
 
     const response = { success: true, data }
-    setCache(cacheKey, response, 60)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 120, res)
   } catch (error) {
     next(error)
   }
 })
 
-// ===== ТОВАРЫ КАТЕГОРИИ ===== (кэш 30 сек)
+// ===== ТОВАРЫ КАТЕГОРИИ ===== (кэш 60 сек)
 router.get('/:slug/products', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params
     const { page = '1', limit = '20', sortBy = 'newest' } = req.query
 
     const cacheKey = `cat_products_${slug}_${page}_${limit}_${sortBy}`
-    const cached = getCached(cacheKey)
-    if (cached) return res.json(cached)
+    if (trySendCached(cacheKey, res)) return
 
     const category = await prisma.category.findUnique({
       where: { slug },
@@ -253,8 +239,7 @@ router.get('/:slug/products', async (req: Request, res: Response, next: NextFunc
       pagination: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) },
     }
 
-    setCache(cacheKey, response, 30)
-    res.json(response)
+    cacheAndSend(cacheKey, response, 60, res)
   } catch (error) {
     next(error)
   }
