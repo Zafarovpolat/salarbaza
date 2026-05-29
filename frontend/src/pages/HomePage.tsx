@@ -23,7 +23,7 @@ import { formatPrice } from "@/utils/formatPrice";
 import { useFavoritesStore } from "@/store/favoritesStore";
 import { useCartStore } from "@/store/cartStore";
 import toast from "react-hot-toast";
-import dekorHouseLogo from "@/assets/dekor-house-logo.png";
+import dekorHouseLogo from "@/assets/decor-market-logo.png";
 
 // ✅ FIX: кэш продуктов — не грузим заново при каждом переходе на главную
 let cachedFeatured: Product[] | null = null;
@@ -169,11 +169,11 @@ export function HomePage() {
     className="absolute inset-0 m-auto w-[120px] h-[120px] rounded-full bg-mint"
   />
 
-  {/* Белое лого Dekor House в центре */}
+  {/* Белое лого Decor Market в центре */}
   <div className="absolute inset-0 flex items-center justify-center z-10">
     <motion.img
       src={dekorHouseLogo}
-      alt="Dekor House"
+      alt="Decor Market"
       animate={{
         scale: [1, 1.04, 1],
       }}
