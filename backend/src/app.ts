@@ -1,4 +1,5 @@
 import express from 'express'
+import compression from 'compression'
 import cors from 'cors'
 import helmet from 'helmet'
 import { config } from './config'
@@ -32,6 +33,9 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     crossOriginOpenerPolicy: { policy: 'unsafe-none' }
 }))
+
+// Gzip compression — all JSON responses
+app.use(compression())
 
 // Body parsing
 app.use(express.json())

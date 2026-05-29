@@ -5,15 +5,6 @@ import { AppError } from '../middleware/errorHandler'
 
 export async function getAllCategories(rootOnly: boolean = false) {
 
-  try {
-    const count = await prisma.category.count()
-    console.log(`📊 DB: всего категорий в БД = ${count}`)
-    const activeCount = await prisma.category.count({ where: { isActive: true } })
-    console.log(`📊 DB: активных категорий = ${activeCount}`)
-  } catch (dbError: any) {
-    console.error(`❌ DB CONNECTION ERROR: ${dbError.message}`)
-  }
-
   const where: any = { isActive: true }
   if (rootOnly) {
     where.parentId = null
