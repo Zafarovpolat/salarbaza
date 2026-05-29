@@ -23,7 +23,6 @@ import { formatPrice } from "@/utils/formatPrice";
 import { useFavoritesStore } from "@/store/favoritesStore";
 import { useCartStore } from "@/store/cartStore";
 import toast from "react-hot-toast";
-import dekorHouseLogo from "@/assets/dekor-house-logo.png";
 
 // ✅ FIX: кэш продуктов — не грузим заново при каждом переходе на главную
 let cachedFeatured: Product[] | null = null;
@@ -123,70 +122,7 @@ export function HomePage() {
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
-        {/* Концентрические анимированные риплы с декором в центре */}
-        <div className="absolute right-[-60px] top-[-60px] w-[300px] h-[300px] z-[1]">
-  {/* Большой рипл */}
-  <motion.div
-    animate={{
-      scale: [1, 1.1, 1],
-      opacity: [0.05, 0.08, 0.05],
-    }}
-    transition={{
-      duration: 4,
-      repeat: Infinity,
-      ease: "easeInOut",
-    }}
-    className="absolute inset-0 rounded-full bg-white"
-  />
 
-  {/* Средний рипл (Исправлено центрирование) */}
-  <motion.div
-    animate={{
-      scale: [1, 1.15, 1],
-      opacity: [0.04, 0.07, 0.04],
-    }}
-    transition={{
-      duration: 5,
-      repeat: Infinity,
-      ease: "easeInOut",
-      delay: 0.5,
-    }}
-    className="absolute inset-0 m-auto w-[200px] h-[200px] rounded-full bg-white"
-  />
-
-  {/* Маленький рипл (Исправлено центрирование) */}
-  <motion.div
-    animate={{
-      scale: [1, 1.2, 1],
-      opacity: [0.06, 0.1, 0.06],
-    }}
-    transition={{
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut",
-      delay: 1,
-    }}
-    className="absolute inset-0 m-auto w-[120px] h-[120px] rounded-full bg-mint"
-  />
-
-  {/* Белое лого Decor Market в центре */}
-  <div className="absolute inset-0 flex items-center justify-center z-10">
-    <motion.img
-      src={dekorHouseLogo}
-      alt="Decor Market"
-      animate={{
-        scale: [1, 1.04, 1],
-      }}
-      transition={{
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
-      className="w-[140px] h-[140px] object-contain select-none pointer-events-none"
-      draggable={false}
-    />
-  </div>
-</div>
 
         <div className="relative z-[2] p-7 md:p-10 text-white w-full">
           <motion.div
