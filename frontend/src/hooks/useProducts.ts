@@ -57,7 +57,15 @@ export function useProducts(options: UseProductsOptions = {}) {
             isRateLimited.current = false
 
             if (append) {
-                setProducts(prev => [...prev, ...response.data])
+                // ✅ Deduplicate: offset pagination can repeat items when
+                // underlying data shifts between page loads (sync, stock changes)
+                setProducts(prev => {
+                    const existingIds = new Set(prev.map(p => (p as any).cardId || p.id))
+                    const unique = response.data.filter(
+                        (p: any) => !existingIds.has(p.cardId || p.id)
+                    )
+                    return [...prev, ...unique]
+                })
             } else {
                 setProducts(response.data)
             }
