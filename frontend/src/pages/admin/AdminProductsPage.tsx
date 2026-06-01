@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Edit, Trash2, Search, Ruler, Package, RefreshCw } from 'lucide-react'
+import { Plus, Edit, Trash2, Search, Ruler, Package, RefreshCw, Eye, EyeOff } from 'lucide-react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { adminService, type BitoSyncRun } from '@/services/adminService'
 import toast from 'react-hot-toast'
@@ -88,6 +88,14 @@ export function AdminProductsPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const handleToggleActive = async (id: string, currentActive: boolean) => {
+        try {
+            await adminService.toggleProductActive(id)
+            toast.success(currentActive ? 'Товар скрыт' : 'Товар показан')
+            loadProducts()
+        } catch (error) { toast.error('Ошибка переключения статуса') }
     }
 
     const handleDelete = async (id: string, name: string) => {
@@ -241,6 +249,13 @@ export function AdminProductsPage() {
                                         )}
                                     </div>
                                     <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => handleToggleActive(product.id, product.isActive)}
+                                            className={`p-2 rounded-lg ${product.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                                            title={product.isActive ? 'Скрыть товар' : 'Показать товар'}
+                                        >
+                                            {product.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
                                         <Link to={`/admin/products/${product.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                                             <Edit className="w-4 h-4" />
                                         </Link>
@@ -319,12 +334,23 @@ export function AdminProductsPage() {
                                     })()}
                                 </td>
                                 <td className="px-4 py-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    <button
+                                        onClick={() => handleToggleActive(product.id, product.isActive)}
+                                        className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${product.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                                        title="Нажмите чтобы переключить"
+                                    >
                                         {product.isActive ? 'Активен' : 'Скрыт'}
-                                    </span>
+                                    </button>
                                 </td>
                                 <td className="px-4 py-3 text-right">
                                     <div className="flex items-center justify-end gap-1">
+                                        <button
+                                            onClick={() => handleToggleActive(product.id, product.isActive)}
+                                            className={`p-2 rounded-lg ${product.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                                            title={product.isActive ? 'Скрыть товар' : 'Показать товар'}
+                                        >
+                                            {product.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
                                         <Link to={`/admin/products/${product.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                                             <Edit className="w-4 h-4" />
                                         </Link>
