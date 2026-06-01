@@ -13,6 +13,8 @@ import {
   Upload,
   Loader2,
   FolderTree,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { adminService } from "@/services/adminService";
@@ -248,6 +250,19 @@ export function AdminCategoriesPage() {
       loadCategories();
     } catch (error: any) {
       toast.error(error.message || "Ошибка удаления");
+    }
+  };
+
+  const handleToggleActive = async (e: React.MouseEvent, categoryId: string, currentActive: boolean) => {
+    e.stopPropagation();
+    const action = currentActive ? "скрыть" : "показать";
+    if (!confirm(`${currentActive ? "Скрыть" : "Показать"} категорию?`)) return;
+    try {
+      await adminService.toggleCategoryActive(categoryId);
+      toast.success(`Категория ${currentActive ? "скрыта" : "показана"}`);
+      loadCategories();
+    } catch (error) {
+      toast.error(`Ошибка: не удалось ${action} категорию`);
     }
   };
 
@@ -614,6 +629,13 @@ export function AdminCategoriesPage() {
 
                     <div className="flex items-center gap-1 ml-2">
                       <button
+                        onClick={(e) => handleToggleActive(e, category.id, category.isActive)}
+                        className={`p-2 rounded-lg ${category.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                        title={category.isActive ? "Скрыть категорию" : "Показать категорию"}
+                      >
+                        {category.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleNew(category.id);
@@ -697,6 +719,13 @@ export function AdminCategoriesPage() {
                           </div>
 
                           <div className="flex items-center gap-1 ml-2">
+                            <button
+                              onClick={(e) => handleToggleActive(e, child.id, child.isActive)}
+                              className={`p-1.5 rounded-lg ${child.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                              title={child.isActive ? "Скрыть подкатегорию" : "Показать подкатегорию"}
+                            >
+                              {child.isActive ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
                             <button
                               onClick={(e) => handleEdit(e, child)}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"

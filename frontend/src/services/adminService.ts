@@ -83,6 +83,16 @@ export const adminService = {
     return data.data
   },
 
+  async toggleProductActive(id: string) {
+    const res = await fetch(`${API_URL}/admin/products/${id}/toggle-active`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+    })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
   async deleteProduct(id: string) {
     const res = await fetch(`${API_URL}/admin/products/${id}`, {
       method: 'DELETE',
@@ -139,6 +149,16 @@ export const adminService = {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(category),
+    })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
+  async toggleCategoryActive(id: string) {
+    const res = await fetch(`${API_URL}/admin/categories/${id}/toggle-active`, {
+      method: 'PATCH',
+      headers: getHeaders(),
     })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)

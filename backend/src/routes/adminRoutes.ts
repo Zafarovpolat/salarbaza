@@ -479,6 +479,28 @@ router.put('/products/:id', async (req, res) => {
   }
 })
 
+// ✅ Quick toggle isActive for a product
+router.patch('/products/:id/toggle-active', async (req, res) => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id: req.params.id } })
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' })
+    }
+
+    const updated = await prisma.product.update({
+      where: { id: req.params.id },
+      data: { isActive: !product.isActive },
+    })
+
+    invalidateCache()
+
+    res.json({ success: true, data: updated })
+  } catch (error: any) {
+    console.error('Toggle product active error:', error)
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 router.delete('/products/:id', async (req, res) => {
   try {
     await prisma.product.delete({
@@ -697,6 +719,28 @@ router.put('/categories/:id', async (req, res) => {
 
     res.json({ success: true, data: category })
   } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// ✅ Quick toggle isActive for a category
+router.patch('/categories/:id/toggle-active', async (req, res) => {
+  try {
+    const category = await prisma.category.findUnique({ where: { id: req.params.id } })
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' })
+    }
+
+    const updated = await prisma.category.update({
+      where: { id: req.params.id },
+      data: { isActive: !category.isActive },
+    })
+
+    invalidateCache('categor')
+
+    res.json({ success: true, data: updated })
+  } catch (error: any) {
+    console.error('Toggle category active error:', error)
     res.status(500).json({ success: false, message: error.message })
   }
 })
