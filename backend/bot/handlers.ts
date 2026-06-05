@@ -13,14 +13,29 @@ function escapeMarkdown(text: any): string {
 }
 
 // ── Сохранить язык пользователя в БД ──────────────────────────────────────
-async function saveUserLanguage(telegramId: number, lang: 'uz' | 'ru') {
+async function saveUserLanguage(
+  telegramId: number,
+  lang: 'uz' | 'ru',
+  from?: TelegramBot.User
+) {
   try {
     await prisma.user.upsert({
       where:  { telegramId: BigInt(telegramId) },
-      update: { language: lang },
+      update: {
+        language: lang,
+        // Обновляем имя только если оно пришло и пользователь ещё без имени
+        ...(from?.first_name ? {
+          firstName: from.first_name,
+          lastName:  from.last_name ?? undefined,
+          username:  from.username  ?? undefined,
+        } : {}),
+      },
       create: {
         telegramId: BigInt(telegramId),
         language:   lang,
+        firstName:  from?.first_name ?? null,
+        lastName:   from?.last_name  ?? null,
+        username:   from?.username   ?? null,
       },
     })
   } catch (error: any) {
@@ -60,8 +75,8 @@ export async function handleCallbackQuery(
   if (data === 'lang_uz' || data === 'lang_ru') {
     const lang = data === 'lang_uz' ? 'uz' : 'ru'
 
-    // Сохраняем язык в БД
-    await saveUserLanguage(telegramId, lang)
+    // Сохраняем язык в БД (+ имя из query.from)
+    await saveUserLanguage(telegramId, lang, query.from)
 
     // Подтверждение выбора
     const confirmText = lang === 'uz'

@@ -26,6 +26,14 @@ export const adminService = {
     return data.data
   },
 
+  // Dashboard extended data
+  async getDashboardData() {
+    const res = await fetch(`${API_URL}/admin/dashboard-data`, { headers: getHeaders() })
+    const data = await res.json()
+    if (!data.success) throw new Error(data.message)
+    return data.data
+  },
+
   // Bito sync status
   async getBitoSyncRuns(limit = 20) {
     const res = await fetch(`${API_URL}/admin/bito/sync-runs?limit=${limit}`, { headers: getHeaders() })
