@@ -122,6 +122,46 @@ def db_connect(dsn: str, statement_timeout_ms: int = 30000):
 # ------------------------- bito helpers -------------------------
 
 
+# --------------- category exclusion filter ---------------
+# Categories (and all their descendants) that should never be synced to
+# Supabase. Matched case-insensitively against Bito category `name`.
+#
+# "full" entries: the named category AND every child/grandchild is excluded.
+# "leaf" entries: only that exact category is excluded (no recursion needed
+#                 unless it happens to have children — we recurse anyway).
+_EXCLUDED_CATEGORY_NAMES_FULL = {"salar baza", "mebel", "chiroq", "dekorativ element"}
+_EXCLUDED_CATEGORY_NAMES_LEAF = {"gazon", "gold setka", "kompozitsiya", "latok", "dona gul", "katta daraxt"}
+
+
+def _build_excluded_bito_ids(bito_cats: List[Dict[str, Any]]) -> Set[str]:
+    """Return the set of Bito category _id values that must be skipped.
+
+    Builds a parent→children map, then collects all descendants of every
+    excluded root. Runs once per sync invocation (~68 categories, instant).
+    """
+    by_id = {c["_id"]: c for c in bito_cats}
+    children: Dict[str, List[str]] = {}
+    for c in bito_cats:
+        pid = c.get("parent_id")
+        if pid:
+            children.setdefault(pid, []).append(c["_id"])
+
+    def _descendants(cat_id: str) -> Set[str]:
+        result: Set[str] = set()
+        for child_id in children.get(cat_id, []):
+            result.add(child_id)
+            result |= _descendants(child_id)
+        return result
+
+    excluded: Set[str] = set()
+    for c in bito_cats:
+        name_lower = (c.get("name") or "").strip().lower()
+        if name_lower in _EXCLUDED_CATEGORY_NAMES_FULL or name_lower in _EXCLUDED_CATEGORY_NAMES_LEAF:
+            excluded.add(c["_id"])
+            excluded |= _descendants(c["_id"])
+    return excluded
+
+
 def pick_price_for_product(price_items_by_pid: Dict[str, Dict[str, Any]], bito_id: str) -> Optional[int]:
     """Return integer UZS price for a Bito product id, or None."""
     item = price_items_by_pid.get(bito_id)
@@ -242,6 +282,7 @@ def sync_categories(
     dry_run: bool,
     log: List[str],
     create_new: bool = True,
+    excluded_bito_ids: Optional[Set[str]] = None,
 ) -> Dict[str, str]:
     """Returns: {bito_category_id: supabase_category_id}.
 
@@ -249,9 +290,16 @@ def sync_categories(
     name/parent links of categories that already exist, so a renamed Bito
     category propagates to the site without risk of creating duplicate empty
     categories. New Bito categories appear once a `--mode=full` run lands.
+
+    Categories whose Bito _id is in `excluded_bito_ids` are silently skipped
+    (never created, never updated).
     """
     bito_cats = client.categories()
     log.append(f"[categories] fetched {len(bito_cats)} from Bito")
+
+    if excluded_bito_ids is None:
+        excluded_bito_ids = set()
+    skipped_excluded = 0
 
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
@@ -270,6 +318,9 @@ def sync_categories(
     with conn.cursor() as cur:
         for cat in bito_cats:
             bid = cat["_id"]
+            if bid in excluded_bito_ids:
+                skipped_excluded += 1
+                continue
             name_uz_source = cat.get("name") or ""
             ru, uz = smart_translate(name_uz_source)
             parent_bid = cat.get("parent_id") or None
@@ -306,7 +357,7 @@ def sync_categories(
                         (new_id, slug, ru, uz, bid, parent_bid, now, now),
                     )
 
-    log.append(f"[categories] {inserts} new, {updates} updated (dry_run={dry_run}, create_new={create_new})")
+    log.append(f"[categories] {inserts} new, {updates} updated, {skipped_excluded} excluded (dry_run={dry_run}, create_new={create_new})")
     return bito_to_supa
 
 
@@ -335,6 +386,7 @@ def sync_products(
     cat_map: Dict[str, str],
     skip_prices: bool = False,
     skip_stock: bool = False,
+    excluded_bito_cat_ids: Optional[Set[str]] = None,
 ) -> Dict[str, Any]:
     """Sync Bito products into Supabase. 1 Bito SKU = 1 Supabase product.
 
@@ -415,7 +467,17 @@ def sync_products(
             return None
         return cat_map.get(cat_bid)
 
+    _excl_cats = excluded_bito_cat_ids or set()
+    skipped_excluded = 0
+
     for bp in bito_products:
+        # Skip products belonging to excluded Bito categories
+        bp_cat = bp.get("category")
+        bp_cat_id = (bp_cat.get("_id") if isinstance(bp_cat, dict) else bp_cat) if bp_cat else None
+        if bp_cat_id and bp_cat_id in _excl_cats:
+            skipped_excluded += 1
+            continue
+
         bito_id = bp["_id"]
         bito_sku = bp.get("sku")
         bito_number = bp.get("number")
@@ -631,6 +693,7 @@ def sync_products(
         f"matched_sku={plan['matched_by_sku']} matched_name={plan['matched_by_name']} "
         f"updated={plan['updated']} category_moved={plan['category_moved']} "
         f"created={plan['created']} skipped={plan['skipped_unmatched']} "
+        f"excluded={skipped_excluded} "
         f"stock_rows={plan['stock_rows']} (dry_run={dry_run})"
     )
     return {
@@ -863,11 +926,19 @@ def main() -> int:
                     cur.execute('SELECT "bitoId", id FROM bito_warehouses')
                     wh_map = {r[0]: r[1] for r in cur.fetchall()}
 
+            # Build the set of excluded Bito category IDs once (used by
+            # both category and product sync phases).
+            _bito_cats_for_filter = bito.categories()
+            excluded_bito_ids = _build_excluded_bito_ids(_bito_cats_for_filter)
+            if excluded_bito_ids:
+                log.append(f"[filter] excluding {len(excluded_bito_ids)} Bito categories")
+
             cat_map: Dict[str, str] = {}
             if not args.skip_categories:
                 cat_map = sync_categories(
                     bito, conn, dry_run, log,
                     create_new=(args.mode == "full"),
+                    excluded_bito_ids=excluded_bito_ids,
                 )
                 stats["categories"] = {"count": len(cat_map)}
             else:
@@ -881,6 +952,7 @@ def main() -> int:
                     mode=args.mode,
                     wh_map=wh_map, cat_map=cat_map,
                     skip_prices=args.skip_prices, skip_stock=args.skip_stock,
+                    excluded_bito_cat_ids=excluded_bito_ids,
                 )
 
             if args.mode == "full":
