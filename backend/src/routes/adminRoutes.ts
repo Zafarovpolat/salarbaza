@@ -139,6 +139,99 @@ router.get('/stats', async (req, res) => {
   }
 })
 
+// ── Dashboard extended data ─────────────────────────────────────────────
+router.get('/dashboard-data', async (req, res) => {
+  try {
+    const now = new Date()
+    const sevenDaysAgo  = new Date(now.getTime() - 7  * 86400000)
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000)
+
+    const [
+      recentOrders,
+      lowStockProducts,
+      outOfStockCount,
+      newCustomers7d,
+      ordersByStatus,
+      topCategories,
+      revenueThisMonth,
+      ordersThisMonth,
+    ] = await Promise.all([
+      // 1. Last 5 orders
+      prisma.order.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: { user: true, items: true },
+      }),
+      // 2. Low stock products (1–5 in stock, active)
+      prisma.product.findMany({
+        where: { isActive: true, stockQuantity: { gt: 0, lte: 5 } },
+        select: { id: true, code: true, nameRu: true, stockQuantity: true, price: true },
+        orderBy: { stockQuantity: 'asc' },
+        take: 10,
+      }),
+      // 3. Out of stock
+      prisma.product.count({ where: { isActive: true, stockQuantity: 0 } }),
+      // 4. New customers (7 days)
+      prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      // 5. Orders by status
+      prisma.order.groupBy({ by: ['status'], _count: { id: true } }),
+      // 6. Top categories by product count
+      prisma.category.findMany({
+        where: { products: { some: {} } },
+        select: {
+          id: true, nameRu: true,
+          _count: { select: { products: true } },
+        },
+        orderBy: { products: { _count: 'desc' } },
+        take: 8,
+      }),
+      // 7. Revenue this month
+      prisma.order.aggregate({
+        _sum: { total: true },
+        where: {
+          status: 'DELIVERED',
+          createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
+        },
+      }),
+      // 8. Orders this month
+      prisma.order.count({
+        where: { createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) } },
+      }),
+    ])
+
+    res.json({
+      success: true,
+      data: {
+        recentOrders: recentOrders.map(o => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          customerName: o.customerName,
+          status: o.status,
+          total: o.total,
+          itemsCount: o.items.length,
+          createdAt: o.createdAt,
+        })),
+        lowStockProducts,
+        outOfStockCount,
+        newCustomers7d,
+        ordersByStatus: Object.fromEntries(
+          ordersByStatus.map(s => [s.status, s._count.id])
+        ),
+        topCategories: topCategories.map(c => ({
+          id: c.id,
+          nameRu: c.nameRu,
+          productCount: c._count.products,
+        })),
+        revenueThisMonth: revenueThisMonth._sum.total || 0,
+        ordersThisMonth,
+      },
+    })
+  } catch (error) {
+    console.error('Dashboard data error:', error)
+    res.status(500).json({ success: false, message: 'Server error' })
+  }
+})
+
 // ==================== PRODUCTS ====================
 router.get('/products', async (req, res) => {
   try {
