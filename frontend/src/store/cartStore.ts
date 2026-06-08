@@ -126,7 +126,7 @@ export const useCartStore = create<CartState>()(
             },
         }),
         {
-            name: 'decormarket-cart',
+            name: 'decormarket-cart-v2',
             partialize: (state) => ({ items: state.items }),
         }
     )
