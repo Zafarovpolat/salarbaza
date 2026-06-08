@@ -997,12 +997,11 @@ def catalog_visibility(
     dry_run: bool,
     log: List[str],
 ) -> Dict[str, int]:
-    """Source of truth = Bito.  Hide products not linked to Bito.
+    """Enforce visibility for unlinked products only.
 
-    • ``bitoProductId`` is set → ``isActive = true``  (stock synced from Bito)
     • ``bitoProductId`` is NULL → ``isActive = false`` + ``inStock = false``
-
-    Runs *after* ``relink_products`` so newly-linked products stay visible.
+    • Linked products keep their current ``isActive`` — the owner curates
+      which products are visible on the site manually or via bito-cat images.
     """
     now = datetime.now(timezone.utc)
 
@@ -1015,23 +1014,17 @@ def catalog_visibility(
     linked = [p for p in products if p.get("bitoProductId")]
     unlinked = [p for p in products if not p.get("bitoProductId")]
 
-    to_activate = [p["id"] for p in linked if not p["isActive"]]
+    # Never auto-activate linked products — owner controls isActive
     to_deactivate = [p["id"] for p in unlinked if p["isActive"]]
     to_oos = [p["id"] for p in unlinked if p.get("inStock")]
 
     log.append(
         f"[catalog] linked={len(linked)} unlinked={len(unlinked)} → "
-        f"activate={len(to_activate)} deactivate={len(to_deactivate)} "
-        f"force_oos={len(to_oos)}"
+        f"deactivate={len(to_deactivate)} force_oos={len(to_oos)}"
     )
 
     if not dry_run:
         with conn.cursor() as cur:
-            if to_activate:
-                cur.execute(
-                    'UPDATE products SET "isActive" = true, "updatedAt" = %s WHERE id = ANY(%s)',
-                    (now, to_activate),
-                )
             if to_deactivate:
                 cur.execute(
                     'UPDATE products SET "isActive" = false, "updatedAt" = %s WHERE id = ANY(%s)',
@@ -1046,7 +1039,6 @@ def catalog_visibility(
                 )
 
     return {
-        "activated": len(to_activate),
         "deactivated": len(to_deactivate),
         "stock_fixed": len(to_oos),
     }
