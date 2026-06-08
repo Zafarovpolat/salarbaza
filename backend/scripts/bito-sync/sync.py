@@ -34,7 +34,6 @@ import secrets
 import string
 import sys
 import time
-import urllib.request
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -873,93 +872,38 @@ def sync_employees(client: BitoClient, conn, dry_run: bool, log: List[str]) -> D
 # ------------------------- phase 5: catalog visibility -------------------------
 
 
-BITO_CAT_GITHUB_URL = (
-    "https://api.github.com/repos/zafarovpolat/bito-cat/contents/edited"
-)
-
-
-def fetch_catalog_skus() -> Set[str]:
-    """Fetch the set of curated product SKU numbers from the bito-cat repo.
-
-    File names in ``bito-cat/edited/`` follow the pattern
-    ``{SKU}-{name}-{N}.png`` where ``{SKU}`` is the Bito article number
-    (e.g. ``5604``).  Returns a set of those numeric SKU strings.
-
-    On any network / parsing error the function returns an empty set so the
-    caller can safely skip the catalog filter without crashing the sync.
-    """
-    try:
-        req = urllib.request.Request(
-            BITO_CAT_GITHUB_URL,
-            headers={
-                "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "salarbaza-sync",
-            },
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            files = json.loads(resp.read())
-        skus: Set[str] = set()
-        for f in files:
-            name = f.get("name", "")
-            first = name.split("-")[0]
-            if first.isdigit():
-                skus.add(first)
-        return skus
-    except Exception as exc:  # noqa: BLE001
-        print(f"WARNING: fetch_catalog_skus: {exc}", file=sys.stderr)
-        return set()
-
-
 def catalog_visibility(
     conn,
-    catalog_skus: Set[str],
     dry_run: bool,
     log: List[str],
 ) -> Dict[str, int]:
-    """Show only products whose Bito SKU is in the bito-cat catalog.
+    """Source of truth = Bito.  Hide products not linked to Bito.
 
-    • Products matching a bito-cat SKU → ``isActive = true``
-    • Products *not* matching → ``isActive = false``
-    • Products in the catalog but **without** ``bitoProductId``
-      (= can't be stock-synced) and still marked ``inStock = true``
-      → forced to ``inStock = false`` to prevent stale "in stock" cards.
+    • ``bitoProductId`` is set → ``isActive = true``  (stock synced from Bito)
+    • ``bitoProductId`` is NULL → ``isActive = false`` (not in Bito, hide)
 
-    Matching uses the ``bitoSku`` column first, then ``bitoNumber`` as
-    fallback — one of them stores the Bito article number that
-    corresponds to the bito-cat file-name prefix.
+    This catches products created by the split-by-color migration or
+    manually that were never linked to a Bito product — they sit with
+    stale ``inStock = true`` forever because the sync can't touch them.
     """
-    if not catalog_skus:
-        log.append("[catalog] SKIP — no catalog SKUs (GitHub API failed?)")
-        return {"activated": 0, "deactivated": 0, "stock_fixed": 0}
-
     now = datetime.now(timezone.utc)
 
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
-            """SELECT id, "bitoProductId", "bitoSku", "bitoNumber",
-                      "isActive", "inStock"
-               FROM products"""
+            'SELECT id, "bitoProductId", "isActive", "inStock" FROM products'
         )
         products = [dict(r) for r in cur.fetchall()]
 
-    def _in_catalog(p: Dict[str, Any]) -> bool:
-        for field in (p.get("bitoSku"), p.get("bitoNumber")):
-            if field and str(field).strip() in catalog_skus:
-                return True
-        return False
+    linked = [p for p in products if p.get("bitoProductId")]
+    unlinked = [p for p in products if not p.get("bitoProductId")]
 
-    to_activate = [p["id"] for p in products if _in_catalog(p) and not p["isActive"]]
-    to_deactivate = [p["id"] for p in products if not _in_catalog(p) and p["isActive"]]
-    # Products in catalog but without Bito link → force OOS so stale
-    # inStock=true doesn't show sold-out items.
-    to_oos = [
-        p["id"]
-        for p in products
-        if _in_catalog(p) and not p.get("bitoProductId") and p.get("inStock")
-    ]
+    to_activate = [p["id"] for p in linked if not p["isActive"]]
+    to_deactivate = [p["id"] for p in unlinked if p["isActive"]]
+    # Also force inStock=false for unlinked products still marked in-stock
+    to_oos = [p["id"] for p in unlinked if p.get("inStock")]
 
     log.append(
-        f"[catalog] {len(catalog_skus)} bito-cat SKUs → "
+        f"[catalog] linked={len(linked)} unlinked={len(unlinked)} → "
         f"activate={len(to_activate)} deactivate={len(to_deactivate)} "
         f"force_oos={len(to_oos)}"
     )
@@ -1121,10 +1065,9 @@ def main() -> int:
                 if not args.skip_employees:
                     stats["employees"] = sync_employees(bito, conn, dry_run, log)
 
-            # Catalog visibility: show only products present in bito-cat
+            # Catalog visibility: hide products not linked to Bito
             if not args.skip_catalog:
-                catalog_skus = fetch_catalog_skus()
-                stats["catalog"] = catalog_visibility(conn, catalog_skus, dry_run, log)
+                stats["catalog"] = catalog_visibility(conn, dry_run, log)
 
             elapsed = time.time() - t0
             log.append(f"=== finished in {elapsed:.1f}s status={status} ===")
