@@ -177,7 +177,13 @@ def pick_price_for_product(price_items_by_pid: Dict[str, Dict[str, Any]], bito_i
 
 
 def sum_stock(product: Dict[str, Any]) -> Tuple[int, Dict[str, Dict[str, int]]]:
-    """Return (total_amount, {warehouse_bito_id: {amount, booked, in_transit, in_trash}})."""
+    """Return (total_available, {warehouse_bito_id: {amount, booked, in_transit, in_trash}}).
+
+    Available stock = amount - booked (clamped to 0).
+    Bito's `amount` is the total physical quantity in the warehouse, which
+    includes items reserved (`booked`) for existing orders.  The actual
+    sellable / displayable stock is therefore `amount - booked`.
+    """
     wmap: Dict[str, Dict[str, int]] = {}
     total = 0
     for wid, w in (product.get("_warehouses") or {}).items():
@@ -191,7 +197,8 @@ def sum_stock(product: Dict[str, Any]) -> Tuple[int, Dict[str, Dict[str, int]]]:
             "in_transit": in_transit,
             "in_trash": in_trash,
         }
-        total += amount
+        available = max(0, amount - booked)
+        total += available
     return total, wmap
 
 
