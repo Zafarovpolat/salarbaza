@@ -695,12 +695,41 @@ def sync_products(
                     page_size=200,
                 )
 
+    # --- safety sweep: orphaned linked products → out-of-stock ----------------
+    # After the main loop every Bito product has been iterated.  Any Supabase
+    # product that (a) has bitoProductId set, (b) was NOT matched above, and
+    # (c) still shows inStock=true is stale.  Most common cause: two Supabase
+    # rows share the same bitoProductId (legacy from the pre-split-by-color
+    # era); only one "won" the dict lookup, the other kept stale data.
+    # Fix: set them out-of-stock so they don't appear on the frontend.
+    orphan_ids = [
+        p["id"] for p in supa_products
+        if p.get("bitoProductId")
+        and p["id"] not in used_supa_ids
+        and bool(p.get("inStock"))
+    ]
+    if orphan_ids:
+        plan["orphaned_oos"] = len(orphan_ids)
+        log.append(
+            f"[products] ⚠️ {len(orphan_ids)} linked products not matched in sync → set inStock=false"
+        )
+        if not dry_run:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """UPDATE products
+                       SET "inStock" = false, "stockQuantity" = 0, "updatedAt" = %s
+                       WHERE id = ANY(%s)""",
+                    (now, orphan_ids),
+                )
+    else:
+        plan["orphaned_oos"] = 0
+
     log.append(
         f"[products] mode={mode} matched_pid={plan['matched_by_pid']} "
         f"matched_sku={plan['matched_by_sku']} matched_name={plan['matched_by_name']} "
         f"updated={plan['updated']} category_moved={plan['category_moved']} "
         f"created={plan['created']} skipped={plan['skipped_unmatched']} "
-        f"excluded={skipped_excluded} "
+        f"excluded={skipped_excluded} orphaned_oos={plan['orphaned_oos']} "
         f"stock_rows={plan['stock_rows']} (dry_run={dry_run})"
     )
     return {
