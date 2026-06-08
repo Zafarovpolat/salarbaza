@@ -869,7 +869,127 @@ def sync_employees(client: BitoClient, conn, dry_run: bool, log: List[str]) -> D
     return {"inserts": inserts, "updates": updates}
 
 
-# ------------------------- phase 5: catalog visibility -------------------------
+# ------------------------- phase 5a: relink orphan products -------------------
+
+
+def _norm(s: str) -> str:
+    """Lowercase, collapse whitespace, strip non-alphanum except dash."""
+    return re.sub(r"[^a-z0-9\-]", "", s.lower().replace(" ", ""))
+
+
+def relink_products(
+    client: BitoClient,
+    conn,
+    dry_run: bool,
+    log: List[str],
+) -> Dict[str, int]:
+    """Link Supabase products that have no ``bitoProductId`` to Bito.
+
+    For each unlinked Supabase product the function looks for a Bito
+    product whose normalised ``name`` matches the Supabase ``code``.
+    A link is only set when:
+
+    1. Exactly *one* candidate Bito product matches (avoids ambiguity).
+    2. That Bito product is not already linked to *another* Supabase row.
+
+    After linking, the normal ``sync_products`` pass will fill stock,
+    price, ``bitoSku``, ``bitoNumber`` — so this function only writes
+    ``bitoProductId``.
+    """
+    # --- Supabase: unlinked products ---
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            """SELECT id, code, "nameRu" FROM products
+               WHERE "bitoProductId" IS NULL"""
+        )
+        unlinked = [dict(r) for r in cur.fetchall()]
+
+    if not unlinked:
+        log.append("[relink] no unlinked products — nothing to do")
+        return {"checked": 0, "linked": 0}
+
+    # --- Supabase: which Bito IDs are already taken ---
+    with conn.cursor() as cur:
+        cur.execute(
+            'SELECT DISTINCT "bitoProductId" FROM products '
+            "WHERE \"bitoProductId\" IS NOT NULL"
+        )
+        taken_bito_ids: Set[str] = {r[0] for r in cur.fetchall()}
+
+    # --- Bito: all products, indexed by normalised name ---
+    bito_products = client.products()
+    bito_by_norm: Dict[str, List[Dict[str, Any]]] = {}
+    for bp in bito_products:
+        key = _norm(bp.get("name") or "")
+        bito_by_norm.setdefault(key, []).append(bp)
+
+    # --- matching ---
+    linked_count = 0
+    now = datetime.now(timezone.utc)
+    update_rows: List[Tuple[str, str]] = []   # (supa_id, bito_id)
+
+    for sp in unlinked:
+        code_norm = _norm(sp.get("code") or "")
+        if not code_norm:
+            continue
+
+        # Strategy 1: exact normalised-name match
+        candidates = bito_by_norm.get(code_norm, [])
+
+        # Strategy 2: code as prefix of Bito name  (e.g. "b-20mix" in "b-20mixvetka")
+        if not candidates:
+            candidates = [
+                bp for key, bps in bito_by_norm.items()
+                if key.startswith(code_norm)
+                for bp in bps
+            ]
+
+        # Strategy 3: Bito name starts with code (e.g. Bito "b-30orange" starts with "b-30orange")
+        if not candidates:
+            candidates = [
+                bp for key, bps in bito_by_norm.items()
+                if code_norm.startswith(key) and len(key) >= 3
+                for bp in bps
+            ]
+
+        # Filter out already-taken Bito IDs
+        candidates = [bp for bp in candidates if bp["_id"] not in taken_bito_ids]
+
+        if len(candidates) == 1:
+            bpid = candidates[0]["_id"]
+            update_rows.append((sp["id"], bpid))
+            taken_bito_ids.add(bpid)
+            linked_count += 1
+            log.append(
+                f"  [relink] {sp['code']!r} → Bito {candidates[0].get('name')!r} "
+                f"(_id={bpid[:16]}…)"
+            )
+        elif candidates:
+            names = [bp.get("name", "?") for bp in candidates[:3]]
+            log.append(
+                f"  [relink] {sp['code']!r}: SKIP — {len(candidates)} "
+                f"ambiguous matches: {names}"
+            )
+        else:
+            log.append(f"  [relink] {sp['code']!r}: SKIP — no Bito match found")
+
+    if update_rows and not dry_run:
+        with conn.cursor() as cur:
+            for supa_id, bito_id in update_rows:
+                cur.execute(
+                    """UPDATE products SET "bitoProductId" = %s, "updatedAt" = %s
+                       WHERE id = %s AND "bitoProductId" IS NULL""",
+                    (bito_id, now, supa_id),
+                )
+
+    log.append(
+        f"[relink] checked={len(unlinked)} linked={linked_count} "
+        f"(dry_run={dry_run})"
+    )
+    return {"checked": len(unlinked), "linked": linked_count}
+
+
+# ------------------------- phase 5b: catalog visibility -----------------------
 
 
 def catalog_visibility(
@@ -880,11 +1000,9 @@ def catalog_visibility(
     """Source of truth = Bito.  Hide products not linked to Bito.
 
     • ``bitoProductId`` is set → ``isActive = true``  (stock synced from Bito)
-    • ``bitoProductId`` is NULL → ``isActive = false`` (not in Bito, hide)
+    • ``bitoProductId`` is NULL → ``isActive = false`` + ``inStock = false``
 
-    This catches products created by the split-by-color migration or
-    manually that were never linked to a Bito product — they sit with
-    stale ``inStock = true`` forever because the sync can't touch them.
+    Runs *after* ``relink_products`` so newly-linked products stay visible.
     """
     now = datetime.now(timezone.utc)
 
@@ -899,7 +1017,6 @@ def catalog_visibility(
 
     to_activate = [p["id"] for p in linked if not p["isActive"]]
     to_deactivate = [p["id"] for p in unlinked if p["isActive"]]
-    # Also force inStock=false for unlinked products still marked in-stock
     to_oos = [p["id"] for p in unlinked if p.get("inStock")]
 
     log.append(
@@ -1065,7 +1182,11 @@ def main() -> int:
                 if not args.skip_employees:
                     stats["employees"] = sync_employees(bito, conn, dry_run, log)
 
-            # Catalog visibility: hide products not linked to Bito
+            # Phase 5a: re-link orphan Supabase products to Bito
+            if not args.skip_catalog:
+                stats["relink"] = relink_products(bito, conn, dry_run, log)
+
+            # Phase 5b: hide whatever is still not linked
             if not args.skip_catalog:
                 stats["catalog"] = catalog_visibility(conn, dry_run, log)
 
