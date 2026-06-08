@@ -1044,6 +1044,102 @@ def catalog_visibility(
     }
 
 
+# ------------------------- phase 5c: image sync from Bito -------------------
+
+
+BITO_CDN_BASE = "https://cdn.bito.uz"
+
+
+def sync_images_from_bito(
+    client,
+    conn,
+    dry_run: bool,
+    log: List[str],
+) -> Dict[str, int]:
+    """Pull images from Bito for products that have 0 images in Supabase.
+
+    Bito product ``images`` is a list of relative paths like
+    ``/uploads/file-xxx.png``.  We turn them into full CDN URLs and INSERT
+    into ``product_images``.
+
+    Only touches products that:
+      1. Have ``bitoProductId`` set (linked to Bito)
+      2. Have zero rows in ``product_images``
+    """
+    now = datetime.now(timezone.utc)
+
+    # Fetch all Bito products
+    bito_products = client.products()
+    bito_by_id: Dict[str, Dict[str, Any]] = {bp["_id"]: bp for bp in bito_products}
+
+    # Find Supabase products with 0 images
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute('''
+            SELECT p.id, p.code, p."bitoProductId"
+            FROM products p
+            WHERE p."bitoProductId" IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM product_images pi WHERE pi."productId" = p.id
+              )
+        ''')
+        no_img_products = [dict(r) for r in cur.fetchall()]
+
+    insert_rows: List[Tuple[Any, ...]] = []
+    products_with_new_imgs = 0
+
+    for sp in no_img_products:
+        bp = bito_by_id.get(sp["bitoProductId"])
+        if not bp:
+            continue
+        bito_images = bp.get("images") or []
+        if not bito_images:
+            continue
+
+        products_with_new_imgs += 1
+        for idx, img_path in enumerate(bito_images):
+            # Turn relative path into full CDN URL
+            if img_path.startswith("/"):
+                url = f"{BITO_CDN_BASE}{img_path}"
+            elif img_path.startswith("http"):
+                url = img_path
+            else:
+                url = f"{BITO_CDN_BASE}/{img_path}"
+
+            insert_rows.append((
+                cuid(),
+                sp["id"],
+                url,
+                sp["code"],
+                idx,           # sortOrder
+                idx == 0,      # isMain = true for first image
+                now,
+            ))
+
+    log.append(
+        f"[images] products_without_images={len(no_img_products)} "
+        f"bito_has_images={products_with_new_imgs} "
+        f"images_to_insert={len(insert_rows)}"
+    )
+
+    if not dry_run and insert_rows:
+        with conn.cursor() as cur:
+            psycopg2.extras.execute_values(
+                cur,
+                '''INSERT INTO product_images
+                    (id, "productId", url, alt, "sortOrder", "isMain", "createdAt")
+                   VALUES %s''',
+                insert_rows,
+                template="(%s, %s, %s, %s, %s::int, %s::bool, %s::timestamptz)",
+                page_size=200,
+            )
+
+    return {
+        "products_without_images": len(no_img_products),
+        "bito_has_images": products_with_new_imgs,
+        "images_inserted": len(insert_rows),
+    }
+
+
 # ------------------------- audit -------------------------
 
 
@@ -1181,6 +1277,10 @@ def main() -> int:
             # Phase 5b: hide whatever is still not linked
             if not args.skip_catalog:
                 stats["catalog"] = catalog_visibility(conn, dry_run, log)
+
+            # Phase 5c: pull Bito images for products with 0 images
+            if not args.skip_catalog:
+                stats["images"] = sync_images_from_bito(bito, conn, dry_run, log)
 
             elapsed = time.time() - t0
             log.append(f"=== finished in {elapsed:.1f}s status={status} ===")
