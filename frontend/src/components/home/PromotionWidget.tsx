@@ -9,12 +9,77 @@ import { promotionService } from '@/services/promotionService'
 import { Promotion } from '@/types'
 import { Container } from '@/components/layout/Container'
 import { Badge } from '@/components/ui/Badge'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/utils/helpers'
 
-// Кэш на уровне модуля — акции показываются мгновенно при повторных заходах на главную
+// ====== Кэш + прелоад ======
+// Цель: на повторных заходах акции рендерятся мгновенно; на холодном старте
+// запрос летит максимально рано (на импорте модуля), чтобы к маунту виджета
+// данные уже были.
+
+const CACHE_TTL = 60_000 // 1 минута
+const STORAGE_KEY = 'promotions_cache_v1'
+
 let cachedPromotions: Promotion[] | null = null
 let cacheTime = 0
-const CACHE_TTL = 60_000 // 1 минута
+let pendingPromise: Promise<Promotion[]> | null = null
+
+// Seed cache из sessionStorage (переживает refresh страницы)
+if (typeof window !== 'undefined') {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as { data: Promotion[]; time: number }
+      if (parsed?.data && Date.now() - parsed.time < CACHE_TTL) {
+        cachedPromotions = parsed.data
+        cacheTime = parsed.time
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function preloadPromotions(): Promise<Promotion[]> {
+  // Свежий кэш — ничего не делаем
+  if (cachedPromotions && Date.now() - cacheTime < CACHE_TTL) {
+    return Promise.resolve(cachedPromotions)
+  }
+  // Уже идёт запрос — переиспользуем
+  if (pendingPromise) return pendingPromise
+
+  pendingPromise = promotionService
+    .getActivePromotions()
+    .then((data) => {
+      cachedPromotions = data
+      cacheTime = Date.now()
+      try {
+        sessionStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ data, time: cacheTime })
+        )
+      } catch {
+        // ignore (private mode / quota)
+      }
+      return data
+    })
+    .catch((err) => {
+      pendingPromise = null
+      throw err
+    })
+    .finally(() => {
+      pendingPromise = null
+    })
+
+  return pendingPromise
+}
+
+// Стартуем запрос сразу при импорте модуля — до того, как HomePage смонтирует виджет
+if (typeof window !== 'undefined' && !cachedPromotions) {
+  preloadPromotions().catch(() => {
+    // Silently fail
+  })
+}
 
 const typeConfig: Record<string, {
   icon: any
@@ -48,21 +113,25 @@ export function PromotionWidget() {
   const { language } = useLanguageStore()
   // Стартуем с тем, что есть в кэше — экран не моргает
   const [promotions, setPromotions] = useState<Promotion[]>(cachedPromotions || [])
+  const [loaded, setLoaded] = useState<boolean>(!!cachedPromotions)
 
   useEffect(() => {
     // Если кэш свежий — фоновый запрос не нужен
-    if (cachedPromotions && Date.now() - cacheTime < CACHE_TTL) return
+    if (cachedPromotions && Date.now() - cacheTime < CACHE_TTL) {
+      setLoaded(true)
+      return
+    }
 
     let cancelled = false
-    promotionService
-      .getActivePromotions()
+    preloadPromotions()
       .then((data) => {
-        cachedPromotions = data
-        cacheTime = Date.now()
-        if (!cancelled) setPromotions(data)
+        if (!cancelled) {
+          setPromotions(data)
+          setLoaded(true)
+        }
       })
       .catch(() => {
-        // Silently fail
+        if (!cancelled) setLoaded(true)
       })
 
     return () => {
@@ -70,7 +139,30 @@ export function PromotionWidget() {
     }
   }, [])
 
-  // Скрываем секцию только если данных действительно нет (после ответа сервера)
+  // Скелетон на первой загрузке — секция сразу резервирует место и не появляется «откуда-то»
+  if (!loaded && promotions.length === 0) {
+    return (
+      <section className="py-4">
+        <Container>
+          <div className="flex items-end justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-gradient-to-br from-terracotta to-red-400 rounded-xl flex items-center justify-center">
+                <Tag className="w-4 h-4 text-white" strokeWidth={1.5} />
+              </div>
+              <h2 className="font-display text-2xl font-medium text-charcoal">
+                {language === 'uz' ? 'Aksiyalar' : 'Акции'}
+              </h2>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
+            <Skeleton className="w-full h-[180px] rounded-2xl" />
+          </div>
+        </Container>
+      </section>
+    )
+  }
+
+  // Запрос завершён, но акций нет — скрываем секцию
   if (promotions.length === 0) return null
 
   return (
