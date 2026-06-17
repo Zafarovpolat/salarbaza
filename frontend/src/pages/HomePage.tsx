@@ -195,6 +195,9 @@ export function HomePage() {
         ))}
       </div>
 
+      {/* ===== PROMOTIONS WIDGET ===== */}
+      <PromotionWidget />
+
       {/* ===== CATEGORIES ===== */}
       <section className="py-6">
         <Container>
@@ -224,9 +227,6 @@ export function HomePage() {
           />
         </Container>
       </section>
-
-      {/* ===== PROMOTIONS WIDGET ===== */}
-      <PromotionWidget />
 
       {/* ===== SALE PRODUCTS ===== */}
       {saleProducts.length > 0 && (
