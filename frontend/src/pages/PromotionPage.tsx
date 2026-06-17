@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, Clock, Tag, Gift, Sparkles, Star, Info, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronLeft, Clock, Tag, Gift, Sparkles, Star, Info, ChevronDown, ChevronUp, Share2 } from 'lucide-react'
+import WebApp from '@twa-dev/sdk'
+import toast from 'react-hot-toast'
 import { useLanguageStore } from '@/store/languageStore'
 import { promotionService } from '@/services/promotionService'
 import { Promotion } from '@/types'
@@ -13,6 +15,8 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/utils/helpers'
+
+const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'DecorMarketUz_Bot'
 
 export function PromotionPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -99,6 +103,41 @@ export function PromotionPage() {
   const config = typeConfig[promotion.type] || typeConfig.SALE
   const TypeIcon = config.icon
 
+  const handleShare = () => {
+    if (!promotion.slug) return
+
+    const directAppUrl = `https://t.me/${BOT_USERNAME}/app?startapp=promo_${promotion.slug}`
+    const shareText =
+      language === 'uz'
+        ? `${name} — Decor Market do'konida ko'ring!`
+        : `${name} — смотрите в Decor Market!`
+
+    try {
+      const tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent(directAppUrl)}&text=${encodeURIComponent(shareText)}`
+
+      if (typeof WebApp.openTelegramLink === 'function') {
+        WebApp.openTelegramLink(tgShareUrl)
+      } else {
+        window.open(tgShareUrl, '_blank')
+      }
+    } catch {
+      navigator.clipboard
+        .writeText(directAppUrl)
+        .then(() =>
+          toast.success(
+            language === 'uz' ? 'Havola nusxalandi' : 'Ссылка скопирована',
+            { duration: 1500 },
+          ),
+        )
+        .catch(() => {
+          window.open(
+            `https://t.me/share/url?url=${encodeURIComponent(directAppUrl)}`,
+            '_blank',
+          )
+        })
+    }
+  }
+
   return (
     <div className="pb-4">
       {/* ===== BANNER ===== */}
@@ -141,6 +180,16 @@ export function PromotionPage() {
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
+
+        {/* Share button */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleShare}
+          className="absolute top-4 right-4 z-[3] w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+          aria-label={language === 'uz' ? 'Ulashish' : 'Поделиться'}
+        >
+          <Share2 className="w-5 h-5" strokeWidth={1.5} />
+        </motion.button>
 
         {/* Content */}
         <div className="relative z-[2] p-7 text-white w-full">

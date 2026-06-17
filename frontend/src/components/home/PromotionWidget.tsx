@@ -11,6 +11,11 @@ import { Container } from '@/components/layout/Container'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/utils/helpers'
 
+// Кэш на уровне модуля — акции показываются мгновенно при повторных заходах на главную
+let cachedPromotions: Promotion[] | null = null
+let cacheTime = 0
+const CACHE_TTL = 60_000 // 1 минута
+
 const typeConfig: Record<string, {
   icon: any
   gradient: string
@@ -41,24 +46,32 @@ const typeConfig: Record<string, {
 export function PromotionWidget() {
   const navigate = useNavigate()
   const { language } = useLanguageStore()
-  const [promotions, setPromotions] = useState<Promotion[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  // Стартуем с тем, что есть в кэше — экран не моргает
+  const [promotions, setPromotions] = useState<Promotion[]>(cachedPromotions || [])
 
   useEffect(() => {
-    async function fetch() {
-      try {
-        const data = await promotionService.getActivePromotions()
-        setPromotions(data)
-      } catch {
+    // Если кэш свежий — фоновый запрос не нужен
+    if (cachedPromotions && Date.now() - cacheTime < CACHE_TTL) return
+
+    let cancelled = false
+    promotionService
+      .getActivePromotions()
+      .then((data) => {
+        cachedPromotions = data
+        cacheTime = Date.now()
+        if (!cancelled) setPromotions(data)
+      })
+      .catch(() => {
         // Silently fail
-      } finally {
-        setIsLoading(false)
-      }
+      })
+
+    return () => {
+      cancelled = true
     }
-    fetch()
   }, [])
 
-  if (isLoading || promotions.length === 0) return null
+  // Скрываем секцию только если данных действительно нет (после ответа сервера)
+  if (promotions.length === 0) return null
 
   return (
     <section className="py-4">
@@ -91,9 +104,9 @@ export function PromotionWidget() {
             return (
               <motion.div
                 key={promo.id}
-                initial={{ opacity: 0, y: 16 }}
+                initial={cachedPromotions ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ duration: 0.25, delay: Math.min(index * 0.04, 0.12) }}
                 onClick={() => navigate(`/promotion/${promo.slug}`)}
                 className="w-full cursor-pointer group"
               >
