@@ -374,7 +374,8 @@ def sync_categories(
 def fetch_supabase_products(cur) -> List[Dict[str, Any]]:
     cur.execute(
         """
-        SELECT id, code, slug, "nameRu", "nameUz", "categoryId", price, "stockQuantity",
+        SELECT id, code, slug, "nameRu", "nameUz", "categoryId", price, "oldPrice",
+               "isSpecialOffer", "stockQuantity",
                "inStock", "bitoProductId", "bitoSku", "bitoNumber"
         FROM products
         """
@@ -570,7 +571,15 @@ def sync_products(
         used_supa_ids.add(supa["id"])
 
         cur_price = supa.get("price")
-        new_price = price if (price is not None and price > 0) else cur_price
+        is_on_sale = bool(supa.get("isSpecialOffer"))
+        if is_on_sale:
+            # Product is in an active promotion — keep discounted price,
+            # but update oldPrice so the "original" reference stays accurate.
+            new_price = cur_price
+            new_old_price = price if (price is not None and price > 0) else supa.get("oldPrice")
+        else:
+            new_price = price if (price is not None and price > 0) else cur_price
+            new_old_price = supa.get("oldPrice")
 
         changed = (
             (supa.get("bitoProductId") or None) != bito_id
@@ -579,6 +588,7 @@ def sync_products(
             or int(supa.get("stockQuantity") or 0) != total_stock
             or bool(supa.get("inStock")) != in_stock
             or (new_price is not None and int(supa.get("price") or 0) != int(new_price))
+            or (new_old_price is not None and int(supa.get("oldPrice") or 0) != int(new_old_price or 0))
             or (new_cat is not None and (supa.get("categoryId") or None) != new_cat)
         )
         moved = new_cat is not None and (supa.get("categoryId") or None) != new_cat
@@ -602,6 +612,7 @@ def sync_products(
                     total_stock,
                     in_stock,
                     int(new_price) if new_price is not None else None,
+                    int(new_old_price) if new_old_price is not None else None,
                     new_cat if new_cat is not None else supa.get("categoryId"),
                     now,
                 )
@@ -636,13 +647,14 @@ def sync_products(
                         "stockQuantity" = u.qty,
                         "inStock"       = u.in_stock,
                         price           = COALESCE(u.price, p.price),
+                        "oldPrice"      = COALESCE(u.old_price, p."oldPrice"),
                         "categoryId"    = u.cat_id,
                         "updatedAt"     = u.now
-                    FROM (VALUES %s) AS u(id, bito_pid, bito_sku, bito_number, qty, in_stock, price, cat_id, now)
+                    FROM (VALUES %s) AS u(id, bito_pid, bito_sku, bito_number, qty, in_stock, price, old_price, cat_id, now)
                     WHERE p.id = u.id
                     """,
                     update_rows,
-                    template="(%s, %s, %s, %s, %s::int, %s::bool, %s::int, %s, %s::timestamptz)",
+                    template="(%s, %s, %s, %s, %s::int, %s::bool, %s::int, %s::int, %s, %s::timestamptz)",
                     page_size=500,
                 )
             if insert_rows:
