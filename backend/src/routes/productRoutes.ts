@@ -334,10 +334,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     // Kept for backwards compatibility but a value of `false` would never match.
     void inStock
 
-    let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' }
+    let orderBy: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[] = { createdAt: 'desc' }
     if (sortBy === 'price_asc') orderBy = { price: 'asc' }
     if (sortBy === 'price_desc') orderBy = { price: 'desc' }
     if (sortBy === 'popular') orderBy = { viewCount: 'desc' }
+    if (sortBy === 'grouped') orderBy = category
+      ? [{ code: 'asc' }, { price: 'asc' }]
+      : [{ categoryId: 'asc' }, { code: 'asc' }]
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
