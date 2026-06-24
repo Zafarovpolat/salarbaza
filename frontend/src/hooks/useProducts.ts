@@ -27,8 +27,9 @@ export function useProducts(options: UseProductsOptions = {}) {
     const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const isFetching = useRef(false)
 
-    // ✅ Track whether we restored from cache to avoid refetch
     const restoredFromCache = useRef(false)
+    // Хранит Y-позицию скролла из кэша; компонент применяет после рендера
+    const [restoredScrollY, setRestoredScrollY] = useState<number | null>(null)
 
     const scrollStore = useScrollStore()
 
@@ -119,16 +120,15 @@ export function useProducts(options: UseProductsOptions = {}) {
                 setTotal(cached.total)
                 setIsLoading(false)
                 restoredFromCache.current = true
-
-                // Restore scroll position after render
-                requestAnimationFrame(() => {
-                    window.scrollTo(0, cached.scrollY)
-                })
+                // Не скроллим здесь — DOM ещё пуст. Компонент сделает это
+                // через useEffect после первого рендера с данными.
+                setRestoredScrollY(cached.scrollY)
                 return
             }
         }
 
         restoredFromCache.current = false
+        setRestoredScrollY(null)
         setPage(1)
         setProducts([])
         setHasMore(true)
@@ -173,7 +173,7 @@ export function useProducts(options: UseProductsOptions = {}) {
         }
     }, [cacheKey, products, page, hasMore, total]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    return { products, isLoading, error, hasMore, total, loadMore, refresh, saveToCache }
+    return { products, isLoading, error, hasMore, total, loadMore, refresh, saveToCache, restoredScrollY }
 }
 
 export function useProduct(slug: string) {

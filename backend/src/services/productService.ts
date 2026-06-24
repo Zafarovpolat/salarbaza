@@ -76,7 +76,7 @@ export async function getProducts(params: GetProductsParams) {
     where.inStock = true
   }
 
-  let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: 'desc' }
+  let orderBy: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[] = { createdAt: 'desc' }
 
   switch (sortBy) {
     case 'price_asc':
@@ -87,6 +87,12 @@ export async function getProducts(params: GetProductsParams) {
       break
     case 'popular':
       orderBy = { viewCount: 'desc' }
+      break
+    case 'grouped':
+      // Товары одного вида идут подряд: сначала по категории, потом по названию
+      orderBy = categorySlug
+        ? [{ nameRu: 'asc' }, { price: 'asc' }]
+        : [{ categoryId: 'asc' }, { nameRu: 'asc' }]
       break
     case 'newest':
     default:
