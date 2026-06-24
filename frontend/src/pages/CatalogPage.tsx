@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SlidersHorizontal } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
@@ -30,7 +30,7 @@ export function CatalogPage() {
 
   const cacheKey = `catalog:${filters.sortBy}:${filters.minPrice ?? ""}:${filters.maxPrice ?? ""}:${filters.inStock ?? ""}`;
 
-  const { products, isLoading, hasMore, loadMore, total, saveToCache, restoredScrollY } = useProducts({
+  const { products, isLoading, hasMore, loadMore, total, saveToCache } = useProducts({
     filters,
     cacheKey,
   });
@@ -44,16 +44,19 @@ export function CatalogPage() {
     return () => { saveToCache(); };
   }, [saveToCache]);
 
-  const scrollApplied = useRef(false);
-  useEffect(() => { scrollApplied.current = false; }, [cacheKey]);
+  // Скроллим к последнему просмотренному товару по data-product-id
   useEffect(() => {
-    if (restoredScrollY !== null && products.length > 0 && !scrollApplied.current) {
-      scrollApplied.current = true;
+    if (products.length === 0) return;
+    const targetId = sessionStorage.getItem('scrollToProduct');
+    if (!targetId) return;
+    const el = document.querySelector(`[data-product-id="${CSS.escape(targetId)}"]`);
+    if (el) {
+      sessionStorage.removeItem('scrollToProduct');
       requestAnimationFrame(() => {
-        window.scrollTo({ top: restoredScrollY, behavior: "instant" });
+        el.scrollIntoView({ behavior: 'instant', block: 'center' });
       });
     }
-  }, [restoredScrollY, products.length]);
+  }, [products.length]);
 
   return (
     <div className="pb-2">
