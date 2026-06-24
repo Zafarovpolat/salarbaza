@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Share2 } from "lucide-react";
@@ -137,8 +137,9 @@ function CategoryHeader({
 function CategoryProducts({ slug }: { slug?: string }) {
   const cacheKey = slug ? `category:${slug}` : undefined;
 
-  const { products, isLoading, hasMore, loadMore, saveToCache } = useProducts({
+  const { products, isLoading, hasMore, loadMore, saveToCache, restoredScrollY } = useProducts({
     categorySlug: slug,
+    filters: { sortBy: 'grouped' },
     cacheKey,
   });
 
@@ -148,12 +149,21 @@ function CategoryProducts({ slug }: { slug?: string }) {
     isLoading,
   });
 
-  // ✅ Save scroll position + products to cache when navigating away
+  // Сохраняем позицию при уходе
   useEffect(() => {
-    return () => {
-      saveToCache();
-    };
+    return () => { saveToCache(); };
   }, [saveToCache]);
+
+  // Восстанавливаем скролл ПОСЛЕ того, как React отрисовал карточки в DOM
+  const scrollApplied = useRef(false);
+  useEffect(() => {
+    if (restoredScrollY !== null && products.length > 0 && !scrollApplied.current) {
+      scrollApplied.current = true;
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: restoredScrollY, behavior: 'instant' });
+      });
+    }
+  }, [restoredScrollY, products.length]);
 
   return (
     <section className="py-6">

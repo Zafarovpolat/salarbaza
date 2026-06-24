@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { SlidersHorizontal } from "lucide-react";
 import { useLanguageStore } from "@/store/languageStore";
@@ -14,27 +14,46 @@ import { ProductFilters } from "@/types";
 import { cn } from "@/utils/helpers";
 
 const sortOptions = [
-  { value: "newest", labelUz: "Yangi", labelRu: "Новые" },
-  { value: "price_asc", labelUz: "Arzon", labelRu: "Дешевле" },
-  { value: "price_desc", labelUz: "Qimmat", labelRu: "Дороже" },
-  { value: "popular", labelUz: "Mashhur", labelRu: "Популярные" },
+  { value: "grouped",   labelUz: "Toifasi",  labelRu: "По виду"     },
+  { value: "newest",    labelUz: "Yangi",    labelRu: "Новые"       },
+  { value: "price_asc", labelUz: "Arzon",    labelRu: "Дешевле"     },
+  { value: "price_desc",labelUz: "Qimmat",   labelRu: "Дороже"      },
+  { value: "popular",   labelUz: "Mashhur",  labelRu: "Популярные"  },
 ] as const;
 
 export function CatalogPage() {
   const { language } = useLanguageStore();
   const { categories, isLoading: categoriesLoading } = useCategories();
 
-  const [filters, setFilters] = useState<ProductFilters>({ sortBy: "newest" });
+  const [filters, setFilters] = useState<ProductFilters>({ sortBy: "grouped" });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
-  const { products, isLoading, hasMore, loadMore, total } = useProducts({
+  const cacheKey = `catalog:${filters.sortBy}:${filters.minPrice ?? ""}:${filters.maxPrice ?? ""}:${filters.inStock ?? ""}`;
+
+  const { products, isLoading, hasMore, loadMore, total, saveToCache, restoredScrollY } = useProducts({
     filters,
+    cacheKey,
   });
   const { loadMoreRef } = useInfiniteScroll({
     onLoadMore: loadMore,
     hasMore,
     isLoading,
   });
+
+  useEffect(() => {
+    return () => { saveToCache(); };
+  }, [saveToCache]);
+
+  const scrollApplied = useRef(false);
+  useEffect(() => { scrollApplied.current = false; }, [cacheKey]);
+  useEffect(() => {
+    if (restoredScrollY !== null && products.length > 0 && !scrollApplied.current) {
+      scrollApplied.current = true;
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: restoredScrollY, behavior: "instant" });
+      });
+    }
+  }, [restoredScrollY, products.length]);
 
   return (
     <div className="pb-2">
