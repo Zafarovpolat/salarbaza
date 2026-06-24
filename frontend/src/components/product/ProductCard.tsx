@@ -54,6 +54,7 @@ export const ProductCard = memo(function ProductCard({
   const productUrl = `${safeProductUrl(product.slug)}${colorQuery}`
 
   const handleClick = () => {
+    sessionStorage.setItem('scrollToProduct', product.cardId || product.id)
     navigate(productUrl)
   }
 
@@ -91,6 +92,7 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <motion.div
+      data-product-id={product.cardId || product.id}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.25 }}

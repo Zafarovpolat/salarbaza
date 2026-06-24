@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Share2 } from "lucide-react";
@@ -137,7 +137,7 @@ function CategoryHeader({
 function CategoryProducts({ slug }: { slug?: string }) {
   const cacheKey = slug ? `category:${slug}` : undefined;
 
-  const { products, isLoading, hasMore, loadMore, saveToCache, restoredScrollY } = useProducts({
+  const { products, isLoading, hasMore, loadMore, saveToCache } = useProducts({
     categorySlug: slug,
     filters: { sortBy: 'grouped' },
     cacheKey,
@@ -149,21 +149,23 @@ function CategoryProducts({ slug }: { slug?: string }) {
     isLoading,
   });
 
-  // Сохраняем позицию при уходе
   useEffect(() => {
     return () => { saveToCache(); };
   }, [saveToCache]);
 
-  // Восстанавливаем скролл ПОСЛЕ того, как React отрисовал карточки в DOM
-  const scrollApplied = useRef(false);
+  // Скроллим к последнему просмотренному товару по data-product-id
   useEffect(() => {
-    if (restoredScrollY !== null && products.length > 0 && !scrollApplied.current) {
-      scrollApplied.current = true;
+    if (products.length === 0) return;
+    const targetId = sessionStorage.getItem('scrollToProduct');
+    if (!targetId) return;
+    const el = document.querySelector(`[data-product-id="${CSS.escape(targetId)}"]`);
+    if (el) {
+      sessionStorage.removeItem('scrollToProduct');
       requestAnimationFrame(() => {
-        window.scrollTo({ top: restoredScrollY, behavior: 'instant' });
+        el.scrollIntoView({ behavior: 'instant', block: 'center' });
       });
     }
-  }, [restoredScrollY, products.length]);
+  }, [products.length]);
 
   return (
     <section className="py-6">
