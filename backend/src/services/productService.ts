@@ -89,10 +89,11 @@ export async function getProducts(params: GetProductsParams) {
       orderBy = { viewCount: 'desc' }
       break
     case 'grouped':
-      // Товары одного вида идут подряд: сначала по категории, потом по названию
+      // Товары одного вида идут подряд: code — чистый ASCII без кавычек,
+      // поэтому Z-4-* / Z-6-* / Z-7-* сортируются предсказуемо
       orderBy = categorySlug
-        ? [{ nameRu: 'asc' }, { price: 'asc' }]
-        : [{ categoryId: 'asc' }, { nameRu: 'asc' }]
+        ? [{ code: 'asc' }, { price: 'asc' }]
+        : [{ categoryId: 'asc' }, { code: 'asc' }]
       break
     case 'newest':
     default:
