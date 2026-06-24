@@ -56,7 +56,7 @@ export interface ProductVariant {
 export interface ProductFilters {
   categorySlug?: string
   categoryId?: string
-  sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popular' | 'name'
+  sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'popular' | 'name' | 'grouped'
   minPrice?: number
   maxPrice?: number
   inStock?: boolean
