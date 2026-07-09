@@ -12,6 +12,7 @@ import {
 import { useLanguageStore } from "@/store/languageStore";
 import { useCategories } from "@/hooks/useCategories";
 import { productService } from "@/services/productService";
+import { promotionService } from "@/services/promotionService";
 import { Product } from "@/types";
 import { CategoryList } from "@/components/category/CategoryList";
 import { ProductGrid } from "@/components/product/ProductGrid";
@@ -28,8 +29,34 @@ import toast from "react-hot-toast";
 let cachedFeatured: Product[] | null = null;
 let cachedNew: Product[] | null = null;
 let cachedSale: Product[] | null = null;
+let cachedSaleEndsAt: string | null = null;
 let cacheTime = 0;
 const CACHE_TTL = 60_000; // 1 минута
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function getDaysLeft(endDate: string | null) {
+  if (!endDate) return null;
+
+  const diff = new Date(endDate).getTime() - Date.now();
+  if (!Number.isFinite(diff) || diff < 0) return null;
+
+  return Math.ceil(diff / DAY_MS);
+}
+
+function formatDaysLeft(days: number, language: string) {
+  if (language === "uz") return `${days} kun qoldi`;
+
+  const mod10 = days % 10;
+  const mod100 = days % 100;
+  const word = mod10 === 1 && mod100 !== 11
+    ? "день"
+    : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+      ? "дня"
+      : "дней";
+
+  return `Осталось ${days} ${word}`;
+}
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -43,19 +70,23 @@ export function HomePage() {
   );
   const [newProducts, setNewProducts] = useState<Product[]>(cachedNew || []);
   const [saleProducts, setSaleProducts] = useState<Product[]>(cachedSale || []);
-  const [isLoading, setIsLoading] = useState(!cachedFeatured);
+  const [saleEndsAt, setSaleEndsAt] = useState<string | null>(cachedSaleEndsAt);
+  const [isLoading, setIsLoading] = useState(
+    !(cachedFeatured && cachedNew && cachedSale !== null)
+  );
 
   useEffect(() => {
     // ✅ FIX: если кэш свежий — не грузим
     if (
       cachedFeatured &&
       cachedNew &&
-      cachedSale &&
+      cachedSale !== null &&
       Date.now() - cacheTime < CACHE_TTL
     ) {
       setFeaturedProducts(cachedFeatured);
       setNewProducts(cachedNew);
       setSaleProducts(cachedSale);
+      setSaleEndsAt(cachedSaleEndsAt);
       setIsLoading(false);
       return;
     }
@@ -63,21 +94,23 @@ export function HomePage() {
     async function fetchProducts() {
       try {
         setIsLoading(true);
-        const [featured, newOnes, sale] = await Promise.all([
+        const [featured, newOnes, specialOffers] = await Promise.all([
           productService.getFeaturedProducts(6),
           productService.getNewProducts(6),
-          productService.getSaleProducts(8),
+          promotionService.getSpecialOfferProducts(8),
         ]);
 
         // Сохраняем в кэш
         cachedFeatured = featured;
         cachedNew = newOnes;
-        cachedSale = sale;
+        cachedSale = specialOffers.products;
+        cachedSaleEndsAt = specialOffers.endsAt;
         cacheTime = Date.now();
 
         setFeaturedProducts(featured);
         setNewProducts(newOnes);
-        setSaleProducts(sale);
+        setSaleProducts(specialOffers.products);
+        setSaleEndsAt(specialOffers.endsAt);
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
@@ -88,6 +121,7 @@ export function HomePage() {
   }, []);
 
   const currency = language === "uz" ? "so'm" : "сум";
+  const saleDaysLeft = getDaysLeft(saleEndsAt);
 
   // ✅ FIX: мемоизация обработчиков
   const handleAddToCart = useCallback(
@@ -229,7 +263,7 @@ export function HomePage() {
       </section>
 
       {/* ===== SALE PRODUCTS ===== */}
-      {saleProducts.length > 0 && (
+      {saleProducts.length > 0 && saleDaysLeft !== null && (
         <section className="bg-gradient-to-br from-forest to-emerald py-10 relative overflow-hidden">
           <div className="absolute -top-[100px] -right-[100px] w-[400px] h-[400px] rounded-full bg-white/[0.04]" />
           <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] rounded-full bg-white/[0.03]" />
@@ -249,7 +283,7 @@ export function HomePage() {
                 </p>
                 <div className="inline-flex items-center gap-2 bg-white/[0.12] rounded-full px-4 py-2 mt-2 text-[13px] text-white/90 font-medium">
                   <Clock className="w-4 h-4 text-warning" strokeWidth={2} />
-                  {language === "uz" ? "3 kun qoldi" : "Осталось 3 дня"}
+                  {formatDaysLeft(saleDaysLeft, language)}
                 </div>
               </div>
             </div>
