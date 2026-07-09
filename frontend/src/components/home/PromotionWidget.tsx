@@ -9,7 +9,6 @@ import { promotionService } from '@/services/promotionService'
 import { Promotion } from '@/types'
 import { Container } from '@/components/layout/Container'
 import { Badge } from '@/components/ui/Badge'
-import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/utils/helpers'
 
 // ====== Кэш + прелоад ======
@@ -23,6 +22,14 @@ const STORAGE_KEY = 'promotions_cache_v1'
 let cachedPromotions: Promotion[] | null = null
 let cacheTime = 0
 let pendingPromise: Promise<Promotion[]> | null = null
+
+function getFreshCachedPromotions() {
+  if (cachedPromotions !== null && Date.now() - cacheTime < CACHE_TTL) {
+    return cachedPromotions
+  }
+
+  return null
+}
 
 // Seed cache из sessionStorage (переживает refresh страницы)
 if (typeof window !== 'undefined') {
@@ -42,8 +49,9 @@ if (typeof window !== 'undefined') {
 
 export function preloadPromotions(): Promise<Promotion[]> {
   // Свежий кэш — ничего не делаем
-  if (cachedPromotions && Date.now() - cacheTime < CACHE_TTL) {
-    return Promise.resolve(cachedPromotions)
+  const freshCachedPromotions = getFreshCachedPromotions()
+  if (freshCachedPromotions !== null) {
+    return Promise.resolve(freshCachedPromotions)
   }
   // Уже идёт запрос — переиспользуем
   if (pendingPromise) return pendingPromise
@@ -111,13 +119,16 @@ const typeConfig: Record<string, {
 export function PromotionWidget() {
   const navigate = useNavigate()
   const { language } = useLanguageStore()
+  const freshCachedPromotions = getFreshCachedPromotions()
   // Стартуем с тем, что есть в кэше — экран не моргает
-  const [promotions, setPromotions] = useState<Promotion[]>(cachedPromotions || [])
-  const [loaded, setLoaded] = useState<boolean>(!!cachedPromotions)
+  const [promotions, setPromotions] = useState<Promotion[]>(freshCachedPromotions || [])
+  const [loaded, setLoaded] = useState<boolean>(freshCachedPromotions !== null)
 
   useEffect(() => {
     // Если кэш свежий — фоновый запрос не нужен
-    if (cachedPromotions && Date.now() - cacheTime < CACHE_TTL) {
+    const freshCachedPromotions = getFreshCachedPromotions()
+    if (freshCachedPromotions !== null) {
+      setPromotions(freshCachedPromotions)
       setLoaded(true)
       return
     }
@@ -139,31 +150,8 @@ export function PromotionWidget() {
     }
   }, [])
 
-  // Скелетон на первой загрузке — секция сразу резервирует место и не появляется «откуда-то»
-  if (!loaded && promotions.length === 0) {
-    return (
-      <section className="py-4">
-        <Container>
-          <div className="flex items-end justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-terracotta to-red-400 rounded-xl flex items-center justify-center">
-                <Tag className="w-4 h-4 text-white" strokeWidth={1.5} />
-              </div>
-              <h2 className="font-display text-2xl font-medium text-charcoal">
-                {language === 'uz' ? 'Aksiyalar' : 'Акции'}
-              </h2>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4">
-            <Skeleton className="w-full h-[180px] rounded-2xl" />
-          </div>
-        </Container>
-      </section>
-    )
-  }
-
-  // Запрос завершён, но акций нет — скрываем секцию
-  if (promotions.length === 0) return null
+  // Do not render while promotion availability is unknown; avoids a flash when there are no promotions.
+  if (!loaded || promotions.length === 0) return null
 
   return (
     <section className="py-4">

@@ -1,24 +1,51 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Tag, ArrowLeft } from 'lucide-react'
+import { Tag, ArrowLeft, Clock } from 'lucide-react'
 import { useLanguageStore } from '@/store/languageStore'
-import { productService } from '@/services/productService'
+import { promotionService } from '@/services/promotionService'
 import { Product } from '@/types'
 import { Container } from '@/components/layout/Container'
 import { ProductGrid } from '@/components/product/ProductGrid'
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function getDaysLeft(endDate: string | null) {
+  if (!endDate) return null
+
+  const diff = new Date(endDate).getTime() - Date.now()
+  if (!Number.isFinite(diff) || diff < 0) return null
+
+  return Math.ceil(diff / DAY_MS)
+}
+
+function formatDaysLeft(days: number, language: string) {
+  if (language === 'uz') return `${days} kun qoldi`
+
+  const mod10 = days % 10
+  const mod100 = days % 100
+  const word = mod10 === 1 && mod100 !== 11
+    ? 'день'
+    : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+      ? 'дня'
+      : 'дней'
+
+  return `Осталось ${days} ${word}`
+}
 
 export function SpecialOffersPage() {
   const navigate = useNavigate()
   const { language } = useLanguageStore()
   const [products, setProducts] = useState<Product[]>([])
+  const [endsAt, setEndsAt] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function fetch() {
       try {
         setIsLoading(true)
-        const data = await productService.getSaleProducts(50)
-        setProducts(data)
+        const data = await promotionService.getSpecialOfferProducts(50)
+        setProducts(data.products)
+        setEndsAt(data.endsAt)
       } catch (error) {
         console.error(error)
       } finally {
@@ -27,6 +54,8 @@ export function SpecialOffersPage() {
     }
     fetch()
   }, [])
+
+  const daysLeft = getDaysLeft(endsAt)
 
   return (
     <div className="pb-4">
@@ -51,6 +80,12 @@ export function SpecialOffersPage() {
         <p className="text-white/70 text-sm mt-1">
           {products.length} {language === 'uz' ? 'ta mahsulot' : 'товаров'}
         </p>
+        {daysLeft !== null && (
+          <div className="inline-flex items-center gap-2 bg-white/[0.12] rounded-full px-4 py-2 mt-3 text-[13px] text-white/90 font-medium">
+            <Clock className="w-4 h-4 text-warning" strokeWidth={2} />
+            {formatDaysLeft(daysLeft, language)}
+          </div>
+        )}
       </div>
 
       <section className="py-6">
