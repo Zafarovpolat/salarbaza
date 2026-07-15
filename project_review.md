@@ -733,7 +733,7 @@ Production: https://dekorhouse-api.onrender.com/api
 
 ```env
 VITE_API_URL=https://dekorhouse-api.onrender.com/api
-VITE_BOT_USERNAME=DekorHouseBot
+VITE_BOT_USERNAME=DecorMarketUz_Bot
 ```
 
 #### Backend (.env)
@@ -860,7 +860,7 @@ npx ts-node prisma/test-seed.ts
 
 ### April 4, 2026 — Обновление документации
 
-- 📝 Исправлена структура проекта (salarbaza → DekorHouse)
+- 📝 Исправлена структура проекта (salarbaza → DekorMarket)
 - 📝 Добавлены Promotions (модели, эндпоинты, страницы)
 - 📝 Добавлены новые страницы: PromotionPage, SpecialOffersPage, NewArrivalsPage
 - 📝 Добавлены админ-страницы: AdminPromotionsPage, AdminPromotionEditPage, AdminBulkTagsPage

@@ -14,7 +14,7 @@ const router = Router()
 // API info endpoint
 router.get('/', (req, res) => {
   res.json({
-    name: 'DekorHouse API',
+    name: 'Dekor Market API',
     version: '1.1.0',
     endpoints: {
       categories: '/api/categories',
