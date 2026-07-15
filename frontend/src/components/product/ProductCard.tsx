@@ -35,7 +35,11 @@ export const ProductCard = memo(function ProductCard({
   const inCart = isInCart(product.id, selectedColor?.id)
   const isProductFavorite = isFavorite(product.id)
   const name = getProductName(product, language)
-  const mainImage = product.images?.find(img => img.isMain)?.url || product.images?.[0]?.url
+  const mainImageObj = product.images?.find(img => img.isMain) || product.images?.[0]
+  const mainImage = mainImageObj?.url
+  const thumbnailUrl = mainImageObj?.thumbnailUrl
+  const mediumUrl = mainImageObj?.mediumUrl
+  const detailUrl = mainImageObj?.url
 
   // Ценовой диапазон
   const priceInfo = (() => {
@@ -104,15 +108,24 @@ export const ProductCard = memo(function ProductCard({
         hover:shadow-card hover:-translate-y-1
       "
     >
-      {/* Image */}
-      <div className="relative aspect-square bg-sand m-2.5 rounded-xl overflow-hidden">
-        {mainImage ? (
-          <img
-            src={mainImage}
-            alt={name}
-            className="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105"
-            loading={index < 8 ? 'eager' : 'lazy'}
-          />
+      {/* Image - with WebP variants and object-contain for product photos */}
+      <div className="relative aspect-square bg-white m-2.5 rounded-xl overflow-hidden">
+        {mainImageObj ? (
+          <picture>
+            {thumbnailUrl && mediumUrl && (
+              <source
+                srcSet={`${thumbnailUrl} 320w, ${mediumUrl} 640w, ${detailUrl} 1200w`}
+                sizes="(max-width: 640px) 320px, 640px"
+                type="image/webp"
+              />
+            )}
+            <img
+              src={mainImage}
+              alt={name}
+              className="w-full h-full object-contain transition-transform duration-600 group-hover:scale-105 bg-white"
+              loading={index < 8 ? 'eager' : 'lazy'}
+            />
+          </picture>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-sand">
             <span className="text-4xl">🪴</span>
