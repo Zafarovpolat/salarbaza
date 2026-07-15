@@ -122,7 +122,7 @@ cp .env.example .env
 
 # 4. Настроить базу данных
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
 
 # 5. Загрузить товары из JSON
 npm run db:seed

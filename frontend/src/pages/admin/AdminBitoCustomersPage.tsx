@@ -129,7 +129,6 @@ export function AdminBitoCustomersPage() {
     } finally {
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, sortBy, sortOrder, isActive, hasBalance])
 
   useEffect(() => {
@@ -146,7 +145,6 @@ export function AdminBitoCustomersPage() {
       }
     }, 300)
     return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
   const handleExport = async () => {

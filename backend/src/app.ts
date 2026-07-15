@@ -27,7 +27,8 @@ app.use(cors({
     allowedHeaders: [
         'Content-Type',
         'Authorization',
-        'X-Telegram-Init-Data'
+        'X-Telegram-Init-Data',
+        'Idempotency-Key'
     ]
 }))
 

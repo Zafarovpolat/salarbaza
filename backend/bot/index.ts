@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api'
 import { config } from '../src/config'
 import { logger } from '../src/utils/logger'
-import { handleStart, handleHelp } from './commands'
+import { handleStart, handleHelp, handleAdmin } from './commands'
 import { handleCallbackQuery } from './handlers'
 
 let bot: TelegramBot | null = null
@@ -44,6 +44,8 @@ export function initTelegramBot() {
       logger.error('Error in /help:', error?.message || 'Unknown')
     }
   })
+
+  bot.onText(/^\/admin(?:@\w+)?$/, async (msg) => { try { await handleAdmin(bot!, msg) } catch (error: any) { logger.error('Error in /admin:', error?.message || 'Unknown') } })
 
   bot.on('callback_query', async (query) => {
     try {

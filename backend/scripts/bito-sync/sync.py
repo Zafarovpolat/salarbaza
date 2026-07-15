@@ -395,6 +395,8 @@ def sync_products(
     skip_prices: bool = False,
     skip_stock: bool = False,
     excluded_bito_cat_ids: Optional[Set[str]] = None,
+    allow_fuzzy_match: bool = False,
+    allow_large_change: bool = False,
 ) -> Dict[str, Any]:
     """Sync Bito products into Supabase. 1 Bito SKU = 1 Supabase product.
 
@@ -431,7 +433,7 @@ def sync_products(
 
     by_bito_pid = {p["bitoProductId"]: p for p in supa_products if p.get("bitoProductId")}
     by_bito_sku = {p["bitoSku"]: p for p in supa_products if p.get("bitoSku") and not p.get("bitoProductId")}
-    matcher = Matcher(supa_products) if mode == "full" else None
+    matcher = Matcher(supa_products) if mode == "full" and allow_fuzzy_match else None
     used_supa_ids: Set[str] = set()
     used_slugs = {p["slug"] for p in supa_products if p.get("slug")}
     used_codes = {p["code"] for p in supa_products if p.get("code")}
@@ -477,6 +479,9 @@ def sync_products(
 
     _excl_cats = excluded_bito_cat_ids or set()
     skipped_excluded = 0
+    eligible_bito_count=sum(1 for bp in bito_products if not (((bp.get("category") or {}).get("_id") if isinstance(bp.get("category"),dict) else bp.get("category")) in _excl_cats))
+    linked_supa_count=sum(1 for p in supa_products if p.get("bitoProductId"))
+    if not allow_large_change and linked_supa_count and eligible_bito_count < max(100,int(linked_supa_count*.8)): raise RuntimeError("SAFETY STOP: partial Bito response")
 
     for bp in bito_products:
         # Skip products belonging to excluded Bito categories
@@ -513,8 +518,8 @@ def sync_products(
             plan["skipped_unmatched"] += 1
             continue
 
-        if supa is None and mode == "full":
-            # Fall back to name-based fuzzy match (used to be Phase B).
+        if supa is None and mode == "full" and allow_fuzzy_match:
+            # supervised fuzzy match
             candidates = [bp.get("name") or ""]
             if bito_number:
                 candidates.append(bito_number)
@@ -633,6 +638,8 @@ def sync_products(
                 )
                 plan["stock_rows"] += 1
 
+    if not allow_large_change and plan["created"]>max(100,int(max(eligible_bito_count,1)*.1)): raise RuntimeError("SAFETY STOP: mass create")
+    if not allow_large_change and plan["category_moved"]>max(50,int(max(linked_supa_count,1)*.1)): raise RuntimeError("SAFETY STOP: mass category move")
     # ---- execute batched writes ----
     if not dry_run:
         with conn.cursor() as cur:
@@ -720,6 +727,7 @@ def sync_products(
         and p["id"] not in used_supa_ids
         and bool(p.get("inStock"))
     ]
+    if orphan_ids and not allow_large_change and len(orphan_ids)>max(20,int(max(linked_supa_count,1)*.02)): raise RuntimeError("SAFETY STOP: mass disappearance")
     if orphan_ids:
         plan["orphaned_oos"] = len(orphan_ids)
         log.append(
@@ -1205,6 +1213,8 @@ def main() -> int:
     parser.add_argument("--skip-employees", action="store_true")
     parser.add_argument("--skip-catalog", action="store_true",
                         help="Skip bito-cat catalog visibility filter")
+    parser.add_argument("--enable-fuzzy-relink", action="store_true")
+    parser.add_argument("--allow-large-change", action="store_true")
     parser.add_argument("--statement-timeout", type=int, default=60000,
                         help="Postgres statement_timeout in ms (default 60s)")
     parser.add_argument("--report-out", default=None,
@@ -1285,7 +1295,7 @@ def main() -> int:
                     mode=args.mode,
                     wh_map=wh_map, cat_map=cat_map,
                     skip_prices=args.skip_prices, skip_stock=args.skip_stock,
-                    excluded_bito_cat_ids=excluded_bito_ids,
+                    excluded_bito_cat_ids=excluded_bito_ids, allow_fuzzy_match=args.enable_fuzzy_relink, allow_large_change=args.allow_large_change,
                 )
 
             if args.mode == "full":
@@ -1294,9 +1304,11 @@ def main() -> int:
                 if not args.skip_employees:
                     stats["employees"] = sync_employees(bito, conn, dry_run, log)
 
-            # Phase 5a: re-link orphan Supabase products to Bito
-            if not args.skip_catalog:
+            # Phase 5a: supervised fuzzy relink only
+            if not args.skip_catalog and args.enable_fuzzy_relink:
                 stats["relink"] = relink_products(bito, conn, dry_run, log)
+            elif not args.skip_catalog:
+                stats["relink"]={"skipped":"fuzzy disabled"};log.append("[relink] skipped")
 
             # Phase 5b: hide whatever is still not linked
             if not args.skip_catalog:

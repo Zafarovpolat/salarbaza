@@ -5,7 +5,7 @@ services:
     region: frankfurt
     plan: free
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm start
     healthCheckPath: /health
     envVars:
@@ -19,7 +19,7 @@ services:
         sync: false
       - key: ADMIN_CHAT_ID
         sync: false
-      - key: ADMIN_PASSWORD_HASH
+      - key: ADMIN_TELEGRAM_IDS
         sync: false
       - key: ADMIN_SESSION_SECRET
         generateValue: true
@@ -34,7 +34,7 @@ services:
     name: dekorhouse-web
     runtime: static
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     staticPublishPath: dist
     headers:
       - path: /index.html

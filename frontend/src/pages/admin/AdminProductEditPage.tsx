@@ -286,8 +286,8 @@ export function AdminProductEditPage() {
         stockQuantity: parseInt(form.stockQuantity),
         slug: form.code
           .toLowerCase()
-          .replace(/[\/\\]/g, '-')
-          .replace(/[^a-z0-9\-]/g, '-')
+          .replace(/[/\\]/g, '-')
+          .replace(/[^a-z0-9-]/g, '-')
           .replace(/-+/g, '-')
           .replace(/^-|-$/g, ''),
         images: isNew ? images.map(img => ({ url: img.url, alt: form.nameRu })) : undefined,

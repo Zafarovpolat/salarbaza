@@ -9,7 +9,7 @@ import { getLanguageKeyboard, getOpenShopKeyboard } from './keyboards'
 
 function escapeMarkdown(text: any): string {
   if (!text) return ''
-  return String(text).replace(/([_*`\[\]])/g, '\\$1')
+  return String(text).replace(/([_*`[\]])/g, '\\$1')
 }
 
 // ── Сохранить язык пользователя в БД ──────────────────────────────────────

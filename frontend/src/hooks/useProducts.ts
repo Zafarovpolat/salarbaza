@@ -127,7 +127,7 @@ export function useProducts(options: UseProductsOptions = {}) {
         setProducts([])
         setHasMore(true)
         fetchProducts(1, false)
-    }, [fetchProducts]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [fetchProducts])
 
     useEffect(() => {
         return () => {
@@ -152,7 +152,7 @@ export function useProducts(options: UseProductsOptions = {}) {
         setProducts([])
         setHasMore(true)
         fetchProducts(1, false)
-    }, [fetchProducts, cacheKey]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [fetchProducts, cacheKey])
 
     /** Save current state to cache — call before navigating away */
     const saveToCache = useCallback(() => {
@@ -165,7 +165,7 @@ export function useProducts(options: UseProductsOptions = {}) {
                 scrollY: 0, // позиция восстанавливается по ID элемента, не по пикселям
             })
         }
-    }, [cacheKey, products, page, hasMore, total]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [cacheKey, products, page, hasMore, total])
 
     return { products, isLoading, error, hasMore, total, loadMore, refresh, saveToCache }
 }
