@@ -15,7 +15,7 @@ export function LoadingScreen() {
           className="mb-6"
         >
           <span className="font-display text-4xl font-semibold text-forest">
-            Dekor<span className="text-sage font-normal">house</span>
+            Dekor<span className="text-sage font-normal"> Market</span>
           </span>
         </motion.div>
 
