@@ -15,6 +15,38 @@ enum UserRole {
   ADMIN
 }
 
+enum AnalyticsEventType {
+  product_view
+  category_view
+  search
+  search_no_results
+  add_to_cart
+  remove_from_cart
+  checkout_started
+  order_created
+  order_cancelled
+}
+
+model AnalyticsEvent {
+  id         String             @id @default(cuid())
+  event      AnalyticsEventType
+  sessionId  String
+  userId     String?
+  productId  String?
+  categoryId String?
+  orderId    String?
+  source     String?
+  metadata   Json?
+  createdAt  DateTime           @default(now())
+
+  @@index([event])
+  @@index([sessionId])
+  @@index([productId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
 model User {
   id         String   @id @default(cuid())
   telegramId BigInt   @unique

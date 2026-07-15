@@ -141,6 +141,19 @@ router.get('/developer', async (req, res) => {
 
   const cacheStats = getCacheStats()
 
+  // Analytics status
+  let analyticsStatus: any = { status: 'unknown' }
+  try {
+    const [totalEvents, lastEvent, last24h] = await Promise.all([
+      prisma.analyticsEvent.count(),
+      prisma.analyticsEvent.findFirst({ orderBy: { createdAt: 'desc' }, select: { createdAt: true, event: true } }),
+      prisma.analyticsEvent.count({ where: { createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }),
+    ])
+    analyticsStatus = { status: totalEvents > 0 ? 'active' : 'no_data', total: totalEvents, lastEvent, last24hCount: last24h }
+  } catch (e: any) {
+    analyticsStatus = { status: 'error', error: e.message?.slice(0, 200) }
+  }
+
   const data = {
     timestamp: new Date().toISOString(),
     backend: {
@@ -158,10 +171,7 @@ router.get('/developer', async (req, res) => {
         provider: process.env.REDIS_URL ? 'redis' : 'memory',
         stats: cacheStats,
       },
-      analytics: {
-        // Placeholder - will be implemented in PR6
-        status: 'not_implemented',
-      },
+      analytics: analyticsStatus,
       imageOptimization: {
         // Placeholder - PR7
         status: 'not_implemented',

@@ -151,6 +151,11 @@ const AdminDeveloperPage = lazy(() =>
     default: m.AdminDeveloperPage,
   }))
 );
+const AdminAnalyticsPage = lazy(() =>
+  import("./pages/admin/AdminAnalyticsPage").then((m) => ({
+    default: m.AdminAnalyticsPage,
+  }))
+);
 
 // ✅ Легкий спиннер для lazy-страниц (не полноэкранный)
 function PageLoader() {
@@ -285,6 +290,7 @@ function AdminRoutes() {
           element={<AdminBitoEmployeeDetailPage />}
         />
         <Route path="/admin/developer" element={<AdminDeveloperPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
       </Routes>
     </Suspense>
   );
