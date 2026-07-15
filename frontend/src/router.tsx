@@ -146,6 +146,11 @@ const AdminBitoEmployeeDetailPage = lazy(() =>
     default: m.AdminBitoEmployeeDetailPage,
   }))
 );
+const AdminDeveloperPage = lazy(() =>
+  import("./pages/admin/AdminDeveloperPage").then((m) => ({
+    default: m.AdminDeveloperPage,
+  }))
+);
 
 // ✅ Легкий спиннер для lazy-страниц (не полноэкранный)
 function PageLoader() {
@@ -279,6 +284,7 @@ function AdminRoutes() {
           path="/admin/bito-employees/:id"
           element={<AdminBitoEmployeeDetailPage />}
         />
+        <Route path="/admin/developer" element={<AdminDeveloperPage />} />
       </Routes>
     </Suspense>
   );
