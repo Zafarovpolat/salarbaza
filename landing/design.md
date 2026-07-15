@@ -1,4 +1,4 @@
-# 🎨 DecorMarket Design System
+# 🎨 DekorMarket Design System
 
 ## Документ дизайн-системы
 

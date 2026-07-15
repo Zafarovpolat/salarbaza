@@ -9,7 +9,7 @@ async function handleStart(bot, msg) {
     const welcomeMessage = `
 👋 Salom, ${firstName}!
 
-🏠 *DecorMarket* — uy va bog' uchun dekoratsiyalar do'koniga xush kelibsiz!
+🏠 *DekorMarket* — uy va bog' uchun dekoratsiyalar do'koniga xush kelibsiz!
 
 🪴 Bizda:
 • Guldonlar va kashpolar

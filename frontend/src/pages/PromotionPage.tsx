@@ -109,8 +109,8 @@ export function PromotionPage() {
     const directAppUrl = `https://t.me/${BOT_USERNAME}/app?startapp=promo_${promotion.slug}`
     const shareText =
       language === 'uz'
-        ? `${name} — Decor Market do'konida ko'ring!`
-        : `${name} — смотрите в Decor Market!`
+        ? `${name} — Dekor Market do'konida ko'ring!`
+        : `${name} — смотрите в Dekor Market!`
 
     try {
       const tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent(directAppUrl)}&text=${encodeURIComponent(shareText)}`

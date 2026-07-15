@@ -1,8 +1,10 @@
-# DecorMarket - Telegram Mini App
+# DekorMarket - Telegram Mini App
 
 ## Документация проекта
 
-**Обновлено:** Апрель 4, 2026
+**Обновлено:** 16 июля 2026
+
+> Актуальная production-схема: Bito является источником товаров, цен, категорий и остатков; Supabase хранит витрину и заказы. Админка использует Telegram ID allowlist без пароля. Bito cron выполняется автоматически только в Render и защищён advisory lock. Prisma migration history приведена к baseline `20260715160000_baseline`. CI запускает lint, tests, clean migration и security audit.
 
 ---
 
@@ -24,7 +26,7 @@
 
 ### Описание
 
-**DecorMarket** — Telegram Mini App для продажи декоративных товаров для дома и сада:
+**DekorMarket** — Telegram Mini App для продажи декоративных товаров для дома и сада:
 
 - 🪴 Горшки и кашпо (пластик, металл, плетёные)
 - 🌿 Искусственные растения и деревья
@@ -91,7 +93,7 @@
 ## 📁 Структура проекта
 
 ```
-DecorMarket/
+DekorMarket/
 ├── 📁 frontend/
 │   ├── 📁 src/
 │   │   ├── 📁 components/
