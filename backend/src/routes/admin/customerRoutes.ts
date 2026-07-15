@@ -1,24 +1,25 @@
-import{Router}from'express';import{prisma}from'../../config/database';const router=Router();
+import { Router } from 'express'
+import { prisma } from '../../config/database'
+import { parsePagination, LIMITS, parseSearchQuery } from '../../utils/pagination'
+const router = Router()
 // ==================== CUSTOMERS ====================
 
 router.get('/customers', async (req, res) => {
   try {
     const {
-      page = '1',
-      limit = '20',
-      search,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       hasOrders = 'all',
     } = req.query
-
-    const pageNum = parseInt(page as string)
-    const limitNum = parseInt(limit as string)
-    const skip = (pageNum - 1) * limitNum
+    const { page: pageNum, limit: limitNum, skip } = parsePagination(req.query, {
+      defaultLimit: 20,
+      maxLimit: LIMITS.ADMIN_LIST,
+    })
+    const search = parseSearchQuery(req.query)
 
     const where: any = {}
 
-    if (search && typeof search === 'string') {
+    if (search) {
       where.OR = [
         { firstName: { contains: search, mode: 'insensitive' } },
         { lastName: { contains: search, mode: 'insensitive' } },

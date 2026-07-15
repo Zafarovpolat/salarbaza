@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { AppError } from '../middleware/errorHandler'
 import { trySendCached, cacheAndSend } from '../utils/cache'
+import { parsePagination, LIMITS } from '../utils/pagination'
 
 const router = Router()
 
@@ -183,13 +184,17 @@ router.get('/:slug/subcategories', async (req: Request, res: Response, next: Nex
   }
 })
 
-// ===== ТОВАРЫ КАТЕГОРИИ ===== (кэш 60 сек)
+// ===== ТОВАРЫ КАТЕГОРИИ ===== (кэш 60 сек) - max 100
 router.get('/:slug/products', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { slug } = req.params
-    const { page = '1', limit = '20', sortBy = 'newest' } = req.query
+    const { sortBy = 'newest' } = req.query
+    const { page: pageNum, limit: limitNum, skip } = parsePagination(req.query, {
+      defaultLimit: 20,
+      maxLimit: LIMITS.CATEGORIES_PRODUCTS,
+    })
 
-    const cacheKey = `cat_products_${slug}_${page}_${limit}_${sortBy}`
+    const cacheKey = `cat_products_${slug}_${pageNum}_${limitNum}_${sortBy}`
     if (trySendCached(cacheKey, res)) return
 
     const category = await prisma.category.findUnique({
@@ -200,10 +205,6 @@ router.get('/:slug/products', async (req: Request, res: Response, next: NextFunc
     if (!category) {
       throw new AppError('Category not found', 404)
     }
-
-    const pageNum = parseInt(page as string)
-    const limitNum = parseInt(limit as string)
-    const skip = (pageNum - 1) * limitNum
 
     let orderBy: any = { createdAt: 'desc' }
     if (sortBy === 'price_asc') orderBy = { price: 'asc' }
