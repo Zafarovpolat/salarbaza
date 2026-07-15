@@ -66,5 +66,8 @@ jobs:
           BITO_BASE_URL: ${{ secrets.BITO_BASE_URL || 'https://api.bito.uz/integration-api/integration/api/v2' }}
           BITO_PRICE_ID: ${{ secrets.BITO_PRICE_ID || '6706187e485b322ea8c90155' }}
         run: |
-          APPLY_FLAG=${{ github.event.inputs.apply == 'false' && '' || '--apply' }}
+          APPLY_FLAG=""
+          if [ "${{ github.event.inputs.apply }}" = "true" ]; then
+            APPLY_FLAG="--apply"
+          fi
           python backend/scripts/bito-sync/sync.py --mode=incremental $APPLY_FLAG
