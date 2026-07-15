@@ -1,4 +1,4 @@
-# 🏠 DecorMarket - Telegram Mini App
+# 🏠 DekorMarket - Telegram Mini App
 
 > Современное Telegram Mini App для продажи декоративных товаров для дома и сада в Узбекистане 🇺🇿
 
@@ -9,14 +9,50 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-latest-blue?logo=postgresql)](https://www.postgresql.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot%20API-blue?logo=telegram)](https://core.telegram.org/bots/api)
 
-> 🎉 **TZ 3.0 ЗАВЕРШЕНО:** Все функции ТЗ 3.0 реализованы — вариации размеров, оптовые цены, акции/промо, улучшенная админка. Обновлено: 4 апреля 2026.
+> **Актуальное состояние production:** 16 июля 2026.
 
+## Текущая архитектура
+
+- **Frontend:** React/Vite Telegram Mini App — `https://dekorhouse-web.onrender.com`.
+- **Backend:** Express/Prisma API — `https://dekorhouse-api.onrender.com/api`.
+- **Bito ERP:** главный источник SKU, цен, категорий и складских остатков.
+- **Supabase PostgreSQL:** витрина, локализованный контент, пользователи, заказы и служебные данные.
+- **Supabase Storage:** утверждённые изображения товаров; анонимная загрузка запрещена, файлы загружает только backend.
+- **Админка:** открывается через команду `/admin` в `@DecorMarketUz_Bot`; backend проверяет подписанный Telegram `initData` и `ADMIN_TELEGRAM_IDS`. Пароль не используется.
+- **Bito sync:** Render Cron — incremental каждый час в `:10`, full ежедневно в `04:00 UTC`; GitHub Actions оставлен ручным fallback. PostgreSQL advisory lock не допускает параллельные записи.
+- **Заказы:** повторный запрос защищён `Idempotency-Key`, поэтому двойное нажатие не создаёт второй заказ.
+- **Миграции:** canonical baseline — `backend/prisma/migrations/20260715160000_baseline`; production использует только `prisma migrate deploy`.
+- **Контроль качества:** CI выполняет ESLint, unit tests, Python tests Bito matching, сборку frontend/backend, развёртывание baseline на чистом PostgreSQL 17 и production dependency audit.
+
+## Основные команды проверки
+
+```bash
+cd backend
+npm ci
+npm run lint
+npm test
+npx prisma generate
+npm run build
+npm audit --omit=dev --audit-level=high
+
+cd ../frontend
+npm ci
+npm run lint
+npm test
+npm run build
+npm audit --omit=dev --audit-level=high
+
+cd ../backend/scripts/bito-sync
+python -m unittest discover -s tests -v
+```
+
+> 🎉 **TZ 3.0 ЗАВЕРШЕНО:** реализованы вариации размеров, оптовые цены, акции/промо и административный интерфейс.
 
 ---
 
 ## 📖 О проекте
 
-**DecorMarket** — полнофункциональное Telegram Mini App для продажи декоративных товаров:
+**DekorMarket** — полнофункциональное Telegram Mini App для продажи декоративных товаров:
 
 ### 🛍️ Ассортимент
 - 🪴 **Горшки и кашпо** — более 100+ SKU (пластик, металл, плетёные)
@@ -238,7 +274,7 @@ createdb dekorhouse
 ## 📁 Структура проекта
 
 ```
-DecorMarket/
+DekorMarket/
 ├── 📁 frontend/          # React Telegram Mini App
 │   ├── src/
 │   │   ├── components/   # 33+ компонентов (UI, Product, Cart, Order, Admin)
@@ -686,7 +722,7 @@ curl http://localhost:3001/api/health
 
 MIT License
 
-Copyright (c) 2026 DecorMarket Team
+Copyright (c) 2026 DekorMarket Team
 
 Свободное использование для коммерческих и личных целей.
 
@@ -694,8 +730,8 @@ Copyright (c) 2026 DecorMarket Team
 
 ## 👥 Контакты
 
-**Проект:** DecorMarket Telegram Mini App  
-**Версия:** 3.0.0 (TZ 3.0 Complete)  
+**Проект:** DekorMarket Telegram Mini App
+**Версия:** 3.0.0 (TZ 3.0 Complete)
 **Последнее обновление:** Апрель 4, 2026
 
 **Stack:** React + TypeScript + Node.js + PostgreSQL + Telegram Bot API
@@ -713,10 +749,10 @@ Copyright (c) 2026 DecorMarket Team
 
 <div align="center">
 
-**🏠 DecorMarket** - Сделано с ❤️ для Узбекистана 🇺🇿
+**🏠 DekorMarket** - Сделано с ❤️ для Узбекистана 🇺🇿
 
-[Report Bug](https://github.com/Zafarovpolat/salarbaza/issues) · 
-[Request Feature](https://github.com/Zafarovpolat/salarbaza/issues) · 
+[Report Bug](https://github.com/Zafarovpolat/salarbaza/issues) ·
+[Request Feature](https://github.com/Zafarovpolat/salarbaza/issues) ·
 [Documentation](./project_review.md)
 
 </div>

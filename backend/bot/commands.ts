@@ -141,5 +141,5 @@ Dushanba - Shanba / Пн - Сб: 9:00 - 18:00
 }
 export async function handleAdmin(bot: TelegramBot, msg: Message) {
  const id=msg.from?.id?String(msg.from.id):'';if(!id||!config.adminTelegramIds.includes(id)){await bot.sendMessage(msg.chat.id,'⛔ Нет доступа к админ-панели.');return}
- await bot.sendMessage(msg.chat.id,'🔐 Открыть админ-панель Decor Market:',{reply_markup:{inline_keyboard:[[{text:'⚙️ Открыть админку',web_app:{url:`${config.frontendUrl.replace(/\/$/,'')}/admin`}}]]}})
+ await bot.sendMessage(msg.chat.id,'🔐 Открыть админ-панель Dekor Market:',{reply_markup:{inline_keyboard:[[{text:'⚙️ Открыть админку',web_app:{url:`${config.frontendUrl.replace(/\/$/,'')}/admin`}}]]}})
 }
