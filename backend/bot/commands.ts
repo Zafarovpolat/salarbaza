@@ -1,4 +1,4 @@
-import TelegramBot from 'node-telegram-bot-api'
+import TelegramBot, { type Message, type CallbackQuery, type User } from 'node-telegram-bot-api'
 import { config } from '../src/config'
 import { getLanguageKeyboard, getOpenShopKeyboard } from './keyboards'
 import { prisma } from '../src/config/database'
@@ -29,7 +29,7 @@ const LANG_QUESTION = `🌐 Qaysi tilda davom ettirish sizga qulay?\nНа как
 
 export async function handleStart(
   bot: TelegramBot,
-  msg: TelegramBot.Message
+  msg: Message
 ) {
   const chatId   = msg.chat.id
   const telegramId = msg.from?.id
@@ -105,7 +105,7 @@ export async function handleStart(
 
 export async function handleHelp(
   bot: TelegramBot,
-  msg: TelegramBot.Message
+  msg: Message
 ) {
   const chatId = msg.chat.id
 

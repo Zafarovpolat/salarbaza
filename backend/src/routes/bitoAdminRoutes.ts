@@ -4,20 +4,11 @@
 // and employees (table bito_employees, prisma model Employee). These are READ-ONLY: data is
 // owned by Bito ERP and synced one-way; we never write back to Bito.
 
-import { Router, Request, Response, NextFunction } from 'express'
+import { Router } from 'express'
 import { prisma } from '../config/database'
-import { config } from '../config'
+import { adminAuth } from '../middleware/adminSession'
 
 const router = Router()
-
-const adminAuth = (req: Request, res: Response, next: NextFunction) => {
-  const adminPassword = req.headers['x-admin-password'] as string
-  if (adminPassword !== config.adminPassword) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' })
-  }
-  next()
-}
-
 router.use(adminAuth)
 
 // ==================== BITO CUSTOMERS ====================

@@ -1237,6 +1237,18 @@ def main() -> int:
 
     with conn_ctx as conn:
         conn.autocommit = False
+
+        # Render full/incremental jobs and manual fallbacks must never write at
+        # the same time. This session-level lock is released automatically when
+        # the connection closes, including crashes and exceptions.
+        with conn.cursor() as lock_cur:
+            lock_cur.execute("SELECT pg_try_advisory_lock(%s)", (742013572091,))
+            lock_acquired = bool(lock_cur.fetchone()[0])
+        if not lock_acquired:
+            print("[skip] Another Bito sync is already running; advisory lock not acquired.")
+            conn.rollback()
+            return 0
+
         try:
             wh_map: Dict[str, str] = {}
             if not args.skip_warehouses:

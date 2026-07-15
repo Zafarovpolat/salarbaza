@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Lock, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { adminAuthService } from '@/services/adminAuthService'
 
 export function AdminLoginPage() {
     const navigate = useNavigate()
@@ -9,26 +10,22 @@ export function AdminLoginPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
 
+    useEffect(() => {
+        adminAuthService.hasSession().then((valid) => {
+            if (valid) navigate('/admin/dashboard', { replace: true })
+        }).catch(() => undefined)
+    }, [navigate])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/stats`, {
-                headers: {
-                    'X-Admin-Password': password
-                }
-            })
-
-            if (response.ok) {
-                localStorage.setItem('adminPassword', password)
-                toast.success('Добро пожаловать!')
-                navigate('/admin/dashboard')
-            } else {
-                toast.error('Неверный пароль')
-            }
+            await adminAuthService.login(password)
+            toast.success('Добро пожаловать!')
+            navigate('/admin/dashboard', { replace: true })
         } catch (error) {
-            toast.error('Ошибка подключения')
+            toast.error(error instanceof Error ? error.message : 'Ошибка подключения')
         } finally {
             setLoading(false)
         }
