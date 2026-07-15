@@ -10,16 +10,22 @@ datasource db {
 
 // ==================== USERS ====================
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
-  id         String     @id @default(cuid())
-  telegramId BigInt     @unique
+  id         String   @id @default(cuid())
+  telegramId BigInt   @unique
   username   String?
   firstName  String?
   lastName   String?
   phone      String?
-  language   String     @default("uz")
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  language   String   @default("uz")
+  role       UserRole @default(USER)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   addresses  Address[]
   cart       Cart?
   favorites  Favorite[]
