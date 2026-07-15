@@ -11,6 +11,10 @@ import { logger } from './utils/logger'
 
 const app = express()
 
+// Render terminates TLS and forwards the original client IP.
+// Required for secure cookies and per-IP rate limiting behind the proxy.
+app.set('trust proxy', 1)
+
 // CORS
 app.use(cors({
     origin: [
@@ -23,8 +27,7 @@ app.use(cors({
     allowedHeaders: [
         'Content-Type',
         'Authorization',
-        'X-Telegram-Init-Data',
-        'X-Admin-Password'
+        'X-Telegram-Init-Data'
     ]
 }))
 
@@ -38,8 +41,8 @@ app.use(helmet({
 app.use(compression())
 
 // Body parsing
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '1mb' }))
+app.use(express.urlencoded({ extended: true, limit: '1mb' }))
 
 // Health check
 app.get('/health', (req, res) => {

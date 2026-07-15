@@ -24,12 +24,10 @@ name: Bito sync (incremental)
 #   BITO_BASE_URL         - Bito API base URL
 #   BITO_PRICE_ID         - Bito price catalog id
 
+# Render Cron is the single automatic scheduler. GitHub Actions is manual-only
+# fallback to avoid duplicate concurrent writes to Supabase.
 on:
-  schedule:
-    # Hourly. User explicitly requested this cadence to keep Supabase load
-    # minimal. If you need tighter near-real-time, change to '*/15 * * * *'.
-    - cron: '0 * * * *'
-  workflow_dispatch:        # manual trigger from Actions UI
+  workflow_dispatch:
     inputs:
       apply:
         description: 'Apply changes (false = dry-run summary only)'

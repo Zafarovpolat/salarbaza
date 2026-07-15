@@ -1,4 +1,4 @@
-import TelegramBot from 'node-telegram-bot-api'
+import TelegramBot, { type Message, type CallbackQuery, type User } from 'node-telegram-bot-api'
 import { config } from '../src/config'
 import { logger } from '../src/utils/logger'
 import { prisma } from '../src/config/database'
@@ -16,7 +16,7 @@ function escapeMarkdown(text: any): string {
 async function saveUserLanguage(
   telegramId: number,
   lang: 'uz' | 'ru',
-  from?: TelegramBot.User
+  from?: User
 ) {
   try {
     await prisma.user.upsert({
@@ -45,7 +45,7 @@ async function saveUserLanguage(
 
 export async function handleCallbackQuery(
   bot: TelegramBot,
-  query: TelegramBot.CallbackQuery
+  query: CallbackQuery
 ) {
   const chatId    = query.message?.chat.id
   const messageId = query.message?.message_id
@@ -142,7 +142,7 @@ export async function handleCallbackQuery(
 
 async function handleConfirmOrder(
   bot: TelegramBot,
-  query: TelegramBot.CallbackQuery,
+  query: CallbackQuery,
   orderId: string,
   chatId: number,
   messageId: number
@@ -185,7 +185,7 @@ async function handleConfirmOrder(
 
 async function handleCancelOrder(
   bot: TelegramBot,
-  query: TelegramBot.CallbackQuery,
+  query: CallbackQuery,
   orderId: string,
   chatId: number,
   messageId: number
@@ -220,7 +220,7 @@ async function handleCancelOrder(
 
 async function handleShipOrder(
   bot: TelegramBot,
-  query: TelegramBot.CallbackQuery,
+  query: CallbackQuery,
   orderId: string,
   chatId: number,
   messageId: number
@@ -260,7 +260,7 @@ async function handleShipOrder(
 
 async function handleDeliverOrder(
   bot: TelegramBot,
-  query: TelegramBot.CallbackQuery,
+  query: CallbackQuery,
   orderId: string,
   chatId: number,
   messageId: number
@@ -295,7 +295,7 @@ async function handleDeliverOrder(
 
 async function handleOrderDetails(
   bot: TelegramBot,
-  query: TelegramBot.CallbackQuery,
+  query: CallbackQuery,
   orderId: string,
   chatId: number
 ) {

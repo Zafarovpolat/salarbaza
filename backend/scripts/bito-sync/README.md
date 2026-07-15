@@ -89,19 +89,23 @@ python3 sync.py --mode=incremental --skip-prices                # only stock + c
 
 ## Scheduling
 
-The sync runs on cron in **two places**, on the same schedule, in parallel. The
-script is idempotent so running both is safe — Render is the primary, GH
-Actions is the free fallback.
+**Render is the only automatic scheduler.** GitHub Actions is retained as a
+manual fallback (`workflow_dispatch`) and has no `schedule` trigger. This avoids
+duplicate concurrent writes.
 
-| Where           | Cost      | Incremental cron     | Full cron               |
-| --------------- | --------- | -------------------- | ----------------------- |
-| GitHub Actions  | Free      | `0 * * * *`          | `0 4 * * *`             |
-| Render Cron     | $7/mo     | `0 * * * *`          | `0 4 * * *`             |
+| Where           | Incremental             | Full                    |
+| --------------- | ----------------------- | ----------------------- |
+| Render Cron     | `10 * * * *`            | `0 4 * * *`             |
+| GitHub Actions  | manual only             | manual only             |
+
+The script also takes a PostgreSQL session advisory lock. If another full or
+incremental run is active, the second process exits successfully without
+writing.
 
 Workflow files:
-- `.github/workflows/bito-sync-incremental.yml` — hourly incremental
-- `.github/workflows/bito-sync-full.yml`        — daily full
-- `render.yaml`                                 — both Render Cron Jobs
+- `.github/workflows/bito-sync-incremental.yml` — manual fallback
+- `.github/workflows/bito-sync-full.yml`        — manual fallback
+- `render.yaml`                                 — automatic Render Cron Jobs
 
 Required GitHub repo / Render secrets:
 - `SUPABASE_DSN` — Postgres connection string

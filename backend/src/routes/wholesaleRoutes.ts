@@ -190,39 +190,6 @@ router.get('/calculate', async (req, res) => {
     }
 })
 
-// Создать дефолтный шаблон (вызвать один раз)
-router.post('/seed-default', async (req, res) => {
-    try {
-        const existing = await prisma.wholesalePriceTemplate.findFirst({
-            where: { isDefault: true }
-        })
-
-        if (existing) {
-            return res.json({ success: true, message: 'Default template already exists', data: existing })
-        }
-
-        const template = await prisma.wholesalePriceTemplate.create({
-            data: {
-                name: 'Стандартный',
-                description: 'Базовые оптовые скидки для всех категорий',
-                isDefault: true,
-                tiers: {
-                    create: [
-                        { minQuantity: 5, discountPercent: 5 },
-                        { minQuantity: 10, discountPercent: 10 },
-                        { minQuantity: 20, discountPercent: 15 },
-                        { minQuantity: 50, discountPercent: 20 },
-                    ]
-                }
-            },
-            include: { tiers: true }
-        })
-
-        res.json({ success: true, data: template })
-    } catch (error) {
-        console.error('Seed error:', error)
-        res.status(500).json({ success: false, message: 'Server error' })
-    }
-})
+// Default wholesale templates must be created by a migration/CLI seed, never by a public HTTP endpoint.
 
 export default router

@@ -9,6 +9,7 @@ import { generateOrderNumber, serializeBigInt } from '../utils/helpers'
 import { OrderStatus } from '@prisma/client'
 import { sendOrderNotification } from '../services/telegramService'
 import { logger } from '../utils/logger'
+import { strictRateLimiter } from '../middleware/rateLimiter'
 
 const router = Router()
 router.use(authMiddleware)
@@ -28,7 +29,7 @@ const createOrderSchema = z.object({
     // ✅ items теперь optional — если нет, берём из корзины
     items: z.array(z.object({
         productId: z.string(),
-        quantity: z.number().min(1),
+        quantity: z.number().int().min(1).max(1000),
         colorId: z.string().optional(),
         variantId: z.string().optional(),
     })).optional(),
@@ -68,10 +69,9 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
 })
 
 // ==================== CREATE ORDER ====================
-router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.post('/', strictRateLimiter, async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         logger.info('📦 === NEW ORDER REQUEST ===')
-        logger.info(`📦 Body: ${JSON.stringify(req.body)}`)
         logger.info(`👤 User ID: ${req.user?.id}`)
 
         const parseResult = createOrderSchema.safeParse(req.body)
@@ -154,6 +154,26 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
 
         const productMap = new Map(products.map(p => [p.id, p]))
 
+        // Validate active state and aggregate requested quantities so duplicate
+        // lines cannot bypass stock checks.
+        const productQuantities = new Map<string, number>()
+        const variantQuantities = new Map<string, number>()
+        const colorQuantities = new Map<string, number>()
+        for (const item of itemsToProcess) {
+            productQuantities.set(item.productId, (productQuantities.get(item.productId) || 0) + item.quantity)
+            if (item.variantId) variantQuantities.set(item.variantId, (variantQuantities.get(item.variantId) || 0) + item.quantity)
+            if (item.colorId) colorQuantities.set(item.colorId, (colorQuantities.get(item.colorId) || 0) + item.quantity)
+        }
+        for (const [productId, requested] of productQuantities) {
+            const product = productMap.get(productId)
+            if (!product || !product.isActive || !product.inStock) {
+                throw new AppError(`Product ${productId} is unavailable`, 400)
+            }
+            if (product.stockQuantity >= 0 && requested > product.stockQuantity) {
+                throw new AppError(`Insufficient stock for ${product.code}`, 400)
+            }
+        }
+
         let subtotal = 0
         let totalDiscount = 0
 
@@ -168,14 +188,26 @@ router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => 
                 ? product.variants.find(v => v.id === item.variantId)
                 : null
 
-            if (item.variantId && !variant) {
-                logger.warn(`⚠️ Variant ${item.variantId} not found for product ${item.productId}`)
+            if (product.variants.length > 0 && !item.variantId) {
+                throw new AppError(`Variant is required for ${product.code}`, 400)
+            }
+            if (item.variantId && (!variant || !variant.inStock)) {
+                throw new AppError(`Variant is unavailable for ${product.code}`, 400)
+            }
+            if (variant && (variantQuantities.get(variant.id) || 0) > variant.stockQuantity) {
+                throw new AppError(`Insufficient variant stock for ${product.code}`, 400)
             }
 
             // Цвет
             const color = item.colorId
                 ? product.colors.find(c => c.id === item.colorId)
                 : null
+            if (item.colorId && (!color || !color.inStock)) {
+                throw new AppError(`Color is unavailable for ${product.code}`, 400)
+            }
+            if (color && color.stockQuantity > 0 && (colorQuantities.get(color.id) || 0) > color.stockQuantity) {
+                throw new AppError(`Insufficient color stock for ${product.code}`, 400)
+            }
 
             const priceModifier = color?.priceModifier || 0
 

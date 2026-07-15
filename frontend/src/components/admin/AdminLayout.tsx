@@ -5,6 +5,7 @@ import {
   ShoppingCart, LogOut, Home, Menu, X, Percent, Tag, Tags,
   Briefcase, UserCircle2,
 } from 'lucide-react'
+import { adminAuthService } from '@/services/adminAuthService'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -28,19 +29,28 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [authChecking, setAuthChecking] = useState(true)
 
   useEffect(() => {
-    const password = localStorage.getItem('adminPassword')
-    if (!password) navigate('/admin')
+    adminAuthService.hasSession()
+      .then((valid) => {
+        if (!valid) navigate('/admin', { replace: true })
+        else setAuthChecking(false)
+      })
+      .catch(() => navigate('/admin', { replace: true }))
   }, [navigate])
 
   useEffect(() => {
     setSidebarOpen(false)
   }, [location.pathname])
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminPassword')
-    navigate('/admin')
+  const handleLogout = async () => {
+    await adminAuthService.logout().catch(() => undefined)
+    navigate('/admin', { replace: true })
+  }
+
+  if (authChecking) {
+    return <div className="min-h-screen bg-cream flex items-center justify-center text-forest">Проверка доступа…</div>
   }
 
   return (
