@@ -2,6 +2,7 @@ import express from 'express'
 import compression from 'compression'
 import cors from 'cors'
 import helmet from 'helmet'
+import * as Sentry from '@sentry/node'
 import { config } from './config'
 import { errorHandler } from './middleware/errorHandler'
 import { rateLimiter } from './middleware/rateLimiter'
@@ -80,7 +81,7 @@ app.use((req, res, next) => {
 
 // API routes
 app.use('/api', routes)
-app.use('/api/wholesale', wholesaleRoutes)  // ✅ Добавлено
+app.use('/api/wholesale', wholesaleRoutes)
 
 // 404 handler
 app.use((req, res) => {
@@ -89,6 +90,9 @@ app.use((req, res) => {
         message: 'Route not found'
     })
 })
+
+// Sentry error handler - must be before custom error handler
+Sentry.setupExpressErrorHandler(app)
 
 // Error handler
 app.use(errorHandler)

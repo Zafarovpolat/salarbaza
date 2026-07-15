@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles/globals.css'
 import { preloadPromotions } from '@/components/home/PromotionWidget'
+import { initSentry } from '@/lib/sentry'
+
+// Sentry must be initialized before React render
+initSentry()
 
 // Прелоадим акции до маунта React — запрос летит параллельно с разбором JS
 preloadPromotions().catch(() => {

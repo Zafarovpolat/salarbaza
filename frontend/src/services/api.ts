@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios'
 import WebApp from '@twa-dev/sdk'
 import { API_URL } from '@/utils/constants'
+import { captureNetworkError } from '@/lib/sentry'
 
 const api = axios.create({
     baseURL: API_URL,
@@ -28,6 +29,10 @@ api.interceptors.response.use(
     (error: AxiosError) => {
         if (error.response) {
             const status = error.response.status
+            const endpoint = error.config?.url || 'unknown'
+
+            // Capture to Sentry with context
+            captureNetworkError(endpoint, status, error)
 
             // ✅ 429 — отдельная обработка
             if (status === 429) {
@@ -38,6 +43,8 @@ api.interceptors.response.use(
                 'An error occurred'
             return Promise.reject(new Error(message))
         } else if (error.request) {
+            const endpoint = error.config?.url || 'unknown'
+            captureNetworkError(endpoint, undefined, error)
             return Promise.reject(new Error('Network error. Please check your connection.'))
         } else {
             return Promise.reject(error)
