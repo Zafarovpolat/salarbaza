@@ -22,9 +22,9 @@ export function slugify(text: string): string {
     .replace(/ў/g, 'u').replace(/қ/g, 'q').replace(/ғ/g, 'g').replace(/ҳ/g, 'h')
     .replace(/ʼ/g, '').replace(/'/g, '')
     // ✅ Слеши, пайпы, кавычки → дефис или удаление
-    .replace(/[\/\\]/g, '-')
+    .replace(/[/\\]/g, '-')
     .replace(/[|«»""''()[\]{}]/g, '')
-    .replace(/[^a-z0-9\-]/g, '-')
+    .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
 }

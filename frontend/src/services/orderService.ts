@@ -20,6 +20,7 @@ interface CreateOrderData {
     customerNote?: string
     paymentMethod: 'CASH' | 'CARD' | 'PAYME' | 'CLICK' | 'UZUM'
     items: OrderItem[]
+    idempotencyKey: string
 }
 
 export const orderService = {
@@ -50,7 +51,7 @@ export const orderService = {
             items: data.items,    // ← ЭТО БЫЛО ПРОПУЩЕНО
         }
 
-        const response = await post<{ success: boolean; data: Order }>('/orders', payload)
+        const response = await post<{ success: boolean; data: Order }>('/orders', payload, { headers: { 'Idempotency-Key': data.idempotencyKey } })
         return response.data
     },
 

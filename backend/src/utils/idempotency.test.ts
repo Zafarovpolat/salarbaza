@@ -1,0 +1,1 @@
+import{describe,it,expect}from'vitest';import{isValidIdempotencyKey}from'./idempotency';describe('idempotency',()=>{it('valid',()=>expect(isValidIdempotencyKey('550e8400-e29b-41d4-a716-446655440000')).toBe(true));it('invalid',()=>expect(isValidIdempotencyKey('short')).toBe(false))})

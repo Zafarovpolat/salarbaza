@@ -198,7 +198,6 @@ function MainRoutes() {
     } else if (param.startsWith("promo_")) {
       navigate(`/promotion/${param.replace("promo_", "")}`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

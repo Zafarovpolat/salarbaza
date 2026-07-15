@@ -1,0 +1,1 @@
+import{describe,it,expect}from'vitest';import{createIdempotencyKey}from'./idempotency';describe('idempotency',()=>it('unique safe',()=>{const a=createIdempotencyKey(),b=createIdempotencyKey();expect(a).not.toBe(b);expect(a).toMatch(/^[A-Za-z0-9_-]{16,128}$/)}))

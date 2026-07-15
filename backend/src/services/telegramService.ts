@@ -7,7 +7,7 @@ import { getBot } from '../../bot/index'
 // Именно _ в юзернеймах (@some_user) ломал отправку
 function escapeMarkdown(text: any): string {
   if (!text) return ''
-  return String(text).replace(/([_*`\[\]])/g, '\\$1')
+  return String(text).replace(/([_*`[\]])/g, '\\$1')
 }
 
 export async function sendOrderNotification(order: any) {

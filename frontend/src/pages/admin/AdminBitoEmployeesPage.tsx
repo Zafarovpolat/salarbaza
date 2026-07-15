@@ -70,7 +70,6 @@ export function AdminBitoEmployeesPage() {
   useEffect(() => {
     const timer = setTimeout(loadData, 300)
     return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
   const handleExport = async () => {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Ruler } from "lucide-react";
@@ -8,6 +8,7 @@ import { useTelegram } from "@/hooks/useTelegram";
 import { orderService } from "@/services/orderService";
 import { formatPrice } from "@/utils/formatPrice";
 import { getProductName } from "@/utils/helpers";
+import { createIdempotencyKey } from "@/utils/idempotency";
 import { Container } from "@/components/layout/Container";
 import { OrderForm } from "@/components/order/OrderForm";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +19,7 @@ export function CheckoutPage() {
   const { items, clearCart } = useCartStore();
   const { haptic, user } = useTelegram();
   const [isLoading, setIsLoading] = useState(false);
+  const idempotencyKey = useRef(createIdempotencyKey());
 
   const { subtotal, total } = useMemo(() => {
     const subtotal = items.reduce((sum, item) => {
@@ -51,6 +53,7 @@ export function CheckoutPage() {
         customerNote: formData.comment || undefined,
         paymentMethod: "CASH",
         items: orderItems,
+        idempotencyKey: idempotencyKey.current,
       });
 
       haptic.notification("success");

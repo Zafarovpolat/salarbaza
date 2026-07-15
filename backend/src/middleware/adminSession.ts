@@ -2,14 +2,6 @@ import crypto from 'crypto'
 import { Request, Response, NextFunction } from 'express'
 import { config } from '../config'
 
-function deriveScrypt(password: string, salt: Buffer, length: number, N: number, r: number, p: number): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, length, { N, r, p, maxmem: 64 * 1024 * 1024 }, (error, key) => {
-      if (error) reject(error)
-      else resolve(key)
-    })
-  })
-}
 const COOKIE_NAME = 'decor_admin_session'
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60
 
@@ -38,9 +30,9 @@ function safeEqual(a: string, b: string): boolean {
   return left.length === right.length && crypto.timingSafeEqual(left, right)
 }
 
-export function createAdminSession(): string {
+export function createAdminSession(telegramId: string): string {
   const now = Math.floor(Date.now() / 1000)
-  const payload = Buffer.from(JSON.stringify({ v: 1, iat: now, exp: now + SESSION_TTL_SECONDS })).toString('base64url')
+  const payload = Buffer.from(JSON.stringify({ v: 1, sub: telegramId, iat: now, exp: now + SESSION_TTL_SECONDS })).toString('base64url')
   return `${payload}.${sign(payload)}`
 }
 
@@ -51,24 +43,10 @@ export function verifyAdminSession(token?: string): boolean {
   try {
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
     const now = Math.floor(Date.now() / 1000)
-    return data.v === 1 && Number.isInteger(data.iat) && Number.isInteger(data.exp) && data.iat <= now + 60 && data.exp > now
+    return data.v === 1 && typeof data.sub === 'string' && config.adminTelegramIds.includes(data.sub) && Number.isInteger(data.iat) && Number.isInteger(data.exp) && data.iat <= now + 60 && data.exp > now
   } catch {
     return false
   }
-}
-
-export async function verifyAdminPassword(password: string): Promise<boolean> {
-  const encoded = config.adminPasswordHash
-  const parts = encoded.split('$')
-  if (parts.length !== 6 || parts[0] !== 'scrypt') return false
-  const [, nRaw, rRaw, pRaw, salt64, hash64] = parts
-  const N = Number(nRaw)
-  const r = Number(rRaw)
-  const p = Number(pRaw)
-  if (!Number.isInteger(N) || !Number.isInteger(r) || !Number.isInteger(p)) return false
-  const expected = Buffer.from(hash64, 'base64url')
-  const actual = await deriveScrypt(password, Buffer.from(salt64, 'base64url'), expected.length, N, r, p)
-  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected)
 }
 
 export function setAdminCookie(res: Response, token: string): void {

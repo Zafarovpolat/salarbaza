@@ -9,6 +9,7 @@ import { generateOrderNumber, serializeBigInt } from '../utils/helpers'
 import { OrderStatus } from '@prisma/client'
 import { sendOrderNotification } from '../services/telegramService'
 import { logger } from '../utils/logger'
+import { isValidIdempotencyKey } from '../utils/idempotency'
 import { strictRateLimiter } from '../middleware/rateLimiter'
 
 const router = Router()
@@ -73,6 +74,14 @@ router.post('/', strictRateLimiter, async (req: AuthRequest, res: Response, next
     try {
         logger.info('📦 === NEW ORDER REQUEST ===')
         logger.info(`👤 User ID: ${req.user?.id}`)
+
+        const idempotencyKey = req.get('Idempotency-Key')?.trim()
+        if (!isValidIdempotencyKey(idempotencyKey)) throw new AppError('Valid Idempotency-Key header is required', 400)
+        const existingOrder = await prisma.order.findUnique({ where: { idempotencyKey }, include: { items: true, user: true } })
+        if (existingOrder) {
+            if (existingOrder.userId !== req.user!.id) throw new AppError('Idempotency key conflict', 409)
+            return res.status(200).json({ success: true, data: serializeBigInt(existingOrder), idempotentReplay: true })
+        }
 
         const parseResult = createOrderSchema.safeParse(req.body)
 
@@ -277,6 +286,7 @@ router.post('/', strictRateLimiter, async (req: AuthRequest, res: Response, next
         const order = await prisma.order.create({
             data: {
                 orderNumber: generateOrderNumber(),
+                idempotencyKey,
                 userId: req.user!.id,
                 status: OrderStatus.PENDING,
                 subtotal,
