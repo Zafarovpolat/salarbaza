@@ -159,10 +159,10 @@ export function ProductPage() {
 
   return (
     <div className="pb-36">
-      {/* ===== Gallery ===== */}
-      <section className="relative bg-sand">
+      {/* ===== Gallery - optimized with object-contain */}
+      <section className="relative bg-white">
         <div
-  className="aspect-square relative overflow-hidden"
+  className="aspect-square relative overflow-hidden bg-white"
   onTouchStart={(e) => {
     const touch = e.touches[0]
     ;(e.currentTarget as any)._touchStartX = touch.clientX
@@ -185,15 +185,36 @@ export function ProductPage() {
   }}
 >
           <AnimatePresence mode="wait">
-            <motion.img
+            <motion.div
               key={currentImageIndex}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              src={currentImage || '/placeholder.png'}
-              alt={name}
-              className="w-full h-full object-cover"
-            />
+              className="w-full h-full bg-white flex items-center justify-center"
+            >
+              {(() => {
+                const imgObj = images[currentImageIndex] as any
+                const thumb = imgObj?.thumbnailUrl
+                const medium = imgObj?.mediumUrl
+                const detail = imgObj?.url
+                return (
+                  <picture className="w-full h-full flex items-center justify-center">
+                    {thumb && medium && (
+                      <source
+                        srcSet={`${thumb} 320w, ${medium} 640w, ${detail} 1200w`}
+                        sizes="(max-width: 768px) 100vw, 1200px"
+                        type="image/webp"
+                      />
+                    )}
+                    <img
+                      src={currentImage || '/placeholder.png'}
+                      alt={name}
+                      className="w-full h-full object-contain bg-white"
+                    />
+                  </picture>
+                )
+              })()}
+            </motion.div>
           </AnimatePresence>
 
           {/* Badges */}

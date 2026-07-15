@@ -86,6 +86,13 @@ export interface ProductImage {
   alt?: string
   sortOrder: number
   isMain: boolean
+  originalUrl?: string
+  thumbnailUrl?: string
+  mediumUrl?: string
+  width?: number
+  height?: number
+  bytes?: number
+  format?: string
 }
 
 export interface ProductColor {
