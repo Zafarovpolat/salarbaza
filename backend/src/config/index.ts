@@ -17,6 +17,9 @@ export const config = {
     supabaseServiceRole: process.env.SUPABASE_SERVICE_ROLE || '',
     deliveryFee: 25000,
     freeDeliveryThreshold: 500000,
+    sentryDsn: process.env.SENTRY_DSN || '',
+    sentryEnvironment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
+    sentryRelease: process.env.SENTRY_RELEASE || process.env.RENDER_GIT_COMMIT || process.env.GIT_SHA || undefined,
 }
 
 if (config.nodeEnv === 'production') {

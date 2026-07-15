@@ -1,7 +1,9 @@
+import './instrument'
 import app from './app'
 import { config } from './config'
 import { logger } from './utils/logger'
 import { prisma } from './config/database'
+import * as Sentry from '@sentry/node'
 
 const PORT = config.port || 3001
 
@@ -52,6 +54,7 @@ async function bootstrap() {
         message: error.message,
         stack: error.stack?.split('\n').slice(0, 5).join('\n'),
       })
+      try { Sentry.captureException(error) } catch {}
     })
 
     process.on('unhandledRejection', (reason: any) => {
@@ -59,12 +62,14 @@ async function bootstrap() {
         message: reason?.message || String(reason),
         code: reason?.code,
       })
+      try { Sentry.captureException(reason) } catch {}
     })
   } catch (error: any) {
     logger.error('Failed to start:', {
       message: error?.message || 'Unknown',
       stack: error?.stack?.split('\n').slice(0, 5).join('\n'),
     })
+    try { Sentry.captureException(error) } catch {}
     process.exit(1)
   }
 }
