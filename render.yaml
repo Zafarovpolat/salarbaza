@@ -19,12 +19,16 @@ services:
         sync: false
       - key: ADMIN_CHAT_ID
         sync: false
-      - key: ADMIN_PASSWORD
-        value: "[REMOVED]"
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: ADMIN_SESSION_SECRET
+        generateValue: true
+      - key: SUPABASE_URL
+        value: https://yjfyvedavmrdifmepvkh.supabase.co
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
       - key: FRONTEND_URL
         value: https://dekorhouse-web.onrender.com
-      - key: JWT_SECRET
-        generateValue: true
 
   - type: web
     name: dekorhouse-web
@@ -58,8 +62,8 @@ services:
   # expose webhooks (verified: all POST endpoints 404), so a scheduled poll
   # is the closest we can get to real-time.
   #
-  # Mirrored on GitHub Actions (.github/workflows/bito-sync-incremental.yml)
-  # for redundancy — the script is idempotent so running both is safe.
+  # GitHub Actions remains manual-only fallback. Render is the single automatic
+  # scheduler; the sync also takes a PostgreSQL advisory lock.
   #
   # Render Cron Jobs require the Starter plan ($7/mo).
   # ----------------------------------------------------------------------
@@ -69,7 +73,7 @@ services:
     region: frankfurt
     plan: starter
     rootDir: backend/scripts/bito-sync
-    schedule: "0 * * * *"   # hourly, on the hour
+    schedule: "10 * * * *"  # hourly at :10; daily full sync runs at 04:00
     buildCommand: pip install -r requirements.txt
     startCommand: python sync.py --mode=incremental --apply
     envVars:

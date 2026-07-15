@@ -59,6 +59,19 @@ export async function authMiddleware(
         const hash = params.get('hash')
         params.delete('hash')
 
+        if (!hash || !/^[a-f0-9]{64}$/i.test(hash)) {
+            return res.status(401).json({ success: false, message: 'Invalid authorization' })
+        }
+
+        // Telegram initData must be recent. A leaked valid payload must not work forever.
+        const authDate = Number(params.get('auth_date'))
+        const now = Math.floor(Date.now() / 1000)
+        const maxAgeSeconds = 15 * 60
+        if (!Number.isInteger(authDate) || authDate > now + 60 || now - authDate > maxAgeSeconds) {
+            logger.warn('Expired Telegram initData')
+            return res.status(401).json({ success: false, message: 'Authorization expired' })
+        }
+
         const dataCheckString = Array.from(params.entries())
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([key, value]) => `${key}=${value}`)
@@ -74,7 +87,9 @@ export async function authMiddleware(
             .update(dataCheckString)
             .digest('hex')
 
-        if (calculatedHash !== hash) {
+        const expectedHash = Buffer.from(calculatedHash, 'hex')
+        const receivedHash = Buffer.from(hash, 'hex')
+        if (expectedHash.length !== receivedHash.length || !crypto.timingSafeEqual(expectedHash, receivedHash)) {
             logger.warn('Invalid Telegram hash')
             return res.status(401).json({
                 success: false,

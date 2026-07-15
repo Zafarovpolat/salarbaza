@@ -4,7 +4,12 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const getHeaders = () => ({
   'Content-Type': 'application/json',
-  'X-Admin-Password': localStorage.getItem('adminPassword') || '',
+})
+
+const adminFetch = (input: RequestInfo | URL, init: RequestInit = {}) => fetch(input, {
+  ...init,
+  credentials: 'include',
+  headers: { ...getHeaders(), ...(init.headers || {}) },
 })
 
 export interface BitoSyncRun {
@@ -20,7 +25,7 @@ export interface BitoSyncRun {
 export const adminService = {
   // Stats
   async getStats() {
-    const res = await fetch(`${API_URL}/admin/stats`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/stats`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
@@ -28,7 +33,7 @@ export const adminService = {
 
   // Dashboard extended data
   async getDashboardData() {
-    const res = await fetch(`${API_URL}/admin/dashboard-data`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/dashboard-data`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
@@ -36,7 +41,7 @@ export const adminService = {
 
   // Bito sync status
   async getBitoSyncRuns(limit = 20) {
-    const res = await fetch(`${API_URL}/admin/bito/sync-runs?limit=${limit}`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/bito/sync-runs?limit=${limit}`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data as {
@@ -56,21 +61,21 @@ export const adminService = {
     const queryString = queryParams.toString()
     const url = `${API_URL}/admin/products${queryString ? `?${queryString}` : ''}`
 
-    const res = await fetch(url, { headers: getHeaders() })
+    const res = await adminFetch(url, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getProduct(id: string) {
-    const res = await fetch(`${API_URL}/admin/products/${id}`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/products/${id}`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async createProduct(product: any) {
-    const res = await fetch(`${API_URL}/admin/products`, {
+    const res = await adminFetch(`${API_URL}/admin/products`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(product),
@@ -81,7 +86,7 @@ export const adminService = {
   },
 
   async updateProduct(id: string, product: any) {
-    const res = await fetch(`${API_URL}/admin/products/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/products/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(product),
@@ -92,7 +97,7 @@ export const adminService = {
   },
 
   async toggleProductActive(id: string) {
-    const res = await fetch(`${API_URL}/admin/products/${id}/toggle-active`, {
+    const res = await adminFetch(`${API_URL}/admin/products/${id}/toggle-active`, {
       method: 'PATCH',
       headers: getHeaders(),
     })
@@ -102,7 +107,7 @@ export const adminService = {
   },
 
   async deleteProduct(id: string) {
-    const res = await fetch(`${API_URL}/admin/products/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/products/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })
@@ -113,7 +118,7 @@ export const adminService = {
 
   // Product Images
   async addProductImage(productId: string, url: string, isMain: boolean = false) {
-    const res = await fetch(`${API_URL}/admin/products/${productId}/images`, {
+    const res = await adminFetch(`${API_URL}/admin/products/${productId}/images`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ url, alt: '', isMain }),
@@ -124,7 +129,7 @@ export const adminService = {
   },
 
   async deleteProductImage(productId: string, imageId: string) {
-    const res = await fetch(`${API_URL}/admin/products/${productId}/images/${imageId}`, {
+    const res = await adminFetch(`${API_URL}/admin/products/${productId}/images/${imageId}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })
@@ -135,14 +140,14 @@ export const adminService = {
 
   // Categories
   async getCategories() {
-    const res = await fetch(`${API_URL}/admin/categories`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/categories`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async createCategory(category: any) {
-    const res = await fetch(`${API_URL}/admin/categories`, {
+    const res = await adminFetch(`${API_URL}/admin/categories`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(category),
@@ -153,7 +158,7 @@ export const adminService = {
   },
 
   async updateCategory(id: string, category: any) {
-    const res = await fetch(`${API_URL}/admin/categories/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/categories/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(category),
@@ -164,7 +169,7 @@ export const adminService = {
   },
 
   async toggleCategoryActive(id: string) {
-    const res = await fetch(`${API_URL}/admin/categories/${id}/toggle-active`, {
+    const res = await adminFetch(`${API_URL}/admin/categories/${id}/toggle-active`, {
       method: 'PATCH',
       headers: getHeaders(),
     })
@@ -174,7 +179,7 @@ export const adminService = {
   },
 
   async deleteCategory(id: string) {
-    const res = await fetch(`${API_URL}/admin/categories/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/categories/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })
@@ -185,14 +190,14 @@ export const adminService = {
 
   // Orders
   async getOrders() {
-    const res = await fetch(`${API_URL}/admin/orders`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/orders`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async updateOrderStatus(id: string, status: string) {
-    const res = await fetch(`${API_URL}/admin/orders/${id}/status`, {
+    const res = await adminFetch(`${API_URL}/admin/orders/${id}/status`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify({ status }),
@@ -204,21 +209,21 @@ export const adminService = {
 
   // Wholesale Templates
   async getWholesaleTemplates() {
-    const res = await fetch(`${API_URL}/admin/wholesale-templates`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/wholesale-templates`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getWholesaleTemplate(id: string) {
-    const res = await fetch(`${API_URL}/admin/wholesale-templates/${id}`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/wholesale-templates/${id}`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async createWholesaleTemplate(template: any) {
-    const res = await fetch(`${API_URL}/admin/wholesale-templates`, {
+    const res = await adminFetch(`${API_URL}/admin/wholesale-templates`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(template),
@@ -229,7 +234,7 @@ export const adminService = {
   },
 
   async updateWholesaleTemplate(id: string, template: any) {
-    const res = await fetch(`${API_URL}/admin/wholesale-templates/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/wholesale-templates/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(template),
@@ -240,7 +245,7 @@ export const adminService = {
   },
 
   async deleteWholesaleTemplate(id: string) {
-    const res = await fetch(`${API_URL}/admin/wholesale-templates/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/wholesale-templates/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })
@@ -269,28 +274,28 @@ export const adminService = {
     const queryString = queryParams.toString()
     const url = `${API_URL}/admin/customers${queryString ? `?${queryString}` : ''}`
 
-    const res = await fetch(url, { headers: getHeaders() })
+    const res = await adminFetch(url, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getCustomersStats() {
-    const res = await fetch(`${API_URL}/admin/customers/stats`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/customers/stats`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getCustomer(id: string) {
-    const res = await fetch(`${API_URL}/admin/customers/${id}`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/customers/${id}`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async exportCustomers() {
-    const res = await fetch(`${API_URL}/admin/customers-export`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/customers-export`, { headers: getHeaders() })
     return res.blob()
   },
 
@@ -299,21 +304,21 @@ export const adminService = {
   // =============================================
 
   async getPromotions() {
-    const res = await fetch(`${API_URL}/admin/promotions`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/promotions`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getPromotion(id: string) {
-    const res = await fetch(`${API_URL}/admin/promotions/${id}`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/promotions/${id}`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async createPromotion(promotion: any) {
-    const res = await fetch(`${API_URL}/admin/promotions`, {
+    const res = await adminFetch(`${API_URL}/admin/promotions`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(promotion),
@@ -324,7 +329,7 @@ export const adminService = {
   },
 
   async updatePromotion(id: string, promotion: any) {
-    const res = await fetch(`${API_URL}/admin/promotions/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/promotions/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(promotion),
@@ -335,7 +340,7 @@ export const adminService = {
   },
 
   async updatePromotionStatus(id: string, status: string) {
-    const res = await fetch(`${API_URL}/admin/promotions/${id}/status`, {
+    const res = await adminFetch(`${API_URL}/admin/promotions/${id}/status`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify({ status }),
@@ -346,7 +351,7 @@ export const adminService = {
   },
 
   async deletePromotion(id: string) {
-    const res = await fetch(`${API_URL}/admin/promotions/${id}`, {
+    const res = await adminFetch(`${API_URL}/admin/promotions/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })
@@ -356,7 +361,7 @@ export const adminService = {
   },
 
   async addProductToPromotion(promotionId: string, productId: string) {
-    const res = await fetch(`${API_URL}/admin/promotions/${promotionId}/products`, {
+    const res = await adminFetch(`${API_URL}/admin/promotions/${promotionId}/products`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ productId }),
@@ -367,7 +372,7 @@ export const adminService = {
   },
 
   async removeProductFromPromotion(promotionId: string, productId: string) {
-    const res = await fetch(`${API_URL}/admin/promotions/${promotionId}/products/${productId}`, {
+    const res = await adminFetch(`${API_URL}/admin/promotions/${promotionId}/products/${productId}`, {
       method: 'DELETE',
       headers: getHeaders(),
     })
@@ -386,7 +391,7 @@ export const adminService = {
     isSpecialOffer?: boolean
     isActive?: boolean
   }) {
-    const res = await fetch(`${API_URL}/admin/products/bulk-tags`, {
+    const res = await adminFetch(`${API_URL}/admin/products/bulk-tags`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ productIds, tags }),
@@ -421,28 +426,28 @@ export const adminService = {
     const queryString = queryParams.toString()
     const url = `${API_URL}/admin/bito/customers${queryString ? `?${queryString}` : ''}`
 
-    const res = await fetch(url, { headers: getHeaders() })
+    const res = await adminFetch(url, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getBitoCustomersStats() {
-    const res = await fetch(`${API_URL}/admin/bito/customers/stats`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/bito/customers/stats`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getBitoCustomer(id: string) {
-    const res = await fetch(`${API_URL}/admin/bito/customers/${id}`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/bito/customers/${id}`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async exportBitoCustomers() {
-    const res = await fetch(`${API_URL}/admin/bito/customers-export`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/bito/customers-export`, { headers: getHeaders() })
     return res.blob()
   },
 
@@ -469,21 +474,21 @@ export const adminService = {
     const queryString = queryParams.toString()
     const url = `${API_URL}/admin/bito/employees${queryString ? `?${queryString}` : ''}`
 
-    const res = await fetch(url, { headers: getHeaders() })
+    const res = await adminFetch(url, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async getBitoEmployee(id: string) {
-    const res = await fetch(`${API_URL}/admin/bito/employees/${id}`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/bito/employees/${id}`, { headers: getHeaders() })
     const data = await res.json()
     if (!data.success) throw new Error(data.message)
     return data.data
   },
 
   async exportBitoEmployees() {
-    const res = await fetch(`${API_URL}/admin/bito/employees-export`, { headers: getHeaders() })
+    const res = await adminFetch(`${API_URL}/admin/bito/employees-export`, { headers: getHeaders() })
     return res.blob()
   },
 }
