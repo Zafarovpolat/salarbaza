@@ -45,9 +45,161 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import psycopg2  # noqa: E402
 import psycopg2.extras  # noqa: E402
 
+try:
+    import requests  # noqa: E402
+except ImportError:
+    requests = None  # type: ignore
+
+try:
+    import sentry_sdk  # noqa: E402
+except ImportError:
+    sentry_sdk = None  # type: ignore
+
 from bito_client import BitoClient  # noqa: E402
 from categories import smart_slug, smart_translate  # noqa: E402
 from matching import Matcher  # noqa: E402
+
+
+# ------------------------- telegram notifications -------------------------
+
+def _get_admin_ids() -> List[str]:
+    raw = os.environ.get("ADMIN_TELEGRAM_IDS", "")
+    ids = [s.strip() for s in raw.split(",") if s.strip().isdigit()]
+    return ids
+
+
+def _get_bot_token() -> Optional[str]:
+    return os.environ.get("BOT_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
+
+
+def _send_telegram_to_admins(text: str) -> None:
+    """Best-effort send to all ADMIN_TELEGRAM_IDS. Failures are swallowed but logged to Sentry."""
+    token = _get_bot_token()
+    admin_ids = _get_admin_ids()
+    if not token or not admin_ids:
+        return
+    if requests is None:
+        print(f"[notify] requests not available, skipping telegram: {text[:200]}", file=sys.stderr)
+        return
+
+    for admin_id in admin_ids:
+        try:
+            resp = requests.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json={
+                    "chat_id": admin_id,
+                    "text": text,
+                    "parse_mode": "HTML",
+                    "disable_web_page_preview": True,
+                },
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                print(f"[notify] Telegram send to {admin_id} failed {resp.status_code}: {resp.text[:300]}", file=sys.stderr)
+                if sentry_sdk:
+                    try:
+                        sentry_sdk.capture_message(f"Telegram notify failed {resp.status_code} to {admin_id}")
+                    except Exception:
+                        pass
+        except Exception as e:
+            print(f"[notify] Telegram exception to {admin_id}: {e}", file=sys.stderr)
+            if sentry_sdk:
+                try:
+                    sentry_sdk.capture_exception(e)
+                except Exception:
+                    pass
+
+
+def _format_full_summary(mode: str, elapsed: float, stats: Dict[str, Any], log: List[str]) -> str:
+    products = (stats.get("products") or {}).get("plan") if isinstance(stats.get("products"), dict) else stats.get("products") or {}
+    # products may be nested under plan
+    if isinstance(products, dict) and "plan" in products:
+        products = products["plan"]
+    # Fallback: products directly
+    bito_total = products.get("bito_total", 0)
+    matched = (products.get("matched_by_pid", 0) + products.get("matched_by_sku", 0) + products.get("matched_by_name", 0))
+    created = products.get("created", 0)
+    updated = products.get("updated", 0)
+    moved = products.get("category_moved", 0)
+    warnings = products.get("warnings", [])
+    stock_rows = products.get("stock_rows", 0)
+
+    customers = stats.get("customers", {})
+    employees = stats.get("employees", {})
+    images = stats.get("images", {})
+
+    lines = [
+        f"✅ <b>Bito {mode} sync completed</b> in {elapsed:.1f}s",
+        f"• Bito total: {bito_total}",
+        f"• Matched: {matched} (pid:{products.get('matched_by_pid',0)} sku:{products.get('matched_by_sku',0)} name:{products.get('matched_by_name',0)})",
+        f"• Created: {created}",
+        f"• Updated: {updated}",
+        f"• Category moved: {moved}",
+        f"• Stock rows: {stock_rows}",
+        f"• Customers: {customers.get('inserts',0) if isinstance(customers, dict) else 0} new / {customers.get('updates',0) if isinstance(customers, dict) else 0} upd",
+        f"• Employees: {employees.get('inserts',0) if isinstance(employees, dict) else 0} new / {employees.get('updates',0) if isinstance(employees, dict) else 0} upd",
+        f"• No-image: {images.get('products_without_images',0) if isinstance(images, dict) else 0} → inserted {images.get('images_inserted',0) if isinstance(images, dict) else 0}",
+        f"• Warnings: {len(warnings)}",
+    ]
+    if warnings:
+        lines.append(f"• Warn samples: {'; '.join(warnings[:3])}")
+    return "\n".join(lines)
+
+
+def _format_incremental_summary(mode: str, elapsed: float, stats: Dict[str, Any]) -> Optional[str]:
+    products = (stats.get("products") or {}).get("plan") if isinstance(stats.get("products"), dict) and isinstance(stats.get("products").get("plan"), dict) else stats.get("products") or {}
+    if isinstance(stats.get("products"), dict) and "plan" in stats["products"]:
+        products = stats["products"]["plan"]
+    updated = products.get("updated", 0)
+    created = products.get("created", 0)
+    moved = products.get("category_moved", 0)
+    bito_total = products.get("bito_total", 0)
+
+    # No changes → silence
+    if updated == 0 and created == 0 and moved == 0 and products.get("orphaned_oos", 0) == 0:
+        # Check other changes
+        if not stats.get("customers") and not stats.get("employees"):
+            return None
+
+    # Large normal change threshold
+    is_large = updated > 100 or created > 10 or moved > 10
+
+    if is_large:
+        return (
+            f"ℹ️ <b>Bito {mode} sync</b> large change in {elapsed:.1f}s\n"
+            f"• Total: {bito_total}, updated: {updated}, created: {created}, moved: {moved}"
+        )
+    # Normal small change → short summary
+    if updated or created or moved:
+        return (
+            f"ℹ️ <b>Bito {mode} sync</b> in {elapsed:.1f}s: "
+            f"upd {updated}, new {created}, moved {moved}, total {bito_total}"
+        )
+    return None
+
+
+def _format_error_alert(mode: str, error: str, log: List[str], stats: Dict[str, Any]) -> str:
+    err_lower = (error or "").lower()
+    if "safety stop" in err_lower:
+        if "partial" in err_lower:
+            title = "🚨 <b>SAFETY STOP: partial Bito response</b>"
+        elif "disappearance" in err_lower:
+            title = "🚨 <b>SAFETY STOP: mass disappearance</b>"
+        elif "category" in err_lower:
+            title = "🚨 <b>SAFETY STOP: mass category move</b>"
+        elif "mass create" in err_lower:
+            title = "🚨 <b>SAFETY STOP: mass create</b>"
+        else:
+            title = "🚨 <b>SAFETY STOP</b>"
+    elif "price" in err_lower or any("price" in (l or "").lower() and "warning" in (l or "").lower() for l in log):
+        title = "⚠️ <b>Bito price API failure</b>"
+    elif "tenant" in err_lower or "db" in err_lower or "operational" in err_lower or "connection" in err_lower:
+        title = "❌ <b>Bito sync DB connection failure</b>"
+    else:
+        title = "❌ <b>Bito sync failure</b>"
+
+    snippet = "\n".join(log[-10:]) if log else ""
+    return f"{title}\nMode: {mode}\nError: <code>{error[:1000]}</code>\n\nLog tail:\n<code>{snippet[:1500]}</code>"
 
 
 # ------------------------- helpers -------------------------
@@ -1245,12 +1397,37 @@ def main() -> int:
             return 0
         raise
 
-    with conn_ctx as conn:
+    # Variables for notification outside conn scope
+    elapsed = 0.0
+    final_stats = stats
+    final_log = log
+    final_status = status
+    final_error = error
+
+    try:
+        conn_ctx_obj = db_connect(dsn, statement_timeout_ms=args.statement_timeout)
+    except psycopg2.OperationalError as e:
+        if _is_supabase_tenant_missing(e):
+            print(f"[skip] Supabase project unreachable ({e}). Exiting 0.", file=sys.stderr)
+            return 0
+        # DB connection failure -> immediate alert
+        err_msg = f"DB connection failure: {e}"
+        print(f"[error] {err_msg}", file=sys.stderr)
+        if not dry_run:
+            try:
+                _send_telegram_to_admins(f"❌ <b>Bito sync DB connection failure</b>\nMode: {args.mode}\n<code>{err_msg[:1000]}</code>")
+            except Exception as notify_e:
+                print(f"[notify] failed to send DB failure alert: {notify_e}", file=sys.stderr)
+                if sentry_sdk:
+                    try:
+                        sentry_sdk.capture_exception(notify_e)
+                    except Exception:
+                        pass
+        raise
+
+    with conn_ctx_obj as conn:
         conn.autocommit = False
 
-        # Render full/incremental jobs and manual fallbacks must never write at
-        # the same time. This session-level lock is released automatically when
-        # the connection closes, including crashes and exceptions.
         with conn.cursor() as lock_cur:
             lock_cur.execute("SELECT pg_try_advisory_lock(%s)", (742013572091,))
             lock_acquired = bool(lock_cur.fetchone()[0])
@@ -1269,8 +1446,6 @@ def main() -> int:
                     cur.execute('SELECT "bitoId", id FROM bito_warehouses')
                     wh_map = {r[0]: r[1] for r in cur.fetchall()}
 
-            # Build the set of excluded Bito category IDs once (used by
-            # both category and product sync phases).
             _bito_cats_for_filter = bito.categories()
             excluded_bito_ids = _build_excluded_bito_ids(_bito_cats_for_filter)
             if excluded_bito_ids:
@@ -1304,17 +1479,15 @@ def main() -> int:
                 if not args.skip_employees:
                     stats["employees"] = sync_employees(bito, conn, dry_run, log)
 
-            # Phase 5a: supervised fuzzy relink only
             if not args.skip_catalog and args.enable_fuzzy_relink:
                 stats["relink"] = relink_products(bito, conn, dry_run, log)
             elif not args.skip_catalog:
-                stats["relink"]={"skipped":"fuzzy disabled"};log.append("[relink] skipped")
+                stats["relink"] = {"skipped": "fuzzy disabled"}
+                log.append("[relink] skipped")
 
-            # Phase 5b: hide whatever is still not linked
             if not args.skip_catalog:
                 stats["catalog"] = catalog_visibility(conn, dry_run, log)
 
-            # Phase 5c: pull Bito images for products with 0 images
             if not args.skip_catalog:
                 stats["images"] = sync_images_from_bito(bito, conn, dry_run, log)
 
@@ -1323,6 +1496,14 @@ def main() -> int:
             record_run(conn, dry_run, log, stats, status, None, args.mode)
             if not dry_run:
                 conn.commit()
+
+            # Save final for notification outside transaction
+            final_stats = stats
+            final_log = log
+            final_status = status
+            final_error = None
+            elapsed = elapsed
+
         except Exception as exc:
             conn.rollback()
             status = "error"
@@ -1330,24 +1511,86 @@ def main() -> int:
             elapsed = time.time() - t0
             log.append(f"=== FAILED after {elapsed:.1f}s: {error} ===")
             try:
-                # Open a fresh transaction to record the failure (the previous
-                # one is poisoned by the exception).
                 record_run(conn, dry_run, log, stats, status, error, args.mode)
                 if not dry_run:
                     conn.commit()
             except Exception:
                 pass
+            final_stats = stats
+            final_log = log
+            final_status = status
+            final_error = error
+
             for line in log:
                 print(line)
+
+            # Immediate failure notification (outside DB transaction failure already handled)
+            if not dry_run:
+                try:
+                    alert_text = _format_error_alert(args.mode, error, log, stats)
+                    _send_telegram_to_admins(alert_text)
+                except Exception as notify_e:
+                    print(f"[notify] failed to send error alert: {notify_e}", file=sys.stderr)
+                    if sentry_sdk:
+                        try:
+                            sentry_sdk.capture_exception(notify_e)
+                        except Exception:
+                            pass
+
+            if args.report_out:
+                try:
+                    Path(args.report_out).write_text(
+                        json.dumps({"status": status, "stats": stats, "log": log}, indent=2, default=str)
+                    )
+                except Exception:
+                    pass
             return 1
 
-    for line in log:
+    for line in final_log:
         print(line)
 
     if args.report_out:
-        Path(args.report_out).write_text(
-            json.dumps({"status": status, "stats": stats, "log": log}, indent=2, default=str)
-        )
+        try:
+            Path(args.report_out).write_text(
+                json.dumps({"status": final_status, "stats": final_stats, "log": final_log}, indent=2, default=str)
+            )
+        except Exception:
+            pass
+
+    # ---- Telegram notifications for success paths (outside DB transaction) ----
+    if not dry_run:
+        try:
+            if final_status == "ok":
+                # Detect price warning even on success
+                has_price_warning = any("price" in (l or "").lower() and "warning" in (l or "").lower() for l in final_log)
+                if has_price_warning:
+                    try:
+                        _send_telegram_to_admins(f"⚠️ <b>Bito price API warning</b>\nMode: {args.mode}\nCheck logs, some price entries failed to fetch.\nElapsed: {elapsed:.1f}s")
+                    except Exception as e:
+                        print(f"[notify] price warning notify failed: {e}", file=sys.stderr)
+
+                if args.mode == "full":
+                    summary = _format_full_summary(args.mode, elapsed, final_stats, final_log)
+                    _send_telegram_to_admins(summary)
+                else:
+                    inc_summary = _format_incremental_summary(args.mode, elapsed, final_stats)
+                    if inc_summary:
+                        _send_telegram_to_admins(inc_summary)
+            else:
+                # Already handled error case above, but if we reach here with error status not yet notified
+                if final_error:
+                    try:
+                        alert_text = _format_error_alert(args.mode, final_error, final_log, final_stats)
+                        _send_telegram_to_admins(alert_text)
+                    except Exception as e:
+                        print(f"[notify] error alert failed: {e}", file=sys.stderr)
+        except Exception as notify_e:
+            print(f"[notify] general notification failure: {notify_e}", file=sys.stderr)
+            if sentry_sdk:
+                try:
+                    sentry_sdk.capture_exception(notify_e)
+                except Exception:
+                    pass
 
     return 0
 
