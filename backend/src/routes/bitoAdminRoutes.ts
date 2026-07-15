@@ -7,6 +7,7 @@
 import { Router } from 'express'
 import { prisma } from '../config/database'
 import { adminAuth } from '../middleware/adminSession'
+import { parsePagination, LIMITS, parseSearchQuery } from '../utils/pagination'
 
 const router = Router()
 router.use(adminAuth)
@@ -14,26 +15,16 @@ router.use(adminAuth)
 // ==================== BITO CUSTOMERS ====================
 
 // GET /api/admin/bito/customers
-// Query: page, limit, search, sortBy, sortOrder, isActive (yes|no|all), hasBalance (debt|credit|zero|all)
+// Query: page, limit, search, sortBy, sortOrder, isActive (yes|no|all), hasBalance (debt|credit|zero|all) - max 200
 router.get('/customers', async (req, res) => {
   try {
-    const {
-      page = '1',
-      limit = '20',
-      search,
-      sortBy = 'totalSale',
-      sortOrder = 'desc',
-      isActive = 'all',
-      hasBalance = 'all',
-    } = req.query
-
-    const pageNum = Math.max(1, parseInt(page as string) || 1)
-    const limitNum = Math.min(200, Math.max(1, parseInt(limit as string) || 20))
-    const skip = (pageNum - 1) * limitNum
+    const { sortBy = 'totalSale', sortOrder = 'desc', isActive = 'all', hasBalance = 'all' } = req.query
+    const { page: pageNum, limit: limitNum, skip } = parsePagination(req.query, { defaultLimit: 20, maxLimit: LIMITS.BITO_CUSTOMER_EMPLOYEE })
+    const search = parseSearchQuery(req.query)
 
     const where: any = {}
 
-    if (search && typeof search === 'string') {
+    if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search, mode: 'insensitive' } },
@@ -259,18 +250,16 @@ router.get('/customers-export', async (req, res) => {
 
 // ==================== BITO EMPLOYEES ====================
 
-// GET /api/admin/bito/employees
+// GET /api/admin/bito/employees - max 200
 router.get('/employees', async (req, res) => {
   try {
-    const { page = '1', limit = '50', search, isActive = 'all', sortBy = 'fullName', sortOrder = 'asc' } = req.query
-
-    const pageNum = Math.max(1, parseInt(page as string) || 1)
-    const limitNum = Math.min(200, Math.max(1, parseInt(limit as string) || 50))
-    const skip = (pageNum - 1) * limitNum
+    const { isActive = 'all', sortBy = 'fullName', sortOrder = 'asc' } = req.query
+    const { page: pageNum, limit: limitNum, skip } = parsePagination(req.query, { defaultLimit: 50, maxLimit: LIMITS.BITO_CUSTOMER_EMPLOYEE })
+    const search = parseSearchQuery(req.query)
 
     const where: any = {}
 
-    if (search && typeof search === 'string') {
+    if (search) {
       where.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search, mode: 'insensitive' } },
@@ -399,7 +388,7 @@ router.get('/employees-export', async (req, res) => {
 // invoked by GitHub Actions / Render Cron Job).
 router.get('/sync-runs', async (req, res) => {
   try {
-    const limit = Math.min(parseInt((req.query.limit as string) || '20'), 100)
+    const { limit } = parsePagination(req.query, { defaultLimit: 20, maxLimit: 100 })
 
     const runs = await prisma.bitoSyncRun.findMany({
       orderBy: { startedAt: 'desc' },
