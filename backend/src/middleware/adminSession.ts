@@ -76,22 +76,34 @@ export function verifyAdminSession(token?: string): boolean {
 }
 
 export function setAdminCookie(res: Response, token: string): void {
-  res.cookie(COOKIE_NAME, token, {
+  const isProd = config.nodeEnv === 'production'
+  const cookieOptions: any = {
     httpOnly: true,
-    secure: config.nodeEnv === 'production',
-    sameSite: config.nodeEnv === 'production' ? 'none' : 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     path: '/api/admin',
     maxAge: SESSION_TTL_SECONDS * 1000,
-  })
+  }
+  // Allow cookie to be shared across *.onrender.com subdomains (web and api)
+  // This helps with browser magic link flow where frontend is on web subdomain and api on api subdomain
+  if (isProd && config.frontendUrl.includes('onrender.com')) {
+    cookieOptions.domain = '.onrender.com'
+  }
+  res.cookie(COOKIE_NAME, token, cookieOptions)
 }
 
 export function clearAdminCookie(res: Response): void {
-  res.clearCookie(COOKIE_NAME, {
+  const isProd = config.nodeEnv === 'production'
+  const cookieOptions: any = {
     httpOnly: true,
-    secure: config.nodeEnv === 'production',
-    sameSite: config.nodeEnv === 'production' ? 'none' : 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     path: '/api/admin',
-  })
+  }
+  if (isProd && config.frontendUrl.includes('onrender.com')) {
+    cookieOptions.domain = '.onrender.com'
+  }
+  res.clearCookie(COOKIE_NAME, cookieOptions)
 }
 
 function validOrigin(req: Request): boolean {
