@@ -37,6 +37,17 @@ export async function consumeMagicToken(token: string): Promise<bigint | null> {
 }
 
 export function getMagicLink(frontendUrl: string, token: string): string {
+  // Prefer direct backend magic link for first-party cookie (avoids third-party cookie blocking)
+  // Backend magic endpoint sets cookie and redirects to frontend dashboard
+  const backendBase = process.env.API_URL?.replace(/\/api\/?$/, '').replace(/\/$/, '') || 'https://dekorhouse-api.onrender.com'
+  // If backendBase already contains /api, keep it, else add /api
+  const backendMagic = backendBase.includes('/api')
+    ? `${backendBase}/admin/auth/magic?token=${encodeURIComponent(token)}`
+    : `${backendBase}/api/admin/auth/magic?token=${encodeURIComponent(token)}`
+  return backendMagic
+}
+
+export function getFrontendMagicLink(frontendUrl: string, token: string): string {
   const base = frontendUrl.replace(/\/$/, '')
   return `${base}/admin/magic?token=${encodeURIComponent(token)}`
 }
