@@ -54,7 +54,16 @@ router.post('/logout', frontendOriginOnly, (_q, res) => {
 
 // Magic link - browser login after bot verification
 // GET /api/admin/auth/magic?token=...  or POST {token}
-router.all('/magic', async (req, res) => {
+router.options('/magic', (req, res) => {
+  // CORS preflight - don't consume token
+  res.setHeader('Access-Control-Allow-Origin', config.frontendUrl)
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Telegram-Init-Data')
+  return res.sendStatus(200)
+})
+
+async function handleMagic(req: any, res: any) {
   try {
     const token = (req.query.token as string) || (req.body && (req.body as any).token)
     const acceptsHtml = req.headers.accept?.includes('text/html')
@@ -79,7 +88,7 @@ router.all('/magic', async (req, res) => {
             <h2 style="color:#854d0e;">Ссылка недействительна или просрочена</h2>
             <p>Ссылка одноразовая и действует 15 минут.</p>
             <p>Откройте Telegram → @DecorMarketUz_Bot → напишите <b>/admin</b> → нажмите новую кнопку <b>🌐 Открыть в браузере (ПК)</b></p>
-            <p style="margin-top:20px; font-size:12px; color:#999;">Токен уже использован или истёк. Сгенерируйте новый.</p>
+            <p style="margin-top:20px; font-size:12px; color:#999;">Токен уже использован или истёк. Сгенерируйте новый. Время: ${new Date().toISOString()}</p>
           </body></html>
         `)
       }
@@ -115,6 +124,9 @@ router.all('/magic', async (req, res) => {
     }
     return res.status(500).json({ success: false, message: 'Server error' })
   }
-})
+}
+
+router.get('/magic', handleMagic)
+router.post('/magic', handleMagic)
 
 export default router
