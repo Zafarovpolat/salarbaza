@@ -4,22 +4,24 @@
 **Текущий production:** Render + Supabase  
 **Цель:** снизить расходы, улучшить latency в UZ, получить контроль над Valkey/ cron/ backups, подготовиться к доменам `dekormarket.uz`
 
-## 1. Текущие расходы (июль 2026)
+## 1. Текущие расходы (июль 2026) — актуально
 
-- **Render:**
-  - `dekorhouse-api` (Node, free) — 0$, но спит, cold start 1-3 сек, 512 MB RAM, Frankfurt
-  - `dekorhouse-web` (Static, free) — 0$, CDN Render слабый для UZ
+- **Render (starter, не free):**
+  - `dekorhouse-api` (Node, starter $7/мес) — 512 MB RAM → 1 GB, без сна, Frankfurt
+  - `dekorhouse-web` (Static, starter $7/мес) — CDN Render, кэш headers настроен
   - `bito-sync-full` + `bito-sync-incremental` (cron, starter $7/мес каждый) = $14/мес
-  - Итого Render: ~$14/мес, но free tier нестабилен, нет Valkey, нет persistent disk
+  - Итого Render: $7+7+14 = **$28/мес** (раньше было free, теперь starter)
 
-- **Supabase:**
-  - Project `yjfyvedavmrdifmepvkh`, Frankfurt? (pooler `aws-1-ap-south-1` — Mumbai)
-  - Postgres + Storage `products` bucket + Auth (не используется) + Realtime (не используется)
-  - Free tier лимиты: 500 MB DB, 1 GB storage, 50k MAU, 2 GB bandwidth
-  - Сейчас: ~935 users, ~618 products? (после sync 1927 Bito, но filtered), ~2k images?
-  - Риск: free tier может приостановиться (Tenant not found — мы уже видели `supabase tenant missing` в sync.py)
+- **Supabase Pro $25/мес:**
+  - Project `yjfyvedavmrdifmepvkh`, pooler `aws-1-ap-south-1` (Mumbai) + `supabase.co`
+  - Postgres 8 GB, 100k MAU, 250 GB bandwidth, 100 GB storage, daily backups 7 дней
+  - Storage `products` bucket + `edited/` prefix, public read, anon INSERT удалён
+  - Сейчас: ~935 users (2 ADMIN), ~618 products? (Bito total 1927, но filtered excluded categories), ~2k images ~2-3 GB
+  - Pro даёт отсутствие пауз (нет `Tenant not found`), лучше pooler, но всё равно latency UZ->Mumbai 120-180ms
 
-- **Итого сейчас:** ~$14 + риски free tier + latency UZ->Frankfurt/Mumbai 150-250ms
+- **Итого сейчас:** Render $28 + Supabase Pro $25 = **$53/мес**, но если считать только api+web+Supabase без cron = **$39/мес (35-40$ как ты сказал)**. Плюс Sentry free tier.
+
+- **Проблемы текущих starter:** всё равно Frankfurt, нет Valkey (приходится memory cache), нет persistent disk для PG backups, Render static CDN слабый для UZ, Supabase storage bandwidth платный после лимита
 
 ## 2. Целевая архитектура (VPS)
 
@@ -234,17 +236,24 @@ cdn.dekormarket.uz {
 - День 3: проверить conversion funnel в `/admin/analytics` — не упала ли конверсия
 - День 7: сравнить расходы (Hetzner $ vs Render), latency (RUS, KZ, UZ), support tickets
 
-## 13. Cost Estimate (месяц)
+## 13. Cost Estimate (месяц) — обновлено под starter + Pro
 
-| Компонент | Render сейчас | VPS Hetzner + R2 | Timeweb KZ |
+| Компонент | Render сейчас (starter+Pro) | VPS Hetzner + R2 | Timeweb KZ |
 |---|---|---|---|
-| API + Web | $0 (free, но риск) | $13-18 CPX31 | $24-35 |
-| Bito cron | $14 (2×$7) | $0 (в том же VPS) | $0 |
-| DB + Storage | Supabase free (риск) | PG self-hosted $0 + R2 storage ~$0.5-2 + egress $0 | same |
-| Cache | memory only | Valkey self-hosted $0 | same |
-| Domain + Cloudflare | $0 (onrender.com) | $12/год .uz + $0 Cloudflare free | same |
+| API (Node) | $7 starter | $0 (в составе VPS) | $0 |
+| Web (Static) | $7 starter | $0 (Caddy static) | $0 |
+| Bito cron ×2 | $14 (2×$7 starter) | $0 (в том же VPS cron) | $0 |
+| DB + Storage | Supabase Pro $25 (8 GB DB, 100 GB storage, backups) | PG self-hosted $0 + R2 storage $0.5-2 + egress $0 | same |
+| Cache | memory only | Valkey self-hosted $0 | $0 |
+| Domain + Cloudflare | $0 (onrender.com) + $12/год .uz | $12/год .uz + $0 Cloudflare free + $0 R2 egress | same |
 | Sentry | free tier | free tier | free |
-| **Итого** | ~$14 + риски | ~$15-20/мес | ~$26-40/мес |
+| **Итого без cron** | **$39 (7+7+25) = 35-40$ как сейчас** | ~$15-20 VPS | ~$26-40 VPS |
+| **Итого с cron** | **$53 (7+7+14+25)** | ~$15-20 | ~$26-40 |
+
+- **Сейчас платишь:** $39 без cron, $53 с cron, но без Valkey и с latency Frankfurt/Mumbai
+- **На Hetzner CPX31 (4vCPU/8GB ~€13-15):** ~$15-18 + R2 $1-2 + домен $1 = **$17-20** против $39-53 = экономия **$20-35/мес**
+- **На Timeweb KZ (4vCPU/8GB ~$24-35):** ~$27-37 vs $39-53, но latency в UZ 20-30ms vs 120ms, плюс оплата KZT
+- **Вывод:** даже с Pro Supabase, VPS дешевле и даёт Valkey + backups + контроль
 
 ## 14. Definition of Done
 
