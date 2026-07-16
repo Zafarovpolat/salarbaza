@@ -57,20 +57,43 @@ router.post('/logout', frontendOriginOnly, (_q, res) => {
 router.all('/magic', async (req, res) => {
   try {
     const token = (req.query.token as string) || (req.body && (req.body as any).token)
-    if (!token) return res.status(400).json({ success: false, message: 'Token required' })
+    const acceptsHtml = req.headers.accept?.includes('text/html')
+
+    if (!token) {
+      if (acceptsHtml) {
+        return res.status(400).send(`
+          <html><body style="font-family:sans-serif; padding:40px; text-align:center;">
+            <h2>Токен не найден</h2>
+            <p>Откройте Telegram → @DecorMarketUz_Bot → /admin → кнопка "Открыть в браузере (ПК)"</p>
+          </body></html>
+        `)
+      }
+      return res.status(400).json({ success: false, message: 'Token required' })
+    }
 
     const telegramIdBig = await consumeMagicToken(token)
     if (!telegramIdBig) {
+      if (acceptsHtml) {
+        return res.status(401).send(`
+          <html><body style="font-family:sans-serif; padding:40px; text-align:center; background:#fefce8;">
+            <h2 style="color:#854d0e;">Ссылка недействительна или просрочена</h2>
+            <p>Ссылка одноразовая и действует 15 минут.</p>
+            <p>Откройте Telegram → @DecorMarketUz_Bot → напишите <b>/admin</b> → нажмите новую кнопку <b>🌐 Открыть в браузере (ПК)</b></p>
+            <p style="margin-top:20px; font-size:12px; color:#999;">Токен уже использован или истёк. Сгенерируйте новый.</p>
+          </body></html>
+        `)
+      }
       return res.status(401).json({ success: false, message: 'Ссылка недействительна или просрочена. Снова /admin в боте' })
     }
 
     const idStr = telegramIdBig.toString()
-    // Check allowlist again (in case IDs changed after token creation)
     if (!config.adminTelegramIds.includes(idStr)) {
+      if (acceptsHtml) {
+        return res.status(403).send(`<html><body style="padding:40px; text-align:center;"><h2>Нет доступа</h2><p>ID ${idStr} не в списке админов</p></body></html>`)
+      }
       return res.status(403).json({ success: false, message: 'Нет доступа' })
     }
 
-    // Ensure ADMIN role
     try {
       await prisma.user.upsert({
         where: { telegramId: telegramIdBig },
@@ -79,16 +102,17 @@ router.all('/magic', async (req, res) => {
       })
     } catch {}
 
-    // Issue session cookie
     setAdminCookie(res, createAdminSession(idStr))
-    // If it's a GET with browser, redirect to dashboard, else JSON
-    const acceptsHtml = req.headers.accept?.includes('text/html')
     if (req.method === 'GET' && acceptsHtml) {
       return res.redirect(`${config.frontendUrl}/admin/dashboard`)
     }
     return res.json({ success: true })
   } catch (e) {
     logger.error('Magic link error', e)
+    const acceptsHtml = req.headers.accept?.includes('text/html')
+    if (acceptsHtml) {
+      return res.status(500).send(`<html><body style="padding:40px; text-align:center;"><h2>Ошибка сервера</h2><p>Попробуйте снова /admin в боте</p></body></html>`)
+    }
     return res.status(500).json({ success: false, message: 'Server error' })
   }
 })
