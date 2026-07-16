@@ -72,11 +72,16 @@ def _get_bot_token() -> Optional[str]:
     return os.environ.get("BOT_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
 
 
+def _escape_html(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def _send_telegram_to_admins(text: str) -> None:
     """Best-effort send to all ADMIN_TELEGRAM_IDS. Failures are swallowed but logged to Sentry."""
     token = _get_bot_token()
     admin_ids = _get_admin_ids()
     if not token or not admin_ids:
+        print(f"[notify] BOT_TOKEN or ADMIN_TELEGRAM_IDS missing, skipping", file=sys.stderr)
         return
     if requests is None:
         print(f"[notify] requests not available, skipping telegram: {text[:200]}", file=sys.stderr)
@@ -84,6 +89,7 @@ def _send_telegram_to_admins(text: str) -> None:
 
     for admin_id in admin_ids:
         try:
+            # Try HTML first
             resp = requests.post(
                 f"https://api.telegram.org/bot{token}/sendMessage",
                 json={
@@ -95,12 +101,26 @@ def _send_telegram_to_admins(text: str) -> None:
                 timeout=10,
             )
             if resp.status_code != 200:
-                print(f"[notify] Telegram send to {admin_id} failed {resp.status_code}: {resp.text[:300]}", file=sys.stderr)
+                print(f"[notify] Telegram HTML send to {admin_id} failed {resp.status_code}: {resp.text[:500]}", file=sys.stderr)
+                # Fallback to plain text without parse_mode
+                try:
+                    plain = text.replace("<b>", "").replace("</b>", "").replace("<code>", "").replace("</code>", "")
+                    resp2 = requests.post(
+                        f"https://api.telegram.org/bot{token}/sendMessage",
+                        json={ "chat_id": admin_id, "text": plain, "disable_web_page_preview": True },
+                        timeout=10,
+                    )
+                    if resp2.status_code != 200:
+                        print(f"[notify] Telegram plain fallback failed {resp2.status_code}: {resp2.text[:300]}", file=sys.stderr)
+                except Exception as e2:
+                    print(f"[notify] fallback exception {e2}", file=sys.stderr)
                 if sentry_sdk:
                     try:
-                        sentry_sdk.capture_message(f"Telegram notify failed {resp.status_code} to {admin_id}")
+                        sentry_sdk.capture_message(f"Telegram notify failed {resp.status_code} to {admin_id}: {resp.text[:200]}")
                     except Exception:
                         pass
+            else:
+                print(f"[notify] Telegram sent to {admin_id} ok")
         except Exception as e:
             print(f"[notify] Telegram exception to {admin_id}: {e}", file=sys.stderr)
             if sentry_sdk:
@@ -199,7 +219,11 @@ def _format_error_alert(mode: str, error: str, log: List[str], stats: Dict[str, 
         title = "❌ <b>Bito sync failure</b>"
 
     snippet = "\n".join(log[-10:]) if log else ""
-    return f"{title}\nMode: {mode}\nError: <code>{error[:1000]}</code>\n\nLog tail:\n<code>{snippet[:1500]}</code>"
+    # Escape HTML inside code blocks
+    safe_err = _escape_html(error[:1000])
+    safe_snippet = _escape_html(snippet[:1500])
+    safe_mode = _escape_html(mode)
+    return f"{title}\nMode: {safe_mode}\nError: <code>{safe_err}</code>\n\nLog tail:\n<code>{safe_snippet}</code>"
 
 
 # ------------------------- helpers -------------------------
