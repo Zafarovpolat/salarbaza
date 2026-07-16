@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Package, FolderTree,
   ShoppingCart, LogOut, Home, Menu, X, Percent, Tag, Tags,
-  Briefcase, UserCircle2,
+  Briefcase, UserCircle2, Code, BarChart3
 } from 'lucide-react'
 import { adminAuthService } from '@/services/adminAuthService'
 
@@ -15,14 +15,16 @@ interface AdminLayoutProps {
 const menuItems = [
   { path: '/admin/dashboard',  label: 'Дашборд',       icon: LayoutDashboard },
   { path: '/admin/products',   label: 'Товары',         icon: Package },
-  { path: '/admin/bulk-tags',  label: 'Массовые теги',  icon: Tags },        // ✅ НОВОЕ
+  { path: '/admin/bulk-tags',  label: 'Массовые теги',  icon: Tags },
   { path: '/admin/categories', label: 'Категории',      icon: FolderTree },
   { path: '/admin/promotions', label: 'Акции',          icon: Tag },
   { path: '/admin/wholesale',  label: 'Оптовые цены',   icon: Percent },
   { path: '/admin/orders',     label: 'Заказы',         icon: ShoppingCart },
   { path: '/admin/customers',  label: 'Клиенты',        icon: Users },
-  { path: '/admin/bito-customers', label: 'Bito клиенты',   icon: UserCircle2 },  // 🆕 импорт из Bito ERP
-  { path: '/admin/bito-employees', label: 'Bito сотрудники', icon: Briefcase },    // 🆕 импорт из Bito ERP
+  { path: '/admin/bito-customers', label: 'Bito клиенты',   icon: UserCircle2 },
+  { path: '/admin/bito-employees', label: 'Bito сотрудники', icon: Briefcase },
+  { path: '/admin/analytics', label: 'Аналитика', icon: BarChart3 },
+  { path: '/admin/developer', label: 'Developer', icon: Code },
 ]
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
@@ -30,14 +32,23 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     adminAuthService.hasSession()
       .then((valid) => {
+        if (cancelled) return
         if (!valid) navigate('/admin', { replace: true })
         else setAuthChecking(false)
       })
-      .catch(() => navigate('/admin', { replace: true }))
+      .catch((e) => {
+        if (cancelled) return
+        console.error('hasSession failed', e)
+        setAuthError('Не удалось проверить сессию, попробуйте открыть через бота /admin')
+        setTimeout(() => navigate('/admin', { replace: true }), 2000)
+      })
+    return () => { cancelled = true }
   }, [navigate])
 
   useEffect(() => {
@@ -50,7 +61,13 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   }
 
   if (authChecking) {
-    return <div className="min-h-screen bg-cream flex items-center justify-center text-forest">Проверка доступа…</div>
+    return (
+      <div className="min-h-screen bg-cream flex flex-col items-center justify-center text-forest p-6">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-forest mb-4" />
+        <p>Проверка доступа…</p>
+        {authError && <p className="mt-3 text-sm text-error text-center max-w-xs">{authError}</p>}
+      </div>
+    )
   }
 
   return (
@@ -64,7 +81,6 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           >
             <Menu className="w-6 h-6 text-dark-gray" />
           </button>
-          {/* ✅ Dekor Market */}
           <span className="font-display text-lg font-semibold text-forest">
             Dekor<span className="text-sage font-normal"> Market</span>
           </span>
@@ -80,18 +96,18 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - flex column with scrollable nav, no absolute overlap */}
       <aside className={`
         fixed top-0 left-0 h-full z-50 w-64
         bg-ivory border-r border-stone/30
+        flex flex-col
         transform transition-transform duration-300 ease-smooth
         lg:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-5 border-b border-stone/30">
+        {/* Sidebar Header - fixed */}
+        <div className="flex items-center justify-between p-5 border-b border-stone/30 shrink-0">
           <div>
-            {/* ✅ Dekor Market */}
             <span className="font-display text-xl font-semibold text-forest">
               Dekor<span className="text-sage font-normal"> Market</span>
             </span>
@@ -105,14 +121,13 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-3 space-y-1">
+        {/* Navigation - scrollable */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-thin scrollbar-thumb-stone scrollbar-track-transparent">
           {menuItems.map((item) => {
             const isActive =
               location.pathname === item.path ||
               (item.path !== '/admin/dashboard' && location.pathname.startsWith(item.path))
             const Icon = item.icon
-
             return (
               <Link
                 key={item.path}
@@ -126,27 +141,27 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                   }
                 `}
               >
-                <Icon className="w-5 h-5" strokeWidth={1.5} />
-                <span>{item.label}</span>
+                <Icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
+                <span className="truncate">{item.label}</span>
               </Link>
             )
           })}
         </nav>
 
-        {/* Bottom Actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-stone/30 space-y-1">
+        {/* Bottom Actions - fixed at bottom of flex column, not absolute */}
+        <div className="shrink-0 p-3 border-t border-stone/30 space-y-1 bg-ivory">
           <Link
             to="/"
             className="flex items-center gap-3 px-4 py-3 rounded-2xl text-dark-gray hover:bg-sand transition-all duration-300 font-medium text-sm"
           >
-            <Home className="w-5 h-5" strokeWidth={1.5} />
+            <Home className="w-5 h-5 shrink-0" strokeWidth={1.5} />
             <span>На сайт</span>
           </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-2xl text-error hover:bg-error/10 transition-all duration-300 font-medium text-sm w-full"
           >
-            <LogOut className="w-5 h-5" strokeWidth={1.5} />
+            <LogOut className="w-5 h-5 shrink-0" strokeWidth={1.5} />
             <span>Выйти</span>
           </button>
         </div>

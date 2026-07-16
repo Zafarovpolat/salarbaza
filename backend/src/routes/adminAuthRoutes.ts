@@ -5,6 +5,7 @@ import { clearAdminCookie, createAdminSession, frontendOriginOnly, getAdminSessi
 import { validateTelegramInitData } from '../utils/telegramAuth'
 import { prisma } from '../config/database'
 import { logger } from '../utils/logger'
+import { consumeMagicToken } from '../services/magicLinkService'
 
 const router = Router()
 
@@ -49,6 +50,47 @@ router.get('/session', (req, res) => {
 router.post('/logout', frontendOriginOnly, (_q, res) => {
   clearAdminCookie(res)
   res.json({ success: true })
+})
+
+// Magic link - browser login after bot verification
+// GET /api/admin/auth/magic?token=...  or POST {token}
+router.all('/magic', async (req, res) => {
+  try {
+    const token = (req.query.token as string) || (req.body && (req.body as any).token)
+    if (!token) return res.status(400).json({ success: false, message: 'Token required' })
+
+    const telegramIdBig = await consumeMagicToken(token)
+    if (!telegramIdBig) {
+      return res.status(401).json({ success: false, message: 'Ссылка недействительна или просрочена. Снова /admin в боте' })
+    }
+
+    const idStr = telegramIdBig.toString()
+    // Check allowlist again (in case IDs changed after token creation)
+    if (!config.adminTelegramIds.includes(idStr)) {
+      return res.status(403).json({ success: false, message: 'Нет доступа' })
+    }
+
+    // Ensure ADMIN role
+    try {
+      await prisma.user.upsert({
+        where: { telegramId: telegramIdBig },
+        update: { role: 'ADMIN' as any },
+        create: { telegramId: telegramIdBig, role: 'ADMIN' as any },
+      })
+    } catch {}
+
+    // Issue session cookie
+    setAdminCookie(res, createAdminSession(idStr))
+    // If it's a GET with browser, redirect to dashboard, else JSON
+    const acceptsHtml = req.headers.accept?.includes('text/html')
+    if (req.method === 'GET' && acceptsHtml) {
+      return res.redirect(`${config.frontendUrl}/admin/dashboard`)
+    }
+    return res.json({ success: true })
+  } catch (e) {
+    logger.error('Magic link error', e)
+    return res.status(500).json({ success: false, message: 'Server error' })
+  }
 })
 
 export default router
