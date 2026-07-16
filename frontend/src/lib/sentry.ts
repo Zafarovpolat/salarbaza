@@ -59,6 +59,15 @@ function scrubObject(obj: any, depth = 0): any {
 }
 
 const beforeSend: BeforeSendHook = (event) => {
+  // Filter out chunk load errors - handled via reload in router.tsx
+  const excValues = (event.exception?.values || []) as any[]
+  for (const exc of excValues) {
+    const val = (exc.value || '').toLowerCase()
+    if (val.includes('failed to fetch dynamically imported module') || val.includes('loading chunk') || val.includes('importing a module script failed')) {
+      return null
+    }
+  }
+
   // Filter cookies
   if (event.request?.cookies) {
     event.request.cookies = '[Filtered]' as any
@@ -82,7 +91,6 @@ const beforeSend: BeforeSendHook = (event) => {
       return b
     })
   }
-  // Scrub user data if present
   if ((event as any).user) {
     const user = (event as any).user
     if (user.ip_address) delete (event as any).user.ip_address
@@ -93,10 +101,7 @@ const beforeSend: BeforeSendHook = (event) => {
 
 export function initSentry() {
   const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined
-  if (!dsn) {
-    // No DSN configured - skip
-    return
-  }
+  if (!dsn) return
 
   const environment = import.meta.env.VITE_ENVIRONMENT || import.meta.env.MODE || 'production'
   const release =
@@ -105,7 +110,6 @@ export function initSentry() {
     (import.meta.env.VITE_RENDER_GIT_COMMIT as string | undefined) ||
     undefined
 
-  // tracesSampleRate 0.05-0.10 in production, 1.0 in dev for easier debugging
   const isProd = environment === 'production'
   const tracesSampleRate = isProd ? 0.07 : 1.0
 
@@ -115,13 +119,10 @@ export function initSentry() {
     release,
     tracesSampleRate,
     sendDefaultPii: false,
-    // Do not enable Session Replay for now
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
     beforeSend,
-    // Keep default integrations, but no replay
     integrations: (defaults) => {
-      // Filter out replay if present
       return defaults.filter((i) => {
         const name = (i as any).name || ''
         return !name.toLowerCase().includes('replay')
@@ -132,19 +133,10 @@ export function initSentry() {
 
 export function captureNetworkError(endpoint: string, status: number | undefined, error: unknown) {
   try {
-    // Don't capture 401/403 as they are expected for auth checks
     if (status === 401 || status === 403) return
     Sentry.captureException(error, {
-      tags: {
-        type: 'network_error',
-        endpoint,
-      },
-      extra: {
-        endpoint,
-        status,
-      },
+      tags: { type: 'network_error', endpoint },
+      extra: { endpoint, status },
     })
-  } catch {
-    // ignore
-  }
+  } catch {}
 }

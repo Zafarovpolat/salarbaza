@@ -6,6 +6,7 @@ import {
   Briefcase, UserCircle2, Code, BarChart3
 } from 'lucide-react'
 import { adminAuthService } from '@/services/adminAuthService'
+import { LoadingScreen } from '@/components/common/LoadingScreen'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -32,7 +33,6 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
-  const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -42,11 +42,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         if (!valid) navigate('/admin', { replace: true })
         else setAuthChecking(false)
       })
-      .catch((e) => {
+      .catch(() => {
         if (cancelled) return
-        console.error('hasSession failed', e)
-        setAuthError('Не удалось проверить сессию, попробуйте открыть через бота /admin')
-        setTimeout(() => navigate('/admin', { replace: true }), 2000)
+        navigate('/admin', { replace: true })
       })
     return () => { cancelled = true }
   }, [navigate])
@@ -61,13 +59,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   }
 
   if (authChecking) {
-    return (
-      <div className="min-h-screen bg-cream flex flex-col items-center justify-center text-forest p-6">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-forest mb-4" />
-        <p>Проверка доступа…</p>
-        {authError && <p className="mt-3 text-sm text-error text-center max-w-xs">{authError}</p>}
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   return (
@@ -96,7 +88,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         />
       )}
 
-      {/* Sidebar - flex column with scrollable nav, no absolute overlap */}
+      {/* Sidebar - flex column with scrollable nav */}
       <aside className={`
         fixed top-0 left-0 h-full z-50 w-64
         bg-ivory border-r border-stone/30
@@ -105,7 +97,6 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         lg:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Sidebar Header - fixed */}
         <div className="flex items-center justify-between p-5 border-b border-stone/30 shrink-0">
           <div>
             <span className="font-display text-xl font-semibold text-forest">
@@ -115,14 +106,13 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full hover:bg-sand transition-colors duration-300"
+            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-full hover:bg-sand"
           >
             <X className="w-5 h-5 text-dark-gray" />
           </button>
         </div>
 
-        {/* Navigation - scrollable */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1 scrollbar-thin scrollbar-thumb-stone scrollbar-track-transparent">
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {menuItems.map((item) => {
             const isActive =
               location.pathname === item.path ||
@@ -133,12 +123,8 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                 key={item.path}
                 to={item.path}
                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-2xl
-                  transition-all duration-300 font-medium text-sm
-                  ${isActive
-                    ? 'bg-forest text-white shadow-button-green'
-                    : 'text-dark-gray hover:bg-sand'
-                  }
+                  flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all
+                  ${isActive ? 'bg-forest text-white shadow-button-green' : 'text-dark-gray hover:bg-sand'}
                 `}
               >
                 <Icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
@@ -148,18 +134,17 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           })}
         </nav>
 
-        {/* Bottom Actions - fixed at bottom of flex column, not absolute */}
         <div className="shrink-0 p-3 border-t border-stone/30 space-y-1 bg-ivory">
           <Link
             to="/"
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-dark-gray hover:bg-sand transition-all duration-300 font-medium text-sm"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-dark-gray hover:bg-sand text-sm font-medium"
           >
             <Home className="w-5 h-5 shrink-0" strokeWidth={1.5} />
             <span>На сайт</span>
           </Link>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-error hover:bg-error/10 transition-all duration-300 font-medium text-sm w-full"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-error hover:bg-error/10 text-sm font-medium w-full"
           >
             <LogOut className="w-5 h-5 shrink-0" strokeWidth={1.5} />
             <span>Выйти</span>
@@ -167,14 +152,9 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
         <div className="p-4 lg:p-8">
-          {title && (
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
-              {title}
-            </h1>
-          )}
+          {title && <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">{title}</h1>}
           {children}
         </div>
       </main>

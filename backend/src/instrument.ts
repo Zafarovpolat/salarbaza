@@ -2,6 +2,19 @@ import * as Sentry from '@sentry/node'
 import { config } from './config'
 
 function scrubEvent(event: Sentry.ErrorEvent): Sentry.ErrorEvent | null {
+  // Filter out transient fetch failures (undici) that are handled via retry / graceful fallback
+  const excValues = (event.exception?.values || []) as any[]
+  for (const exc of excValues) {
+    const val = (exc.value || '').toLowerCase()
+    if (val.includes('fetch failed') && val.includes('efatal')) {
+      // Don't send transient network blips to Sentry - log only
+      return null
+    }
+    if (val.includes('failed to fetch dynamically imported module') || val.includes('loading chunk')) {
+      return null
+    }
+  }
+
   // Scrub headers
   if (event.request?.headers) {
     const headers = event.request.headers as any

@@ -118,9 +118,15 @@ export function AdminDeveloperPage() {
   if (error || !data) {
     return (
       <AdminLayout>
-        <div className="p-6">
-          <p className="text-red-600">Ошибка: {error}</p>
-          <button onClick={load} className="mt-4 px-4 py-2 bg-green-600 text-white rounded">Retry</button>
+        <div className="bg-white rounded-xl p-8 text-center shadow-sm max-w-md mx-auto mt-10">
+          <h2 className="text-lg font-bold text-charcoal">Developer Dashboard</h2>
+          <p className="mt-3 text-sm text-red-600">Ошибка: {error || 'Нет данных'}</p>
+          {error && error.toLowerCase().includes('unathorized') || error?.toLowerCase().includes('unauthorized') || error?.includes('401') ? (
+            <div className="mt-4 text-xs text-gray-600">
+              <p>Вы не авторизованы в браузере. Откройте Telegram → @DecorMarketUz_Bot → /admin → кнопка "Открыть в браузере (ПК)" — ссылка одноразовая 15 мин.</p>
+            </div>
+          ) : null}
+          <button onClick={load} className="mt-4 px-4 py-2 bg-forest text-white rounded text-sm">Retry</button>
         </div>
       </AdminLayout>
     )

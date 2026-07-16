@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { get } from '@/services/api'
+import { LoadingScreen } from '@/components/common/LoadingScreen'
 
 interface AnalyticsData {
   period: number
@@ -24,14 +25,17 @@ export function AdminAnalyticsPage() {
   const [period, setPeriod] = useState(30)
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = async (p: number) => {
     setLoading(true)
+    setError(null)
     try {
       const res = await get<{ success: boolean; data: AnalyticsData }>(`/admin/analytics?period=${p}`)
       setData(res.data)
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
+      setError(e.message || 'Не удалось загрузить аналитику. Откройте через бота /admin — получите ссылку для браузера.')
     } finally {
       setLoading(false)
     }
@@ -46,8 +50,18 @@ export function AdminAnalyticsPage() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600" />
+        <LoadingScreen />
+      </AdminLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="bg-white rounded-xl p-8 text-center shadow-sm">
+          <h2 className="text-lg font-bold text-charcoal">Аналитика</h2>
+          <p className="mt-3 text-sm text-red-600">{error}</p>
+          <p className="mt-2 text-xs text-gray-500">Откройте Telegram → @DecorMarketUz_Bot → /admin → кнопка "Открыть в браузере (ПК)" — тогда сессия появится и страница заработает.</p>
         </div>
       </AdminLayout>
     )
@@ -56,100 +70,105 @@ export function AdminAnalyticsPage() {
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Analytics</h1>
+        <h1 className="text-2xl font-bold text-charcoal">Аналитика</h1>
         <div className="flex gap-2">
           {[7, 30, 90].map((d) => (
             <button
               key={d}
               onClick={() => setPeriod(d)}
-              className={`px-3 py-1.5 rounded text-sm ${period === d ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+              className={`px-3 py-1.5 rounded text-sm ${period === d ? 'bg-forest text-white' : 'bg-gray-100 text-gray-600'}`}
             >
-              {d}d
+              {d}д
             </button>
           ))}
         </div>
       </div>
 
-      {data && (
+      {!data || (data.productViews === 0 && data.orders === 0 && data.sessions === 0) ? (
+        <div className="bg-white rounded-xl p-8 text-center shadow-sm">
+          <p className="text-gray-500">Пока нет данных за {period} дней. Как только пользователи начнут просматривать товары, тут появится воронка.</p>
+          <p className="mt-2 text-xs text-gray-400">События: product_view, add_to_cart, checkout_started, order_created и т.д. Собираются с сайта в реальном времени.</p>
+        </div>
+      ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-xs text-gray-500">Revenue</p>
-              <p className="text-xl font-bold">{fmt(data.revenue)} сум</p>
+              <p className="text-xs text-gray-500">Выручка</p>
+              <p className="text-xl font-bold text-forest">{fmt(data.revenue)} сум</p>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-xs text-gray-500">Orders</p>
+              <p className="text-xs text-gray-500">Заказы</p>
               <p className="text-xl font-bold">{data.orders}</p>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-xs text-gray-500">Avg Order</p>
+              <p className="text-xs text-gray-500">Средний чек</p>
               <p className="text-xl font-bold">{fmt(data.avgOrderValue)}</p>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <p className="text-xs text-gray-500">Sessions</p>
+              <p className="text-xs text-gray-500">Сессий</p>
               <p className="text-xl font-bold">{data.sessions}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <h3 className="font-semibold mb-3">Funnel</h3>
+              <h3 className="font-semibold mb-3">Воронка</h3>
               <ul className="text-sm space-y-2">
-                <li>Product views: {data.productViews}</li>
-                <li>Add to cart: {data.conversion?.addToCart} ({data.conversion?.addToCartRate?.toFixed(1)}%)</li>
-                <li>Checkout started: {data.conversion?.checkoutStarted} ({data.conversion?.checkoutRate?.toFixed(1)}%)</li>
-                <li>Order created: {data.conversion?.orderCreated} ({data.conversion?.orderRate?.toFixed(1)}%)</li>
+                <li>Просмотры товаров: {data.productViews}</li>
+                <li>Добавлено в корзину: {data.conversion?.addToCart} ({data.conversion?.addToCartRate?.toFixed(1)}%)</li>
+                <li>Начало оформления: {data.conversion?.checkoutStarted} ({data.conversion?.checkoutRate?.toFixed(1)}%)</li>
+                <li>Заказы созданы: {data.conversion?.orderCreated} ({data.conversion?.orderRate?.toFixed(1)}%)</li>
               </ul>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <h3 className="font-semibold mb-3">Search</h3>
+              <h3 className="font-semibold mb-3">Поиск</h3>
               <ul className="text-sm space-y-2">
-                <li>Total searches: {data.searches}</li>
-                <li>No results: {data.noResultSearches}</li>
-                <li>Category views: {data.categoryViews}</li>
+                <li>Всего поисков: {data.searches}</li>
+                <li>Без результатов: {data.noResultSearches}</li>
+                <li>Просмотров категорий: {data.categoryViews}</li>
               </ul>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <h3 className="font-semibold mb-3">Telegram Sources</h3>
+              <h3 className="font-semibold mb-3">Источники Telegram</h3>
               <ul className="text-xs max-h-40 overflow-auto space-y-1">
-                {data.telegramSources?.map((s: any) => (
+                {data.telegramSources?.length ? data.telegramSources.map((s: any) => (
                   <li key={s.source} className="flex justify-between"><span className="truncate">{s.source}</span><span>{s._count?._all || s.count}</span></li>
-                ))}
+                )) : <li className="text-gray-400">Нет данных</li>}
               </ul>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <h3 className="font-semibold mb-3">Top Products (views)</h3>
+              <h3 className="font-semibold mb-3">Топ товары (просмотры)</h3>
               <ul className="text-sm space-y-1">
-                {data.topProducts?.map((p: any) => (
+                {data.topProducts?.length ? data.topProducts.map((p: any) => (
                   <li key={p.productId} className="flex justify-between">
-                    <span>{p.product?.nameRu || p.productId?.slice(0, 8)}</span>
+                    <span className="truncate">{p.product?.nameRu || p.productId?.slice(0, 8)}</span>
                     <span className="font-medium">{p.count}</span>
                   </li>
-                ))}
+                )) : <li className="text-gray-400">Нет данных</li>}
               </ul>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <h3 className="font-semibold mb-3">Top Categories</h3>
+              <h3 className="font-semibold mb-3">Топ категории</h3>
               <ul className="text-sm space-y-1">
-                {data.topCategories?.map((c: any) => (
+                {data.topCategories?.length ? data.topCategories.map((c: any) => (
                   <li key={c.categoryId} className="flex justify-between">
-                    <span>{c.category?.nameRu || c.categoryId?.slice(0, 8)}</span>
+                    <span className="truncate">{c.category?.nameRu || c.categoryId?.slice(0, 8)}</span>
                     <span className="font-medium">{c.count}</span>
                   </li>
-                ))}
+                )) : <li className="text-gray-400">Нет данных</li>}
               </ul>
             </div>
           </div>
 
           <div className="bg-white rounded-xl p-5 shadow-sm">
-            <h3 className="font-semibold mb-3">Viewed but not ordered</h3>
+            <h3 className="font-semibold mb-3">Смотрели, но не заказали</h3>
             <div className="flex flex-wrap gap-2">
-              {data.viewedNotOrdered?.map((p: any) => (
+              {data.viewedNotOrdered?.length ? data.viewedNotOrdered.map((p: any) => (
                 <span key={p.id} className="px-2 py-1 bg-yellow-50 text-yellow-700 rounded text-xs">{p.nameRu} ({p.code})</span>
-              ))}
+              )) : <span className="text-xs text-gray-400">Нет таких товаров — отлично!</span>}
             </div>
           </div>
         </div>
