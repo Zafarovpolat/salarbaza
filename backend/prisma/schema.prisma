@@ -319,6 +319,19 @@ model BitoSyncRun {
   @@map("bito_sync_runs")
 }
 
+model AdminMagicToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  telegramId BigInt
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([telegramId])
+  @@index([expiresAt])
+  @@map("admin_magic_tokens")
+}
+
 // ==================== CART ====================
 
 model Cart {

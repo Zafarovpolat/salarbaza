@@ -191,30 +191,36 @@ router.get('/sale', async (req: Request, res: Response, next: NextFunction) => {
   }
 })
 
-// ===== SEARCH ===== (кэш 60 сек) - max 50
+// ===== SEARCH ===== (кэш 60 сек) - max 50, returns pagination for verification
 router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const q = parseSearchQuery(req.query, LIMITS.MAX_SEARCH_LENGTH)
-    if (!q) return res.json({ success: true, data: [] })
+    if (!q) return res.json({ success: true, data: [], pagination: { q: '', limit: 0, total: 0 } })
 
-    const { limit } = parsePagination(req.query, { defaultLimit: LIMITS.DEFAULT_SEARCH, maxLimit: LIMITS.PUBLIC_SEARCH })
-    const cacheKey = `search_${q}_${limit}`
+    const { limit, page } = parsePagination(req.query, { defaultLimit: LIMITS.DEFAULT_SEARCH, maxLimit: LIMITS.PUBLIC_SEARCH })
+    const cacheKey = `search_${q}_${limit}_${page}`
     if (trySendCached(cacheKey, res)) return
 
-    const products = await prisma.product.findMany({
-      where: {
-        isActive: true,
-        inStock: true,
-        OR: [
-          { nameRu: { contains: q, mode: 'insensitive' } },
-          { nameUz: { contains: q, mode: 'insensitive' } },
-          { code: { contains: q, mode: 'insensitive' } },
-        ],
-      },
-      include: productListInclude,
-      take: limit,
-    })
-    const response = { success: true, data: explodeByColor(products as any) }
+    const where: any = {
+      isActive: true,
+      inStock: true,
+      OR: [
+        { nameRu: { contains: q, mode: 'insensitive' } },
+        { nameUz: { contains: q, mode: 'insensitive' } },
+        { code: { contains: q, mode: 'insensitive' } },
+      ],
+    }
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({ where, include: productListInclude, take: limit }),
+      prisma.product.count({ where }),
+    ])
+
+    const response = {
+      success: true,
+      data: explodeByColor(products as any),
+      pagination: { q, limit, page, total, totalPages: Math.ceil(total / limit) },
+    }
     cacheAndSend(cacheKey, response, 60, res)
   } catch (error) {
     next(error)
@@ -339,7 +345,7 @@ router.get('/:slug(*)', async (req: Request, res: Response, next: NextFunction) 
     }
     if (!product) {
       product = await prisma.product.findFirst({
-        where: { OR: [{ code: { equals: originalSlug, mode: 'insensitive' } }, { code: { equals: normalizedSlug, mode: 'insensitive' } }, { slug: { contains: normalizedSlug, mode: 'insensitive' } }] },
+        where: { OR: [{ code: { equals: originalSlug, mode: 'insensitive' } }, { code: { equals: normalizedSlug, mode: 'insensitive' } }, { slug: { contains: normalizedSlug, mode: 'insensitive' } }] } as any,
         include: productDetailInclude,
       })
     }

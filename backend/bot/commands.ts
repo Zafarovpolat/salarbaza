@@ -139,7 +139,46 @@ Dushanba - Shanba / Пн - Сб: 9:00 - 18:00
       : undefined,
   })
 }
+
 export async function handleAdmin(bot: TelegramBot, msg: Message) {
- const id=msg.from?.id?String(msg.from.id):'';if(!id||!config.adminTelegramIds.includes(id)){await bot.sendMessage(msg.chat.id,'⛔ Нет доступа к админ-панели.');return}
- await bot.sendMessage(msg.chat.id,'🔐 Открыть админ-панель Dekor Market:',{reply_markup:{inline_keyboard:[[{text:'⚙️ Открыть админку',web_app:{url:`${config.frontendUrl.replace(/\/$/,'')}/admin`}}]]}})
+  const id = msg.from?.id ? String(msg.from.id) : ''
+  if (!id || !config.adminTelegramIds.includes(id)) {
+    await bot.sendMessage(msg.chat.id, '⛔ Нет доступа к админ-панели.')
+    return
+  }
+
+  // Generate magic link for browser login (unique per /admin)
+  let magicLink = ''
+  try {
+    const { createMagicToken, getMagicLink } = await import('../src/services/magicLinkService')
+    const token = await createMagicToken(id)
+    magicLink = getMagicLink(config.frontendUrl, token)
+  } catch (e) {
+    console.error('Failed to create magic token', e)
+  }
+
+  const adminBase = config.frontendUrl.replace(/\/$/, '')
+
+  const inlineKeyboard: any[] = [
+    [{ text: '⚙️ Открыть админку (в Telegram)', web_app: { url: `${adminBase}/admin` } }],
+  ]
+
+  if (magicLink) {
+    inlineKeyboard.push([{ text: '🌐 Открыть в браузере (ПК) — 15 мин', url: magicLink }])
+  }
+
+  await bot.sendMessage(
+    msg.chat.id,
+    `🔐 <b>Dekor Market — админ-панель</b>\n\n` +
+      `ID: <code>${id}</code> ✅\n\n` +
+      `• В Telegram: нажми "Открыть админку"\n` +
+      (magicLink
+        ? `• На ПК: ссылка действует 15 мин, одноразовая:\n${magicLink}\n\n⚠️ Не пересылай ссылку — она даёт полный доступ!\n`
+        : '') +
+      `Если зависает "Проверка доступа…" — очисти кэш Телеги: Настройки → Данные и память → Очистить кэш`,
+    {
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard: inlineKeyboard },
+    }
+  )
 }

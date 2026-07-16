@@ -156,6 +156,11 @@ const AdminAnalyticsPage = lazy(() =>
     default: m.AdminAnalyticsPage,
   }))
 );
+const AdminMagicPage = lazy(() =>
+  import("./pages/admin/AdminMagicPage").then((m) => ({
+    default: m.AdminMagicPage,
+  }))
+);
 
 // ✅ Легкий спиннер для lazy-страниц (не полноэкранный)
 function PageLoader() {
@@ -291,6 +296,7 @@ function AdminRoutes() {
         />
         <Route path="/admin/developer" element={<AdminDeveloperPage />} />
         <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+        <Route path="/admin/magic" element={<AdminMagicPage />} />
       </Routes>
     </Suspense>
   );
