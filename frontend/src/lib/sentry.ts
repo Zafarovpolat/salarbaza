@@ -132,6 +132,8 @@ export function initSentry() {
 
 export function captureNetworkError(endpoint: string, status: number | undefined, error: unknown) {
   try {
+    // Don't capture 401/403 as they are expected for auth checks
+    if (status === 401 || status === 403) return
     Sentry.captureException(error, {
       tags: {
         type: 'network_error',
