@@ -1,4 +1,4 @@
-import { useEffect, useRef, lazy, Suspense } from "react";
+import { useEffect, useRef, lazy, Suspense, ComponentType } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import WebApp from "@twa-dev/sdk";
 
@@ -8,155 +8,185 @@ import { LoadingScreen } from "./components/common/LoadingScreen";
 // ✅ Главная грузится сразу (critical path)
 import { HomePage } from "./pages/HomePage";
 
-// ✅ Lazy — всё остальное грузится по требованию
-const CatalogPage = lazy(() =>
+// Retry wrapper for dynamically imported chunks — fixes "Failed to fetch dynamically imported module" after deploy
+function lazyWithRetry<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+  return lazy(async () => {
+    const reloadKey = 'chunk-reload-timestamp'
+    try {
+      const mod = await factory()
+      // Clear reload flag on success
+      if (sessionStorage.getItem(reloadKey)) {
+        sessionStorage.removeItem(reloadKey)
+      }
+      return mod
+    } catch (err: any) {
+      const msg = err?.message || ''
+      const isChunkError = msg.includes('Failed to fetch dynamically imported module') || msg.includes('Loading chunk') || msg.includes('Importing a module script failed')
+      if (isChunkError) {
+        const lastReload = Number(sessionStorage.getItem(reloadKey) || '0')
+        const now = Date.now()
+        // Reload once per 10 seconds max
+        if (now - lastReload > 10000) {
+          sessionStorage.setItem(reloadKey, String(now))
+          window.location.reload()
+          // Return dummy while reloading
+          return { default: (() => null) as unknown as T }
+        }
+      }
+      throw err
+    }
+  })
+}
+
+// ✅ Lazy — всё остальное грузится по требованию с retry
+const CatalogPage = lazyWithRetry(() =>
   import("./pages/CatalogPage").then((m) => ({ default: m.CatalogPage }))
 );
-const CategoryPage = lazy(() =>
+const CategoryPage = lazyWithRetry(() =>
   import("./pages/CategoryPage").then((m) => ({ default: m.CategoryPage }))
 );
-const ProductPage = lazy(() =>
+const ProductPage = lazyWithRetry(() =>
   import("./pages/ProductPage").then((m) => ({ default: m.ProductPage }))
 );
-const CartPage = lazy(() =>
+const CartPage = lazyWithRetry(() =>
   import("./pages/CartPage").then((m) => ({ default: m.CartPage }))
 );
-const CheckoutPage = lazy(() =>
+const CheckoutPage = lazyWithRetry(() =>
   import("./pages/CheckoutPage").then((m) => ({ default: m.CheckoutPage }))
 );
-const OrderSuccessPage = lazy(() =>
+const OrderSuccessPage = lazyWithRetry(() =>
   import("./pages/OrderSuccessPage").then((m) => ({
     default: m.OrderSuccessPage,
   }))
 );
-const OrdersPage = lazy(() =>
+const OrdersPage = lazyWithRetry(() =>
   import("./pages/OrdersPage").then((m) => ({ default: m.OrdersPage }))
 );
-const FavoritesPage = lazy(() =>
+const FavoritesPage = lazyWithRetry(() =>
   import("./pages/FavoritesPage").then((m) => ({ default: m.FavoritesPage }))
 );
-const ProfilePage = lazy(() =>
+const ProfilePage = lazyWithRetry(() =>
   import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage }))
 );
-const SearchPage = lazy(() =>
+const SearchPage = lazyWithRetry(() =>
   import("./pages/SearchPage").then((m) => ({ default: m.SearchPage }))
 );
-const PromotionPage = lazy(() =>
+const PromotionPage = lazyWithRetry(() =>
   import("./pages/PromotionPage").then((m) => ({ default: m.PromotionPage }))
 );
-const SpecialOffersPage = lazy(() =>
+const SpecialOffersPage = lazyWithRetry(() =>
   import("./pages/SpecialOffersPage").then((m) => ({
     default: m.SpecialOffersPage,
   }))
 );
-const NewArrivalsPage = lazy(() =>
+const NewArrivalsPage = lazyWithRetry(() =>
   import("./pages/NewArrivalsPage").then((m) => ({
     default: m.NewArrivalsPage,
   }))
 );
-const NotFoundPage = lazy(() =>
+const NotFoundPage = lazyWithRetry(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage }))
 );
 
-// Admin pages — все lazy
-const AdminLoginPage = lazy(() =>
+// Admin pages — все lazy с retry
+const AdminLoginPage = lazyWithRetry(() =>
   import("./pages/admin/AdminLoginPage").then((m) => ({
     default: m.AdminLoginPage,
   }))
 );
-const AdminDashboardPage = lazy(() =>
+const AdminDashboardPage = lazyWithRetry(() =>
   import("./pages/admin/AdminDashboardPage").then((m) => ({
     default: m.AdminDashboardPage,
   }))
 );
-const AdminProductsPage = lazy(() =>
+const AdminProductsPage = lazyWithRetry(() =>
   import("./pages/admin/AdminProductsPage").then((m) => ({
     default: m.AdminProductsPage,
   }))
 );
-const AdminProductEditPage = lazy(() =>
+const AdminProductEditPage = lazyWithRetry(() =>
   import("./pages/admin/AdminProductEditPage").then((m) => ({
     default: m.AdminProductEditPage,
   }))
 );
-const AdminCategoriesPage = lazy(() =>
+const AdminCategoriesPage = lazyWithRetry(() =>
   import("./pages/admin/AdminCategoriesPage").then((m) => ({
     default: m.AdminCategoriesPage,
   }))
 );
-const AdminCategoryProductsPage = lazy(() =>
+const AdminCategoryProductsPage = lazyWithRetry(() =>
   import("./pages/admin/AdminCategoryProductsPage").then((m) => ({
     default: m.AdminCategoryProductsPage,
   }))
 );
-const AdminOrdersPage = lazy(() =>
+const AdminOrdersPage = lazyWithRetry(() =>
   import("./pages/admin/AdminOrdersPage").then((m) => ({
     default: m.AdminOrdersPage,
   }))
 );
-const AdminWholesalePage = lazy(() =>
+const AdminWholesalePage = lazyWithRetry(() =>
   import("./pages/admin/AdminWholesalePage").then((m) => ({
     default: m.AdminWholesalePage,
   }))
 );
-const AdminCustomersPage = lazy(() =>
+const AdminCustomersPage = lazyWithRetry(() =>
   import("./pages/admin/AdminCustomersPage").then((m) => ({
     default: m.AdminCustomersPage,
   }))
 );
-const AdminCustomerDetailPage = lazy(() =>
+const AdminCustomerDetailPage = lazyWithRetry(() =>
   import("./pages/admin/AdminCustomerDetailPage").then((m) => ({
     default: m.AdminCustomerDetailPage,
   }))
 );
-const AdminPromotionsPage = lazy(() =>
+const AdminPromotionsPage = lazyWithRetry(() =>
   import("./pages/admin/AdminPromotionsPage").then((m) => ({
     default: m.AdminPromotionsPage,
   }))
 );
-const AdminPromotionEditPage = lazy(() =>
+const AdminPromotionEditPage = lazyWithRetry(() =>
   import("./pages/admin/AdminPromotionEditPage").then((m) => ({
     default: m.AdminPromotionEditPage,
   }))
 );
-const AdminBulkTagsPage = lazy(() =>
+const AdminBulkTagsPage = lazyWithRetry(() =>
   import("./pages/admin/AdminBulkTagsPage").then((m) => ({
     default: m.AdminBulkTagsPage,
   }))
 );
 
 // 🆕 Bito-импорт: клиенты + сотрудники из Bito ERP (read-only)
-const AdminBitoCustomersPage = lazy(() =>
+const AdminBitoCustomersPage = lazyWithRetry(() =>
   import("./pages/admin/AdminBitoCustomersPage").then((m) => ({
     default: m.AdminBitoCustomersPage,
   }))
 );
-const AdminBitoCustomerDetailPage = lazy(() =>
+const AdminBitoCustomerDetailPage = lazyWithRetry(() =>
   import("./pages/admin/AdminBitoCustomerDetailPage").then((m) => ({
     default: m.AdminBitoCustomerDetailPage,
   }))
 );
-const AdminBitoEmployeesPage = lazy(() =>
+const AdminBitoEmployeesPage = lazyWithRetry(() =>
   import("./pages/admin/AdminBitoEmployeesPage").then((m) => ({
     default: m.AdminBitoEmployeesPage,
   }))
 );
-const AdminBitoEmployeeDetailPage = lazy(() =>
+const AdminBitoEmployeeDetailPage = lazyWithRetry(() =>
   import("./pages/admin/AdminBitoEmployeeDetailPage").then((m) => ({
     default: m.AdminBitoEmployeeDetailPage,
   }))
 );
-const AdminDeveloperPage = lazy(() =>
+const AdminDeveloperPage = lazyWithRetry(() =>
   import("./pages/admin/AdminDeveloperPage").then((m) => ({
     default: m.AdminDeveloperPage,
   }))
 );
-const AdminAnalyticsPage = lazy(() =>
+const AdminAnalyticsPage = lazyWithRetry(() =>
   import("./pages/admin/AdminAnalyticsPage").then((m) => ({
     default: m.AdminAnalyticsPage,
   }))
 );
-const AdminMagicPage = lazy(() =>
+const AdminMagicPage = lazyWithRetry(() =>
   import("./pages/admin/AdminMagicPage").then((m) => ({
     default: m.AdminMagicPage,
   }))
