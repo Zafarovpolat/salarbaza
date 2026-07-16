@@ -131,71 +131,157 @@ def _send_telegram_to_admins(text: str) -> None:
 
 
 def _format_full_summary(mode: str, elapsed: float, stats: Dict[str, Any], log: List[str]) -> str:
-    products = (stats.get("products") or {}).get("plan") if isinstance(stats.get("products"), dict) else stats.get("products") or {}
-    # products may be nested under plan
-    if isinstance(products, dict) and "plan" in products:
-        products = products["plan"]
-    # Fallback: products directly
-    bito_total = products.get("bito_total", 0)
-    matched = (products.get("matched_by_pid", 0) + products.get("matched_by_sku", 0) + products.get("matched_by_name", 0))
-    created = products.get("created", 0)
-    updated = products.get("updated", 0)
-    moved = products.get("category_moved", 0)
-    warnings = products.get("warnings", [])
-    stock_rows = products.get("stock_rows", 0)
+    prod_data = stats.get("products") or {}
+    plan = prod_data.get("plan") if isinstance(prod_data, dict) and "plan" in prod_data else prod_data
+    if not isinstance(plan, dict):
+        plan = {}
+    samples_matched = prod_data.get("samples_matched", []) if isinstance(prod_data, dict) else []
+    samples_new = prod_data.get("samples_new", []) if isinstance(prod_data, dict) else []
+    samples_moved = prod_data.get("samples_moved", []) if isinstance(prod_data, dict) else []
+
+    bito_total = plan.get("bito_total", 0)
+    matched_pid = plan.get("matched_by_pid", 0)
+    matched_sku = plan.get("matched_by_sku", 0)
+    matched_name = plan.get("matched_by_name", 0)
+    matched = matched_pid + matched_sku + matched_name
+    created = plan.get("created", 0)
+    updated = plan.get("updated", 0)
+    moved = plan.get("category_moved", 0)
+    orphaned = plan.get("orphaned_oos", 0)
+    warnings = plan.get("warnings", [])
+    stock_rows = plan.get("stock_rows", 0)
 
     customers = stats.get("customers", {})
     employees = stats.get("employees", {})
     images = stats.get("images", {})
 
+    now_str = datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M UTC")
+
     lines = [
-        f"✅ <b>Bito {mode} sync completed</b> in {elapsed:.1f}s",
-        f"• Bito total: {bito_total}",
-        f"• Matched: {matched} (pid:{products.get('matched_by_pid',0)} sku:{products.get('matched_by_sku',0)} name:{products.get('matched_by_name',0)})",
-        f"• Created: {created}",
-        f"• Updated: {updated}",
-        f"• Category moved: {moved}",
-        f"• Stock rows: {stock_rows}",
-        f"• Customers: {customers.get('inserts',0) if isinstance(customers, dict) else 0} new / {customers.get('updates',0) if isinstance(customers, dict) else 0} upd",
-        f"• Employees: {employees.get('inserts',0) if isinstance(employees, dict) else 0} new / {employees.get('updates',0) if isinstance(employees, dict) else 0} upd",
-        f"• No-image: {images.get('products_without_images',0) if isinstance(images, dict) else 0} → inserted {images.get('images_inserted',0) if isinstance(images, dict) else 0}",
-        f"• Warnings: {len(warnings)}",
+        f"✅ <b>Bito {mode.upper()} sync — успешно</b>",
+        f"",
+        f"⏱ <b>Время:</b> {elapsed:.1f} сек ({now_str})",
+        f"",
+        f"📦 <b>Источник Bito:</b>",
+        f"• Всего товаров в Bito: <b>{bito_total}</b>",
+        f"• Найдено в базе: <b>{matched}</b> (по ID: {matched_pid}, SKU: {matched_sku}, имя: {matched_name})",
+        f"• Обновлено цен/остатков/категорий: <b>{updated}</b>",
+        f"• Новых создано: <b>{created}</b>",
+        f"• Перемещено в другую категорию: <b>{moved}</b>",
+        f"• Снято с продажи (orphaned): <b>{orphaned}</b>",
+        f"",
+        f"🏬 <b>Склады:</b> {stock_rows} строк обновлено",
     ]
+
+    if customers or employees:
+        lines.extend([
+            f"",
+            f"👥 <b>CRM:</b>",
+            f"• Клиенты: {customers.get('inserts',0) if isinstance(customers, dict) else 0} новых / {customers.get('updates',0) if isinstance(customers, dict) else 0} обновлено",
+            f"• Сотрудники: {employees.get('inserts',0) if isinstance(employees, dict) else 0} новых / {employees.get('updates',0) if isinstance(employees, dict) else 0} обновлено",
+        ])
+
+    if images:
+        lines.extend([
+            f"",
+            f"🖼 <b>Изображения:</b> без фото {images.get('products_without_images',0) if isinstance(images, dict) else 0} → добавлено {images.get('images_inserted',0) if isinstance(images, dict) else 0}",
+        ])
+
     if warnings:
-        lines.append(f"• Warn samples: {'; '.join(warnings[:3])}")
+        safe_warns = [_escape_html(w)[:200] for w in warnings[:3]]
+        lines.extend([
+            f"",
+            f"⚠️ <b>Предупреждений:</b> {len(warnings)}",
+            f"• Примеры: {'; '.join(safe_warns)}",
+        ])
+    else:
+        lines.append(f"")
+        lines.append(f"✅ Предупреждений нет")
+
+    if samples_new:
+        lines.extend([f"", f"🆕 <b>Новые товары (пример):</b>"] + [f"• <code>{_escape_html(s[:200])}</code>" for s in samples_new[:3]])
+    if samples_moved:
+        lines.extend([f"", f"📂 <b>Перемещение категорий (пример):</b>"] + [f"• <code>{_escape_html(s[:200])}</code>" for s in samples_moved[:3]])
+
+    lines.extend([
+        f"",
+        f"🔗 <i>Детали в /admin/developer → Bito Sync</i>",
+    ])
+
     return "\n".join(lines)
 
 
 def _format_incremental_summary(mode: str, elapsed: float, stats: Dict[str, Any]) -> Optional[str]:
-    products = (stats.get("products") or {}).get("plan") if isinstance(stats.get("products"), dict) and isinstance(stats.get("products").get("plan"), dict) else stats.get("products") or {}
-    if isinstance(stats.get("products"), dict) and "plan" in stats["products"]:
-        products = stats["products"]["plan"]
-    updated = products.get("updated", 0)
-    created = products.get("created", 0)
-    moved = products.get("category_moved", 0)
-    bito_total = products.get("bito_total", 0)
+    prod_data = stats.get("products") or {}
+    plan = prod_data.get("plan") if isinstance(prod_data, dict) and "plan" in prod_data else prod_data
+    if not isinstance(plan, dict):
+        plan = {}
+    samples_matched = prod_data.get("samples_matched", []) if isinstance(prod_data, dict) else []
 
-    # No changes → silence
-    if updated == 0 and created == 0 and moved == 0 and products.get("orphaned_oos", 0) == 0:
-        # Check other changes
+    updated = plan.get("updated", 0)
+    created = plan.get("created", 0)
+    moved = plan.get("category_moved", 0)
+    orphaned = plan.get("orphaned_oos", 0)
+    bito_total = plan.get("bito_total", 0)
+    matched_pid = plan.get("matched_by_pid", 0)
+    matched_sku = plan.get("matched_by_sku", 0)
+    stock_rows = plan.get("stock_rows", 0)
+    warnings = plan.get("warnings", [])
+
+    # No changes → silence (per spec)
+    if updated == 0 and created == 0 and moved == 0 and orphaned == 0 and not warnings:
         if not stats.get("customers") and not stats.get("employees"):
             return None
 
-    # Large normal change threshold
+    now_str = datetime.now(timezone.utc).strftime("%d.%m %H:%M UTC")
     is_large = updated > 100 or created > 10 or moved > 10
 
     if is_large:
-        return (
-            f"ℹ️ <b>Bito {mode} sync</b> large change in {elapsed:.1f}s\n"
-            f"• Total: {bito_total}, updated: {updated}, created: {created}, moved: {moved}"
-        )
-    # Normal small change → short summary
-    if updated or created or moved:
-        return (
-            f"ℹ️ <b>Bito {mode} sync</b> in {elapsed:.1f}s: "
-            f"upd {updated}, new {created}, moved {moved}, total {bito_total}"
-        )
-    return None
+        title = f"⚠️ <b>Bito {mode.upper()} — крупное изменение!</b>"
+    elif updated or created or moved or orphaned:
+        title = f"ℹ️ <b>Bito {mode} sync — есть изменения</b>"
+    else:
+        title = f"ℹ️ <b>Bito {mode} sync</b>"
+
+    lines = [
+        title,
+        f"",
+        f"⏱ <b>Время:</b> {elapsed:.1f} сек ({now_str})",
+        f"📦 <b>Bito всего:</b> {bito_total}, в базе: {matched_pid + matched_sku}",
+        f"",
+        f"🔄 <b>Изменения:</b>",
+        f"• Обновлено товаров (цены/остатки): <b>{updated}</b>",
+        f"• Новых создано: <b>{created}</b>",
+        f"• Перемещено в другую категорию: <b>{moved}</b>",
+        f"• Снято с продажи: <b>{orphaned}</b>",
+        f"• Строк складов: <b>{stock_rows}</b>",
+    ]
+
+    if warnings:
+        lines.extend([
+            f"",
+            f"⚠️ <b>Предупреждений:</b> {len(warnings)}",
+            f"• {_escape_html(warnings[0][:200])}" if warnings else "",
+        ])
+
+    if samples_matched:
+        lines.extend([
+            f"",
+            f"📋 <b>Примеры обновлений:</b>",
+        ] + [f"• <code>{_escape_html(s[:180])}</code>" for s in samples_matched[:3]])
+
+    if not (updated or created or moved or orphaned):
+        lines.extend([
+            f"",
+            f"ℹ️ Мелкие изменения складов, сайт актуален.",
+        ])
+    else:
+        lines.extend([
+            f"",
+            f"✅ <i>Сайт синхронизирован. Детали в /admin/developer</i>",
+        ])
+
+    return "\n".join(lines)
 
 
 def _format_error_alert(mode: str, error: str, log: List[str], stats: Dict[str, Any]) -> str:
